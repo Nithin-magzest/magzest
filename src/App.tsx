@@ -19,6 +19,7 @@ import StudentProfile from './pages/student/StudentProfile';
 import StudentChat from './pages/student/StudentChat';
 import StudentCourses from './pages/student/StudentCourses';
 import StudentCountries from './pages/student/StudentCountries';
+import StudentMeetings from './pages/student/StudentMeetings';
 
 // Counselor module
 import CounselorLayout from './pages/counselor/CounselorLayout';
@@ -29,6 +30,7 @@ import CounselorUniversities from './pages/counselor/CounselorUniversities';
 import CounselorProfile from './pages/counselor/CounselorProfile';
 import CounselorCourses from './pages/counselor/CounselorCourses';
 import CounselorCountries from './pages/counselor/CounselorCountries';
+import CounselorMeetings from './pages/counselor/CounselorMeetings';
 
 // Admin module
 import AdminLayout from './pages/admin/AdminLayout';
@@ -37,6 +39,7 @@ import AdminApplications from './pages/admin/AdminApplications';
 import AdminUniversities from './pages/admin/AdminUniversities';
 import AdminCourses from './pages/admin/AdminCourses';
 import AdminCountries from './pages/admin/AdminCountries';
+import AdminMeetings from './pages/admin/AdminMeetings';
 
 export default function App() {
   return (
@@ -64,6 +67,7 @@ export default function App() {
             <Route path="profile" element={<StudentProfile />} />
             <Route path="courses" element={<StudentCourses />} />
             <Route path="countries" element={<StudentCountries />} />
+            <Route path="meetings" element={<StudentMeetings />} />
           </Route>
 
           {/* Counselor module */}
@@ -75,6 +79,7 @@ export default function App() {
             <Route path="profile" element={<CounselorProfile />} />
             <Route path="courses" element={<CounselorCourses />} />
             <Route path="countries" element={<CounselorCountries />} />
+            <Route path="meetings" element={<CounselorMeetings />} />
           </Route>
 
           {/* Admin module */}
@@ -86,6 +91,7 @@ export default function App() {
             <Route path="counselors" element={<AdminDashboard />} />
             <Route path="students" element={<AdminDashboard />} />
             <Route path="applications" element={<AdminApplications />} />
+            <Route path="meetings" element={<AdminMeetings />} />
           </Route>
         </Routes>
       </BrowserRouter>

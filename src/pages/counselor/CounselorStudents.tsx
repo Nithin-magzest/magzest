@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, Routes, Route, useParams, useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink } from 'lucide-react';
+import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -62,6 +62,195 @@ function RequestDocumentModal({ studentId, onClose, onRequested }: { studentId: 
   );
 }
 
+const EDUCATION_LEVELS = ['High School', 'Diploma', "Bachelor's", "Master's", 'PhD', 'Other'];
+const ENGLISH_TYPES = ['IELTS', 'TOEFL', 'PTE', 'Duolingo', 'Other'];
+const COUNTRIES = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'New Zealand', 'Ireland', 'Netherlands', 'Singapore', 'France', 'Other'];
+
+function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', nationality: '',
+    educationLevel: '', gpa: '', budget: '',
+    englishType: 'IELTS', englishScore: '',
+    preferredCountries: [] as string[],
+    status: 'active',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  function set(field: string, value: any) { setForm(f => ({ ...f, [field]: value })); }
+
+  function toggleCountry(c: string) {
+    setForm(f => ({
+      ...f,
+      preferredCountries: f.preferredCountries.includes(c)
+        ? f.preferredCountries.filter(x => x !== c)
+        : [...f.preferredCountries, c],
+    }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name.trim() || !form.email.trim()) {
+      setError('Name and email are required.');
+      return;
+    }
+    setSaving(true); setError('');
+    try {
+      const payload: any = {
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        nationality: form.nationality.trim(),
+        educationLevel: form.educationLevel,
+        status: form.status,
+        joinedDate: new Date().toISOString().split('T')[0],
+      };
+      if (form.gpa) payload.gpa = Number(form.gpa);
+      if (form.budget) payload.budget = Number(form.budget);
+      if (form.englishScore) payload.englishScore = { type: form.englishType, score: form.englishScore };
+      if (form.preferredCountries.length) payload.preferredCountries = form.preferredCountries;
+      await api.students.create(payload);
+      onCreated();
+      onClose();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create student.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center">
+              <UserPlus className="w-4 h-4 text-blue-600" />
+            </div>
+            <h2 className="text-base font-bold text-gray-900">Create Student Profile</h2>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="p-1.5 hover:bg-gray-100 rounded-xl transition-colors">
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          {error && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-700">{error}</div>}
+
+          <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 text-xs text-blue-700">
+            A default password <strong>student123</strong> will be set. The student can change it after first login.
+          </div>
+
+          {/* Basic info */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Full Name *</label>
+              <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Student's full name"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Email Address *</label>
+              <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="student@email.com"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Phone</label>
+              <input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+91 98765 43210"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Nationality</label>
+              <input value={form.nationality} onChange={e => set('nationality', e.target.value)} placeholder="e.g. Indian"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+
+          {/* Education */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Education Level</label>
+              <select value={form.educationLevel} onChange={e => set('educationLevel', e.target.value)}
+                aria-label="Education level"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="">Select...</option>
+                {EDUCATION_LEVELS.map(l => <option key={l}>{l}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">GPA</label>
+              <input type="number" value={form.gpa} onChange={e => set('gpa', e.target.value)}
+                placeholder="e.g. 8.5" min="0" max="10" step="0.1"
+                title="GPA score"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+
+          {/* English score */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">English Proficiency</label>
+            <div className="grid grid-cols-2 gap-3">
+              <select value={form.englishType} onChange={e => set('englishType', e.target.value)}
+                aria-label="English test type"
+                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                {ENGLISH_TYPES.map(t => <option key={t}>{t}</option>)}
+              </select>
+              <input value={form.englishScore} onChange={e => set('englishScore', e.target.value)}
+                placeholder="Score (e.g. 7.5)"
+                title="English test score"
+                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+
+          {/* Budget */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Annual Budget (USD)</label>
+            <input type="number" value={form.budget} onChange={e => set('budget', e.target.value)}
+              placeholder="e.g. 30000" min="0" step="1000"
+              title="Annual budget in USD"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          {/* Preferred countries */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              Preferred Countries
+              {form.preferredCountries.length > 0 && (
+                <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">
+                  {form.preferredCountries.length} selected
+                </span>
+              )}
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {COUNTRIES.map(c => {
+                const sel = form.preferredCountries.includes(c);
+                return (
+                  <button key={c} type="button" onClick={() => toggleCountry(c)}
+                    className={`text-xs px-2.5 py-1 rounded-full font-medium border transition-colors ${sel ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'}`}>
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 py-2.5 bg-blue-600 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold shadow-md disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              {saving
+                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Creating…</>
+                : <><UserPlus className="w-4 h-4" /> Create Student</>}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function CounselorStudents() {
   return (
     <Routes>
@@ -78,10 +267,13 @@ function StudentsList() {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [tab, setTab] = useState<'mine' | 'all'>('mine');
+  const [showCreate, setShowCreate] = useState(false);
 
-  useEffect(() => {
+  function loadStudents() {
     api.students.list().then(setAllStudents).catch(() => {});
-  }, []);
+  }
+
+  useEffect(() => { loadStudents(); }, []);
 
   const myStudents = allStudents.filter((s: any) => counselor.assignedStudents?.includes(s._id || s.id));
   const source = tab === 'mine' ? myStudents : allStudents;
@@ -94,9 +286,21 @@ function StudentsList() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Students</h1>
-        <p className="text-gray-500 mt-1">Manage students and their application journey</p>
+      {showCreate && (
+        <CreateStudentModal
+          onClose={() => setShowCreate(false)}
+          onCreated={() => { loadStudents(); setTab('mine'); }}
+        />
+      )}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Students</h1>
+          <p className="text-gray-500 mt-1">Manage students and their application journey</p>
+        </div>
+        <button type="button" onClick={() => setShowCreate(true)}
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors">
+          <UserPlus className="w-4 h-4" /> Add Student
+        </button>
       </div>
 
       <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-fit">

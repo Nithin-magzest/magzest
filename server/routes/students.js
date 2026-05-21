@@ -68,13 +68,18 @@ router.delete('/me/documents/:docId', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   if (req.user.role !== 'counselor') return res.status(403).json({ message: 'Forbidden' });
   const { password, role, _id, ...data } = req.body;
+  if (!data.name || !data.email) return res.status(400).json({ message: 'Name and email are required' });
   try {
+    const existing = await User.findOne({ email: data.email.toLowerCase() });
+    if (existing) return res.status(409).json({ message: 'An account with this email already exists' });
     const bcrypt = require('bcryptjs');
     const hashed = await bcrypt.hash('student123', 10);
-    const student = new User({ ...data, password: hashed, role: 'student' });
+    const student = new User({ ...data, email: data.email.toLowerCase(), password: hashed, role: 'student' });
     await student.save();
     await User.findByIdAndUpdate(req.user.id, { $push: { assignedStudents: student._id.toString() } });
-    res.status(201).json(student.toJSON());
+    const obj = student.toJSON();
+    delete obj.password;
+    res.status(201).json(obj);
   } catch (err) {
     res.status(500).json({ message: err.message || 'Server error' });
   }

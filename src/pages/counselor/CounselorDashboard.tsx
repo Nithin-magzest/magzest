@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X } from 'lucide-react';
+import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X, Award, Edit3, CheckCircle2, Target, ClipboardList } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -161,6 +161,10 @@ export default function CounselorDashboard() {
   const counselor = user as Counselor;
   const [students, setStudents] = useState<any[]>([]);
   const [showNewStudent, setShowNewStudent] = useState(false);
+  const [workNote, setWorkNote] = useState((user as any)?.bio || '');
+  const [editingNote, setEditingNote] = useState(false);
+  const [noteInput, setNoteInput] = useState((user as any)?.bio || '');
+  const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
     api.students.list().then(all => {
@@ -168,6 +172,16 @@ export default function CounselorDashboard() {
       setStudents(mine);
     }).catch(() => {});
   }, []);
+
+  const handleSaveNote = async () => {
+    setSavingNote(true);
+    try {
+      await api.students.updateMe({ bio: noteInput });
+      setWorkNote(noteInput);
+      setEditingNote(false);
+    } catch { /* ignore */ }
+    setSavingNote(false);
+  };
 
   const myStudents = students;
   const allApplications = myStudents.flatMap((s: any) => s.applications || []);
@@ -192,6 +206,40 @@ export default function CounselorDashboard() {
     { label: 'Offer Received', count: allApplications.filter((a: any) => a.status === 'offer_received').length, color: 'bg-green-500' },
     { label: 'Accepted', count: allApplications.filter((a: any) => a.status === 'accepted').length, color: 'bg-emerald-600' },
     { label: 'Rejected', count: allApplications.filter((a: any) => a.status === 'rejected').length, color: 'bg-red-500' },
+  ];
+
+  // Performance score calculation
+  const allDocs = myStudents.flatMap((s: any) => s.documents || []);
+  const verifiedDocs = allDocs.filter((d: any) => d.status === 'verified').length;
+  const acceptedApps = allApplications.filter((a: any) => ['accepted', 'enrolled'].includes(a.status)).length;
+  const submittedApps = allApplications.filter((a: any) => a.status !== 'draft').length;
+
+  const offerRate = submittedApps > 0 ? (stats.offers + acceptedApps) / submittedApps : 0;
+  const docRate = allDocs.length > 0 ? verifiedDocs / allDocs.length : 0;
+  const portfolioRate = Math.min(myStudents.length / 8, 1);
+
+  const performanceScore = Math.min(100, Math.round(offerRate * 45 + docRate * 30 + portfolioRate * 25));
+
+  const perfTier = performanceScore >= 80
+    ? { label: 'Excellent', color: 'text-green-600', bg: 'bg-green-50 border-green-200', bar: 'bg-green-500', ring: 'text-green-600' }
+    : performanceScore >= 60
+    ? { label: 'Good', color: 'text-sky-600', bg: 'bg-sky-50 border-sky-200', bar: 'bg-sky-500', ring: 'text-sky-600' }
+    : performanceScore >= 40
+    ? { label: 'Average', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200', bar: 'bg-yellow-500', ring: 'text-yellow-600' }
+    : { label: 'Getting Started', color: 'text-gray-500', bg: 'bg-gray-50 border-gray-200', bar: 'bg-gray-400', ring: 'text-gray-500' };
+
+  const perfMetrics = [
+    { label: 'Offer & Acceptance Rate', value: Math.round(offerRate * 100), bar: 'bg-green-500' },
+    { label: 'Document Review Rate', value: Math.round(docRate * 100), bar: 'bg-sky-500' },
+    { label: 'Student Portfolio', value: Math.round(portfolioRate * 100), bar: 'bg-purple-500' },
+  ];
+
+  const contributions = [
+    { label: 'Students Managed', value: myStudents.length, icon: Users, color: 'bg-sky-50 text-sky-700' },
+    { label: 'Applications Processed', value: submittedApps, icon: ClipboardList, color: 'bg-purple-50 text-purple-700' },
+    { label: 'Documents Verified', value: verifiedDocs, icon: CheckCircle2, color: 'bg-green-50 text-green-700' },
+    { label: 'Offers Secured', value: stats.offers, icon: Target, color: 'bg-amber-50 text-amber-700' },
+    { label: 'Accepted Students', value: acceptedApps, icon: Award, color: 'bg-emerald-50 text-emerald-700' },
   ];
 
   return (
@@ -237,6 +285,103 @@ export default function CounselorDashboard() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Performance Score + Contributions */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-2 mb-5">
+          <Award className="w-5 h-5 text-sky-600" />
+          <h2 className="text-lg font-bold text-gray-900">My Performance</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Score */}
+          <div className={`rounded-xl border p-5 flex flex-col items-center justify-center text-center ${perfTier.bg}`}>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Performance Score</p>
+            <div className={`text-6xl font-extrabold ${perfTier.color}`}>{performanceScore}</div>
+            <div className={`text-sm font-semibold mt-1 ${perfTier.color}`}>{perfTier.label}</div>
+            <p className="text-xs text-gray-400 mt-2">Based on offer rate, doc reviews & student load</p>
+          </div>
+          {/* Metric bars */}
+          <div className="space-y-4">
+            {perfMetrics.map(m => (
+              <div key={m.label}>
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>{m.label}</span>
+                  <span className="font-semibold">{m.value}%</span>
+                </div>
+                <div className="flex gap-0.5">
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <div key={i} className={`h-2 flex-1 rounded-sm ${i < Math.round(m.value / 10) ? m.bar : 'bg-gray-100'}`} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Contributions */}
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-gray-700 mb-3">My Contributions</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {contributions.map(c => (
+              <div key={c.label} className={`rounded-xl p-3 flex flex-col items-center text-center gap-1 ${c.color}`}>
+                <c.icon className="w-5 h-5" />
+                <div className="text-xl font-bold">{c.value}</div>
+                <div className="text-xs font-medium leading-tight">{c.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Work Status Note */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Edit3 className="w-4 h-4 text-sky-600" />
+            <h2 className="text-base font-bold text-gray-900">My Work Update</h2>
+          </div>
+          {!editingNote ? (
+            <button
+              type="button"
+              onClick={() => { setNoteInput(workNote); setEditingNote(true); }}
+              className="text-xs text-sky-600 font-medium hover:text-sky-700 border border-sky-200 px-3 py-1 rounded-lg hover:bg-sky-50 transition-colors"
+            >
+              {workNote ? 'Edit' : 'Add Update'}
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingNote(false)}
+                className="text-xs text-gray-500 font-medium border border-gray-200 px-3 py-1 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={savingNote}
+                onClick={handleSaveNote}
+                className="text-xs text-white font-medium bg-sky-500 px-3 py-1 rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-60"
+              >
+                {savingNote ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          )}
+        </div>
+        {editingNote ? (
+          <textarea
+            value={noteInput}
+            onChange={e => setNoteInput(e.target.value)}
+            rows={3}
+            placeholder="Describe what you're currently working on, recent achievements, or notes for your team…"
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
+          />
+        ) : (
+          <p className={`text-sm ${workNote ? 'text-gray-700' : 'text-gray-400 italic'}`}>
+            {workNote || 'No work update yet. Click "Add Update" to describe what you\'re working on.'}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -116,6 +116,19 @@ export const api = {
       req<any>(`/counselors/me/documents/${docId}`, { method: 'DELETE', headers: authHeaders() }),
   },
 
+  meetings: {
+    list: () => req<any[]>('/meetings', { headers: authHeaders() }),
+    create: (data: any) => req<any>('/meetings', {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    update: (id: string, data: any) => req<any>(`/meetings/${id}`, {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    delete: (id: string) => req<any>(`/meetings/${id}`, {
+      method: 'DELETE', headers: authHeaders(),
+    }),
+  },
+
   admin: {
     stats: () => req<any>('/admin/stats', { headers: authHeaders() }),
     counselors: () => req<any[]>('/admin/counselors', { headers: authHeaders() }),

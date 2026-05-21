@@ -55,33 +55,6 @@ const MARQUEE_COURSES = [
   'MSc Architecture & Design', 'MSc Supply Chain Management',
 ];
 
-const UNI_LOGOS: Record<string, string> = {
-  'MIT': 'https://logo.clearbit.com/mit.edu',
-  'Harvard University': 'https://logo.clearbit.com/harvard.edu',
-  'University of Oxford': 'https://logo.clearbit.com/ox.ac.uk',
-  'Stanford University': 'https://logo.clearbit.com/stanford.edu',
-  'University of Cambridge': 'https://logo.clearbit.com/cam.ac.uk',
-  'ETH Zurich': 'https://logo.clearbit.com/ethz.ch',
-  'Imperial College London': 'https://logo.clearbit.com/imperial.ac.uk',
-  'University of Toronto': 'https://logo.clearbit.com/utoronto.ca',
-  'University of Melbourne': 'https://logo.clearbit.com/unimelb.edu.au',
-  'TU Munich': 'https://logo.clearbit.com/tum.de',
-  'University of Edinburgh': 'https://logo.clearbit.com/ed.ac.uk',
-  'University of British Columbia': 'https://logo.clearbit.com/ubc.ca',
-  'McGill University': 'https://logo.clearbit.com/mcgill.ca',
-  'University of Sydney': 'https://logo.clearbit.com/sydney.edu.au',
-  'National University of Singapore': 'https://logo.clearbit.com/nus.edu.sg',
-  'Yale University': 'https://logo.clearbit.com/yale.edu',
-  'Princeton University': 'https://logo.clearbit.com/princeton.edu',
-  'Columbia University': 'https://logo.clearbit.com/columbia.edu',
-  'University of Chicago': 'https://logo.clearbit.com/uchicago.edu',
-  'University of Amsterdam': 'https://logo.clearbit.com/uva.nl',
-  'Monash University': 'https://logo.clearbit.com/monash.edu',
-  "King's College London": 'https://logo.clearbit.com/kcl.ac.uk',
-  'University of Auckland': 'https://logo.clearbit.com/auckland.ac.nz',
-  'Delft University of Technology': 'https://logo.clearbit.com/tudelft.nl',
-  'University of Waterloo': 'https://logo.clearbit.com/uwaterloo.ca',
-};
 
 const COURSE_ICON_MAP: Array<[RegExp, React.ElementType]> = [
   [/computer science|software|cloud|cyber|computing/i, Monitor],
@@ -110,14 +83,7 @@ function getCourseIcon(name: string): React.ElementType {
   return BookOpen;
 }
 
-function getUniLogoUrl(name: string, website?: string): string | null {
-  if (UNI_LOGOS[name]) return UNI_LOGOS[name];
-  if (website) {
-    try {
-      const domain = new URL(website).hostname.replace(/^www\./, '');
-      if (domain) return `https://logo.clearbit.com/${domain}`;
-    } catch {}
-  }
+function getUniLogoUrl(_name: string, _website?: string): string | null {
   return null;
 }
 
@@ -675,7 +641,7 @@ export default function Home() {
 
   const handleApply = () => {
     if (isAuthenticated && user?.role === 'student') navigate('/student/applications');
-    else navigate('/login');
+    else open('register');
   };
 
   const handleSubscribe = () => {
@@ -905,24 +871,47 @@ export default function Home() {
               <p className="text-sky-100 leading-relaxed mb-4">
                 Magzest Consultancy Services was founded with a single mission: to help every Indian student access world-class education without the confusion and stress of applying abroad alone.
               </p>
-              <p className="text-sky-100 leading-relaxed">
+              <p className="text-sky-100 leading-relaxed mb-6">
                 With a team of experienced counselors, visa specialists, and university relationship managers, we guide students from shortlisting the right program to landing at their dream university — handling every document, deadline, and detail along the way.
               </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to="/universities"
+                  className="inline-flex items-center gap-2 bg-white text-sky-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-sky-50 active:scale-95 transition-all shadow-md text-sm"
+                >
+                  <BookOpen className="w-4 h-4" /> Browse Programs <ChevronRight className="w-4 h-4" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => isAuthenticated ? navigate(user?.role === 'student' ? '/student' : user?.role === 'counselor' ? '/counselor' : '/admin') : open('register')}
+                  className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white font-semibold px-5 py-2.5 rounded-xl active:scale-95 transition-all text-sm backdrop-blur-sm"
+                >
+                  <UserPlus className="w-4 h-4" /> Get Free Counseling
+                </button>
+              </div>
             </FadeIn>
             <FadeIn direction="right">
               <div className="grid grid-cols-2 gap-5">
                 {[
-                  { value: '10+', label: 'Years of Experience' },
-                  { value: '1,000+', label: 'Students Placed Abroad' },
-                  { value: '20+', label: 'Partner Countries' },
-                  { value: '10+', label: 'Expert Counselors' },
+                  { value: '10+', label: 'Years of Experience', to: '/universities', desc: 'Explore our programs' },
+                  { value: '1,000+', label: 'Students Placed Abroad', to: '/universities', desc: 'See partner universities' },
+                  { value: '20+', label: 'Partner Countries', to: '/search', desc: 'Search by country' },
+                  { value: '10+', label: 'Expert Counselors', to: null, desc: 'Talk to an advisor' },
                 ].map(s => (
-                  <div key={s.label} className="bg-white/10 rounded-2xl p-5 text-center backdrop-blur-sm hover:bg-white/20 transition-colors cursor-default">
-                    <div className="text-3xl font-extrabold">
+                  <button
+                    key={s.label}
+                    type="button"
+                    onClick={() => s.to ? navigate(s.to) : open('register')}
+                    className="bg-white/10 rounded-2xl p-5 text-center backdrop-blur-sm hover:bg-white/25 active:scale-95 transition-all cursor-pointer group text-left"
+                  >
+                    <div className="text-3xl font-extrabold group-hover:scale-110 transition-transform duration-200 text-center">
                       <StatCounter raw={s.value} active={aboutActive} />
                     </div>
-                    <div className="text-sky-100 text-sm mt-1">{s.label}</div>
-                  </div>
+                    <div className="text-sky-100 text-sm mt-1 text-center">{s.label}</div>
+                    <div className="text-white/60 text-xs mt-2 text-center flex items-center justify-center gap-1 group-hover:text-white transition-colors">
+                      {s.desc} <ChevronRight className="w-3 h-3" />
+                    </div>
+                  </button>
                 ))}
               </div>
             </FadeIn>
@@ -1112,12 +1101,16 @@ export default function Home() {
               <p className="text-gray-500 text-lg mb-6 leading-relaxed">
                 See exactly where each application stands — from document submission to final acceptance. Never miss a deadline again.
               </p>
-              <Link
-                to={isAuthenticated && user?.role === 'student' ? '/student/applications' : '/login'}
+              <button
+                type="button"
+                onClick={() => {
+                  if (isAuthenticated && user?.role === 'student') navigate('/student/applications');
+                  else open('register');
+                }}
                 className="inline-flex items-center gap-2 bg-sky-500 text-white font-semibold px-6 py-3 rounded-xl hover:bg-sky-600 active:scale-95 transition-all"
               >
                 <Activity className="w-4 h-4" /> Start Tracking Free <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
             </FadeIn>
             <FadeIn direction="right">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
@@ -1329,9 +1322,9 @@ export default function Home() {
               <h4 className="text-white font-semibold mb-4">Students</h4>
               <ul className="space-y-2 text-sm">
                 <li><Link to="/universities" className="hover:text-white transition-colors">Browse Programs</Link></li>
-                <li><Link to="/login" className="hover:text-white transition-colors">My Applications</Link></li>
+                <li><button type="button" onClick={() => isAuthenticated && user?.role === 'student' ? navigate('/student/applications') : open('login')} className="hover:text-white transition-colors">My Applications</button></li>
                 <li><Link to="/search" className="hover:text-white transition-colors">Scholarships</Link></li>
-                <li><Link to="/login" className="hover:text-white transition-colors">Visa Guides</Link></li>
+                <li><button type="button" onClick={() => open('register')} className="hover:text-white transition-colors">Visa Guides</button></li>
               </ul>
             </div>
             <div>
@@ -1346,7 +1339,7 @@ export default function Home() {
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
                 <li><Link to="/" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link to="/login" className="hover:text-white transition-colors">Our Advisors</Link></li>
+                <li><button type="button" onClick={() => open('register')} className="hover:text-white transition-colors">Our Advisors</button></li>
                 <li><Link to="/" className="hover:text-white transition-colors">Partner with Us</Link></li>
                 <li><Link to="/" className="hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link to="/" className="hover:text-white transition-colors">Terms of Use</Link></li>

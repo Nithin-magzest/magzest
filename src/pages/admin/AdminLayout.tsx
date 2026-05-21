@@ -1,5 +1,5 @@
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCog, Shield, FileText, GraduationCap, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, Shield, FileText, GraduationCap, BookOpen, CalendarDays } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
 
@@ -13,6 +13,7 @@ const navItems: { to: string; label: string; icon: NavIcon; end?: boolean }[] = 
   { to: '/admin/counselors', label: 'Counselors', icon: UserCog },
   { to: '/admin/students', label: 'Students', icon: Users },
   { to: '/admin/applications', label: 'Applications', icon: FileText },
+  { to: '/admin/meetings', label: 'Meetings', icon: CalendarDays },
 ];
 
 function NavIcon({ icon, size }: { icon: NavIcon; size: 'sm' | 'md' }) {
