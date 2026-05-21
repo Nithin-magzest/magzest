@@ -1,79 +1,9 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, ExternalLink, TrendingUp, X } from 'lucide-react';
+import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, ExternalLink, TrendingUp } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
-
-function ApplyModal({ course, uni, onClose, onSuccess }: { course: any; uni: any; onClose: () => void; onSuccess: () => void }) {
-  const { user, refreshUser } = useAuth();
-  const navigate = useNavigate();
-  const [selectedIntake, setSelectedIntake] = useState(course.intake?.[0] || '');
-  const [applying, setApplying] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleApply = async () => {
-    if (!selectedIntake) { setError('Please select an intake.'); return; }
-    setApplying(true);
-    setError('');
-    try {
-      await api.applications.create({
-        universityId: uni.id,
-        universityName: uni.name,
-        courseId: course.id,
-        courseName: course.name,
-        intake: selectedIntake,
-        studentId: user?.id,
-      });
-      await refreshUser();
-      onSuccess();
-      navigate('/student/applications');
-    } catch (e: any) {
-      setError(e.message || 'Failed to submit application.');
-    }
-    setApplying(false);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">Apply to Course</h2>
-          <button type="button" aria-label="Close" onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"><X className="w-5 h-5 text-gray-500" /></button>
-        </div>
-        <div className="p-6 space-y-4">
-          <div className="bg-blue-50 rounded-xl p-4">
-            <p className="font-semibold text-gray-900">{course.name}</p>
-            <p className="text-sm text-gray-500">{uni.name}</p>
-            <p className="text-xs text-blue-600 mt-1">{course.level} · {course.duration}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Intake</label>
-            <select
-              aria-label="Select intake"
-              value={selectedIntake}
-              onChange={e => setSelectedIntake(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              {(course.intake || []).map((i: string) => <option key={i} value={i}>{i}</option>)}
-            </select>
-          </div>
-          <div className="text-sm text-gray-500 bg-gray-50 rounded-xl p-3">
-            <p className="font-medium text-gray-700 mb-1">Tuition Fee</p>
-            <p>{course.currency} {course.tuitionFee?.toLocaleString()}/year</p>
-          </div>
-          {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-        </div>
-        <div className="flex gap-3 px-6 pb-6">
-          <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-          <button type="button" onClick={handleApply} disabled={applying}
-            className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-60">
-            {applying ? 'Submitting…' : 'Submit Application'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import ApplicationModal from '../components/ApplicationModal';
 
 export default function UniversityDetail() {
   const { id } = useParams();
@@ -119,7 +49,7 @@ export default function UniversityDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       {applyModal && (
-        <ApplyModal
+        <ApplicationModal
           course={applyModal}
           uni={uni}
           onClose={() => setApplyModal(null)}
@@ -186,7 +116,7 @@ export default function UniversityDetail() {
               <h2 className="text-xl font-bold text-gray-900 mb-3">About {uni.name}</h2>
               <p className="text-gray-600 leading-relaxed">{uni.description}</p>
               <div className="flex flex-wrap gap-2 mt-4">
-                {uni.tags.map((tag: string) => <span key={tag} className="bg-blue-50 text-blue-700 text-sm px-3 py-1 rounded-full">{tag}</span>)}
+                {uni.tags.map((tag: string) => <span key={tag} className="bg-sky-50 text-blue-700 text-sm px-3 py-1 rounded-full">{tag}</span>)}
               </div>
             </div>
 
@@ -227,7 +157,7 @@ export default function UniversityDetail() {
                         </span>
                       ) : (
                         <button type="button" onClick={() => setApplyModal(course)}
-                          className="mt-4 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                          className="mt-4 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors font-medium">
                           Apply to this Course
                         </button>
                       )
@@ -255,13 +185,13 @@ export default function UniversityDetail() {
               {isAuthenticated && user?.role === 'student' ? (
                 <button type="button"
                   onClick={() => uni?.courses?.[0] && setApplyModal(uni.courses[0])}
-                  className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-blue-50 transition-colors">
+                  className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">
                   Start Application
                 </button>
               ) : isAuthenticated ? (
-                <Link to="/student/applications" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-blue-50 transition-colors">View Applications</Link>
+                <Link to="/student/applications" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">View Applications</Link>
               ) : (
-                <Link to="/login" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-blue-50 transition-colors">Sign In to Apply</Link>
+                <Link to="/login" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">Sign In to Apply</Link>
               )}
               <a href={uni.website} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 mt-3 text-white/80 text-sm hover:text-white">
                 <ExternalLink className="w-4 h-4" /> Visit Official Website

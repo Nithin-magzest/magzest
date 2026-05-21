@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -36,15 +37,28 @@ router.put('/me', authMiddleware, async (req, res) => {
   }
 });
 
-// Add document (student only)
-router.post('/me/documents', authMiddleware, async (req, res) => {
+// Add document (student only) — accepts multipart/form-data with optional file
+router.post('/me/documents', authMiddleware, upload.single('file'), async (req, res) => {
   if (req.user.role !== 'student') return res.status(403).json({ message: 'Forbidden' });
-  const { name, type } = req.body;
+  const { name, type, url: preExistingUrl } = req.body;
+  const url = req.file ? `/uploads/${req.file.filename}` : (preExistingUrl || undefined);
+  const docName = (name || req.file?.originalname || 'Document').trim();
   try {
-    const doc = { name, type, uploadedDate: new Date().toISOString().split('T')[0], status: 'pending' };
+    const doc = { name: docName, type: type || 'Other', url, uploadedDate: new Date().toISOString().split('T')[0], status: 'pending' };
     const user = await User.findByIdAndUpdate(req.user.id, { $push: { documents: doc } }, { new: true }).select('-password');
     const newDoc = user.documents[user.documents.length - 1];
     res.json(newDoc.toJSON());
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete own document (student)
+router.delete('/me/documents/:docId', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ message: 'Forbidden' });
+  try {
+    await User.findByIdAndUpdate(req.user.id, { $pull: { documents: { _id: req.params.docId } } });
+    res.json({ message: 'Document deleted' });
   } catch {
     res.status(500).json({ message: 'Server error' });
   }

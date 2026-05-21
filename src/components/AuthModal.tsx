@@ -1,0 +1,232 @@
+﻿import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { X, GraduationCap, Eye, EyeOff, AlertCircle, UserPlus, LogIn } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useAuthModal } from '../context/AuthModalContext';
+import { api } from '../api';
+
+export default function AuthModal() {
+  const { isOpen, tab, close, setTab } = useAuthModal();
+  const { login, refreshUser } = useAuth();
+  const navigate = useNavigate();
+
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPw, setShowLoginPw] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirm, setRegConfirm] = useState('');
+  const [showRegPw, setShowRegPw] = useState(false);
+  const [regError, setRegError] = useState('');
+  const [regLoading, setRegLoading] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) close();
+  };
+
+  const switchTab = (t: 'login' | 'register') => {
+    setTab(t);
+    setLoginError('');
+    setRegError('');
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoginLoading(true);
+    const result = await login(loginEmail, loginPassword);
+    setLoginLoading(false);
+    if (result.success) {
+      close();
+      if (result.role === 'admin') navigate('/admin');
+      else if (result.role === 'counselor') navigate('/counselor');
+      else navigate('/student');
+    } else {
+      setLoginError('Invalid email or password. Please try again.');
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError('');
+    if (regPassword !== regConfirm) { setRegError('Passwords do not match.'); return; }
+    setRegLoading(true);
+    try {
+      const { token } = await api.auth.register({ name: regName, email: regEmail, password: regPassword });
+      localStorage.setItem('token', token);
+      await refreshUser();
+      close();
+      navigate('/student');
+    } catch (err: any) {
+      setRegError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setRegLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={handleBackdrop}
+    >
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-600 p-1.5 rounded-lg">
+              <GraduationCap className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-lg font-bold text-gray-900">Magzest</span>
+          </div>
+          <button
+            type="button"
+            onClick={close}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tab switcher */}
+        <div className="px-6 pb-4">
+          <div className="flex bg-gray-100 rounded-xl p-1">
+            <button
+              type="button"
+              onClick={() => switchTab('login')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                tab === 'login' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <LogIn className="w-4 h-4" /> Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab('register')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                tab === 'register' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <UserPlus className="w-4 h-4" /> Create Account
+            </button>
+          </div>
+        </div>
+
+        <div className="px-6 pb-6">
+          {/* LOGIN FORM */}
+          {tab === 'login' && (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <p className="text-sm text-gray-500 mb-4">Welcome back! Sign in to your account.</p>
+              {loginError && (
+                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
+                  <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-red-700 text-sm">{loginError}</p>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                <input
+                  type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="your@email.com" required autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                <div className="relative">
+                  <input
+                    type={showLoginPw ? 'text' : 'password'} value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm pr-12"
+                    placeholder="••••••••" required
+                  />
+                  <button type="button" onClick={() => setShowLoginPw(!showLoginPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showLoginPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <button
+                type="submit" disabled={loginLoading}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-sky-600 transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loginLoading ? 'Signing in...' : 'Sign In'}
+              </button>
+              <p className="text-center text-sm text-gray-500">
+                New here?{' '}
+                <button type="button" onClick={() => switchTab('register')} className="text-blue-600 font-medium hover:underline">
+                  Create a free account
+                </button>
+              </p>
+            </form>
+          )}
+
+          {/* REGISTER FORM */}
+          {tab === 'register' && (
+            <form onSubmit={handleRegister} className="space-y-4">
+              <p className="text-sm text-gray-500 mb-4">Join 50,000+ students. Free to sign up.</p>
+              {regError && (
+                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
+                  <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-red-700 text-sm">{regError}</p>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                <input
+                  type="text" value={regName} onChange={e => setRegName(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Your full name" required autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                <input
+                  type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="your@email.com" required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                <div className="relative">
+                  <input
+                    type={showRegPw ? 'text' : 'password'} value={regPassword} onChange={e => setRegPassword(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm pr-12"
+                    placeholder="Min. 6 characters" required minLength={6}
+                  />
+                  <button type="button" onClick={() => setShowRegPw(!showRegPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showRegPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password</label>
+                <input
+                  type="password" value={regConfirm} onChange={e => setRegConfirm(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Repeat your password" required
+                />
+              </div>
+              <button
+                type="submit" disabled={regLoading}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-sky-600 transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {regLoading ? 'Creating account...' : 'Create Free Account'}
+              </button>
+              <p className="text-center text-sm text-gray-500">
+                Already have an account?{' '}
+                <button type="button" onClick={() => switchTab('login')} className="text-blue-600 font-medium hover:underline">
+                  Sign in
+                </button>
+              </p>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

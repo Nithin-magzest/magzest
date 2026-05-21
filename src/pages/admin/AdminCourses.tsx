@@ -1,0 +1,466 @@
+import { useState, useEffect } from 'react';
+import {
+  Plus, Trash2, X, Search, BookOpen, Edit2, DollarSign, Check, Award,
+  Calendar, ChevronDown, ChevronUp, GraduationCap,
+} from 'lucide-react';
+import { api } from '../../api';
+
+const LEVELS = ["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'];
+const CURRENCIES = ['USD', 'GBP', 'EUR', 'AUD', 'CAD', 'SGD', 'NZD'];
+const INTAKES = ['January', 'February', 'March', 'April', 'May', 'June',
+                 'July', 'August', 'September', 'October', 'November', 'December'];
+const PAYMENT_PLANS = ['Annual', 'Semester', 'Monthly'];
+
+const LEVEL_COLORS: Record<string, string> = {
+  "Bachelor's": 'bg-blue-100 text-blue-700',
+  "Master's": 'bg-purple-100 text-purple-700',
+  'PhD': 'bg-red-100 text-red-700',
+  'Diploma': 'bg-green-100 text-green-700',
+  'Certificate': 'bg-yellow-100 text-yellow-700',
+};
+
+function normalId(obj: any) { return (obj?._id || obj?.id)?.toString() ?? ''; }
+
+function Spinner({ white = false }: { white?: boolean }) {
+  return <span className={`w-4 h-4 border-2 ${white ? 'border-white/40 border-t-white' : 'border-gray-300 border-t-gray-600'} rounded-full animate-spin inline-block`} />;
+}
+
+const DEFAULT_COURSE = {
+  name: '', level: '', duration: '', tuitionFee: '', currency: 'USD',
+  department: '', description: '', intake: [] as string[], requirements: [] as string[],
+  applicationFee: '', registrationFee: '', scholarshipAvailable: false,
+  scholarshipAmount: '', paymentPlan: 'Annual',
+};
+
+function CourseModal({ universities, uniId: initialUniId, course, onClose, onSaved }: {
+  universities: any[]; uniId?: string; course?: any; onClose: () => void; onSaved: () => void;
+}) {
+  const editing = !!course;
+  const [uniId, setUniId] = useState(initialUniId || '');
+  const [form, setForm] = useState(editing ? {
+    name: course.name || '', level: course.level || '', duration: course.duration || '',
+    tuitionFee: String(course.tuitionFee || ''), currency: course.currency || 'USD',
+    department: course.department || '', description: course.description || '',
+    intake: course.intake || [], requirements: course.requirements || [],
+    applicationFee: String(course.applicationFee || ''), registrationFee: String(course.registrationFee || ''),
+    scholarshipAvailable: course.scholarshipAvailable || false,
+    scholarshipAmount: course.scholarshipAmount || '', paymentPlan: course.paymentPlan || 'Annual',
+  } : { ...DEFAULT_COURSE });
+  const [reqInput, setReqInput] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const toggleIntake = (m: string) => set('intake', form.intake.includes(m) ? form.intake.filter((x: string) => x !== m) : [...form.intake, m]);
+  const addReq = () => { if (reqInput.trim()) { set('requirements', [...form.requirements, reqInput.trim()]); setReqInput(''); } };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uniId) { setError('Please select a university.'); return; }
+    if (!form.name.trim()) { setError('Course name is required.'); return; }
+    setSaving(true); setError('');
+    try {
+      const payload = {
+        ...form,
+        tuitionFee: parseFloat(form.tuitionFee) || 0,
+        applicationFee: parseFloat(form.applicationFee) || 0,
+        registrationFee: parseFloat(form.registrationFee) || 0,
+      };
+      if (editing) {
+        await api.admin.updateCourse(uniId, normalId(course), payload);
+      } else {
+        await api.admin.addCourse(uniId, payload);
+      }
+      onSaved();
+    } catch (err: any) { setError(err.message || 'Failed to save course.'); }
+    setSaving(false);
+  };
+
+  const inp = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500';
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit Course' : 'Add Course'}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {!editing && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">University <span className="text-red-500">*</span></label>
+              <select value={uniId} onChange={e => setUniId(e.target.value)} className={`${inp} bg-white`}>
+                <option value="">Select university…</option>
+                {universities.map(u => <option key={normalId(u)} value={normalId(u)}>{u.name}</option>)}
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Course Name <span className="text-red-500">*</span></label>
+            <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. MSc Computer Science" className={inp} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Level</label>
+              <select value={form.level} onChange={e => set('level', e.target.value)} className={`${inp} bg-white`}>
+                <option value="">Select…</option>
+                {LEVELS.map(l => <option key={l}>{l}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration</label>
+              <input value={form.duration} onChange={e => set('duration', e.target.value)} placeholder="e.g. 2 years" className={inp} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Tuition Fee / year</label>
+              <input type="number" min="0" value={form.tuitionFee} onChange={e => set('tuitionFee', e.target.value)} placeholder="e.g. 25000" className={inp} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
+              <select value={form.currency} onChange={e => set('currency', e.target.value)} className={`${inp} bg-white`}>
+                {CURRENCIES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Application Fee</label>
+              <input type="number" min="0" value={form.applicationFee} onChange={e => set('applicationFee', e.target.value)} placeholder="e.g. 75" className={inp} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Registration Fee</label>
+              <input type="number" min="0" value={form.registrationFee} onChange={e => set('registrationFee', e.target.value)} placeholder="e.g. 200" className={inp} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Plan</label>
+            <div className="flex gap-2">
+              {PAYMENT_PLANS.map(p => (
+                <button key={p} type="button" onClick={() => set('paymentPlan', p)}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${form.paymentPlan === p ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-200 hover:border-purple-400'}`}>
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Department</label>
+            <input value={form.department} onChange={e => set('department', e.target.value)} placeholder="e.g. School of Engineering" className={inp} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+            <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={2}
+              placeholder="Brief course description…"
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Intake Months</label>
+            <div className="flex flex-wrap gap-1.5">
+              {INTAKES.map(m => (
+                <button key={m} type="button" onClick={() => toggleIntake(m)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-all ${form.intake.includes(m) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-200 hover:border-purple-400'}`}>
+                  {m.slice(0, 3)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Entry Requirements</label>
+            <div className="flex gap-2 mb-2">
+              <input value={reqInput} onChange={e => setReqInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addReq(); } }}
+                placeholder="e.g. IELTS 6.5+" className="flex-1 px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+              <button type="button" onClick={addReq} className="px-3 py-2 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100">Add</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {form.requirements.map((r: string, i: number) => (
+                <span key={i} className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-full border border-purple-100">
+                  {r}
+                  <button type="button" onClick={() => set('requirements', form.requirements.filter((_: string, j: number) => j !== i))} className="text-purple-400 hover:text-purple-700 ml-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" checked={form.scholarshipAvailable} onChange={e => set('scholarshipAvailable', e.target.checked)} className="w-4 h-4 accent-purple-600 rounded" />
+              <span className="text-sm font-medium text-gray-700">Scholarship Available</span>
+            </label>
+            {form.scholarshipAvailable && (
+              <input value={form.scholarshipAmount} onChange={e => set('scholarshipAmount', e.target.value)} placeholder="e.g. Up to USD 5,000/year"
+                className="mt-2 w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            )}
+          </div>
+
+          {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">{error}</div>}
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 disabled:opacity-60 flex items-center justify-center gap-2">
+              {saving ? <><Spinner white />{editing ? 'Saving…' : 'Adding…'}</> : <><Check className="w-4 h-4" />{editing ? 'Update Course' : 'Add Course'}</>}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function CourseCard({ course, uniName, onEdit, onDelete }: {
+  course: any; uniName: string; onEdit: () => void; onDelete: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+      <div className="flex items-start gap-4 px-5 py-4">
+        <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+          <BookOpen className="w-5 h-5 text-purple-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-bold text-gray-900">{course.name}</p>
+            {course.level && (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LEVEL_COLORS[course.level] || 'bg-gray-100 text-gray-600'}`}>
+                {course.level}
+              </span>
+            )}
+            {course.scholarshipAvailable && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-1">
+                <Award className="w-3 h-3" /> Scholarship
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+            <span className="text-xs text-gray-500 flex items-center gap-1">
+              <GraduationCap className="w-3 h-3" /> {uniName}
+            </span>
+            {course.department && <span className="text-xs text-gray-400">{course.department}</span>}
+            {course.duration && <span className="text-xs text-gray-400">{course.duration}</span>}
+          </div>
+          <div className="flex flex-wrap gap-x-4 mt-1">
+            {course.tuitionFee > 0 && (
+              <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                <DollarSign className="w-3 h-3" /> {course.currency} {Number(course.tuitionFee).toLocaleString()} / year
+              </span>
+            )}
+            {course.intake?.length > 0 && (
+              <span className="text-xs text-sky-600 flex items-center gap-1">
+                <Calendar className="w-3 h-3" /> {course.intake.slice(0, 3).map((m: string) => m.slice(0, 3)).join(', ')}{course.intake.length > 3 ? '…' : ''}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button type="button" onClick={onEdit}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 hover:bg-purple-100 active:scale-95 transition-all">
+            <Edit2 className="w-3.5 h-3.5" /> Edit
+          </button>
+          <button type="button" onClick={onDelete}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 active:scale-95 transition-all">
+            <Trash2 className="w-3.5 h-3.5" /> Delete
+          </button>
+          {(course.description || course.requirements?.length > 0) && (
+            <button type="button" onClick={() => setExpanded(v => !v)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 active:scale-95 transition-all">
+              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {expanded ? 'Hide' : 'More'}
+            </button>
+          )}
+        </div>
+      </div>
+      {expanded && (
+        <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 space-y-3">
+          {course.description && <p className="text-sm text-gray-600">{course.description}</p>}
+          {course.requirements?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Entry Requirements</p>
+              <div className="flex flex-wrap gap-2">
+                {course.requirements.map((r: string, i: number) => (
+                  <span key={i} className="text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full border border-purple-100">{r}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {(course.applicationFee > 0 || course.registrationFee > 0 || course.scholarshipAmount) && (
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              {course.applicationFee > 0 && (
+                <div><span className="text-gray-400">App Fee:</span> <span className="font-medium text-gray-700">{course.currency} {Number(course.applicationFee).toLocaleString()}</span></div>
+              )}
+              {course.registrationFee > 0 && (
+                <div><span className="text-gray-400">Reg Fee:</span> <span className="font-medium text-gray-700">{course.currency} {Number(course.registrationFee).toLocaleString()}</span></div>
+              )}
+              {course.scholarshipAmount && (
+                <div><span className="text-gray-400">Scholarship:</span> <span className="font-medium text-amber-700">{course.scholarshipAmount}</span></div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function AdminCourses() {
+  const [universities, setUniversities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [levelFilter, setLevelFilter] = useState('');
+  const [uniFilter, setUniFilter] = useState('');
+  const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState<{ course: any; uniId: string } | null>(null);
+
+  const fetchUniversities = () => {
+    setLoading(true);
+    api.universities.list()
+      .then(setUniversities)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchUniversities(); }, []);
+
+  const allCourses = universities.flatMap(uni =>
+    (uni.courses || []).map((c: any) => ({
+      ...c,
+      _uniId: normalId(uni),
+      _uniName: uni.name,
+    }))
+  );
+
+  const filtered = allCourses.filter(c => {
+    const q = query.toLowerCase();
+    const matchQ = !query || c.name?.toLowerCase().includes(q) || c._uniName?.toLowerCase().includes(q) || c.department?.toLowerCase().includes(q);
+    const matchLevel = !levelFilter || c.level === levelFilter;
+    const matchUni = !uniFilter || c._uniId === uniFilter;
+    return matchQ && matchLevel && matchUni;
+  });
+
+  const handleDelete = async (uniId: string, courseId: string) => {
+    if (!window.confirm('Delete this course? This cannot be undone.')) return;
+    try {
+      await api.admin.deleteCourse(uniId, courseId);
+      fetchUniversities();
+    } catch { alert('Failed to delete course.'); }
+  };
+
+  const totalCourses = allCourses.length;
+  const withScholarship = allCourses.filter(c => c.scholarshipAvailable).length;
+  const uniNames = universities.map(u => ({ id: normalId(u), name: u.name }));
+
+  return (
+    <>
+      {showAdd && (
+        <CourseModal
+          universities={universities}
+          onClose={() => setShowAdd(false)}
+          onSaved={() => { setShowAdd(false); fetchUniversities(); }}
+        />
+      )}
+      {editing && (
+        <CourseModal
+          universities={universities}
+          uniId={editing.uniId}
+          course={editing.course}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); fetchUniversities(); }}
+        />
+      )}
+
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-purple-200 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
+                <h1 className="text-2xl font-bold leading-tight">Courses Management</h1>
+              </div>
+            </div>
+            <button type="button" onClick={() => setShowAdd(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-purple-700 rounded-xl text-sm font-bold hover:bg-purple-50 transition-colors shadow-sm">
+              <Plus className="w-4 h-4" /> Add Course
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: 'Total Courses', value: totalCourses },
+              { label: 'Universities', value: universities.length },
+              { label: 'With Scholarship', value: withScholarship },
+            ].map(s => (
+              <div key={s.label} className="bg-white/10 border border-white/20 rounded-xl p-4 backdrop-blur-sm">
+                <div className="text-3xl font-bold">{s.value}</div>
+                <div className="text-xs text-white/60 mt-0.5">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input value={query} onChange={e => setQuery(e.target.value)}
+              placeholder="Search courses, universities, departments…"
+              className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm" />
+          </div>
+          <select value={levelFilter} onChange={e => setLevelFilter(e.target.value)}
+            className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm text-gray-700">
+            <option value="">All Levels</option>
+            {LEVELS.map(l => <option key={l}>{l}</option>)}
+          </select>
+          <select value={uniFilter} onChange={e => setUniFilter(e.target.value)}
+            className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm text-gray-700 max-w-[220px]">
+            <option value="">All Universities</option>
+            {uniNames.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+        </div>
+
+        {/* Course list */}
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 p-14 text-center text-gray-400 shadow-sm">
+            <BookOpen className="w-10 h-10 mx-auto mb-2 opacity-30" />
+            <p className="text-sm font-medium">
+              {query || levelFilter || uniFilter ? 'No courses match your filters.' : 'No courses yet. Add courses via universities or use the button above.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map(c => (
+              <CourseCard
+                key={`${c._uniId}-${normalId(c)}`}
+                course={c}
+                uniName={c._uniName}
+                onEdit={() => setEditing({ course: c, uniId: c._uniId })}
+                onDelete={() => handleDelete(c._uniId, normalId(c))}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

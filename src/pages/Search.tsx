@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, MapPin, Star, BookOpen, Users, DollarSign, X, SlidersHorizontal, Globe } from 'lucide-react';
 import { api } from '../api';
@@ -125,7 +125,7 @@ export default function SearchPage() {
             <Globe className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No universities found</h3>
             <p className="text-gray-400 mb-6">Try adjusting your search or filters</p>
-            <button type="button" onClick={clearFilters} className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors">Clear Filters</button>
+            <button type="button" onClick={clearFilters} className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-sky-600 transition-colors">Clear Filters</button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -151,7 +151,7 @@ export default function SearchPage() {
                   <p className="text-gray-500 text-sm mb-4 line-clamp-2 flex-1">{uni.description}</p>
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-1.5">
-                      {uni.tags.slice(0, 3).map((tag: string) => <span key={tag} className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{tag}</span>)}
+                      {uni.tags.slice(0, 3).map((tag: string) => <span key={tag} className="bg-sky-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{tag}</span>)}
                     </div>
                     <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 text-center">
                       <div><BookOpen className="w-3.5 h-3.5 mx-auto text-gray-400 mb-0.5" /><p className="text-xs text-gray-400">Courses</p><p className="text-sm font-bold text-gray-800">{uni.courses.length}</p></div>

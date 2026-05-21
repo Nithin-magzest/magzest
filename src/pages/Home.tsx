@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, Star, BookOpen, ArrowRight, ChevronRight, Globe } from 'lucide-react';
+import {
+  Search, MapPin, Star, BookOpen, ArrowRight, ChevronRight, ChevronDown, Globe,
+  UserPlus, LogIn, Zap, Rocket, Mail, LayoutGrid, Monitor, Briefcase,
+  Cog, Brain, Stethoscope, Activity, X, CheckCircle, DollarSign, Clock, Calendar, GraduationCap,
+} from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useAuthModal } from '../context/AuthModalContext';
 
 const FLAGS: Record<string, string> = {
   Canada: '🇨🇦', Australia: '🇦🇺', 'United Kingdom': '🇬🇧',
@@ -10,7 +15,181 @@ const FLAGS: Record<string, string> = {
   'United States': '🇺🇸', 'New Zealand': '🇳🇿',
 };
 
+const FLAG_CODES: Record<string, string> = {
+  'United States': 'us', 'United Kingdom': 'gb', 'Canada': 'ca',
+  'Australia': 'au', 'Germany': 'de', 'Singapore': 'sg',
+  'Netherlands': 'nl', 'New Zealand': 'nz', 'Ireland': 'ie',
+  'France': 'fr', 'Sweden': 'se', 'Switzerland': 'ch',
+  'Japan': 'jp', 'South Korea': 'kr', 'Austria': 'at', 'Denmark': 'dk',
+};
+
+const MARQUEE_UNIS = [
+  'MIT', 'Harvard University', 'University of Oxford', 'Stanford University',
+  'University of Cambridge', 'ETH Zurich', 'Imperial College London',
+  'University of Toronto', 'University of Melbourne', 'TU Munich',
+  'University of Edinburgh', 'University of British Columbia', 'McGill University',
+  'University of Sydney', 'National University of Singapore', 'Yale University',
+  'Princeton University', 'Columbia University', 'University of Chicago',
+  'University of Amsterdam', 'Monash University', 'King\'s College London',
+  'University of Auckland', 'Delft University of Technology', 'University of Waterloo',
+];
+
+const MARQUEE_COUNTRIES = [
+  { flag: '🇺🇸', name: 'United States' }, { flag: '🇬🇧', name: 'United Kingdom' },
+  { flag: '🇨🇦', name: 'Canada' }, { flag: '🇦🇺', name: 'Australia' },
+  { flag: '🇩🇪', name: 'Germany' }, { flag: '🇸🇬', name: 'Singapore' },
+  { flag: '🇳🇱', name: 'Netherlands' }, { flag: '🇳🇿', name: 'New Zealand' },
+  { flag: '🇮🇪', name: 'Ireland' }, { flag: '🇫🇷', name: 'France' },
+  { flag: '🇸🇪', name: 'Sweden' }, { flag: '🇨🇭', name: 'Switzerland' },
+  { flag: '🇯🇵', name: 'Japan' }, { flag: '🇰🇷', name: 'South Korea' },
+  { flag: '🇦🇹', name: 'Austria' }, { flag: '🇩🇰', name: 'Denmark' },
+];
+
+const MARQUEE_COURSES = [
+  'MSc Computer Science', 'MBA Business Administration', 'MSc Data Science & AI',
+  'BEng Mechanical Engineering', 'MSc Electrical Engineering', 'MSc Cybersecurity',
+  'MSc Finance & Investment', 'PhD Machine Learning', 'MSc Public Health',
+  'LLM International Law', 'MSc Biotechnology', 'MA International Relations',
+  'MSc Software Engineering', 'MSc Cloud Computing', 'BBA Marketing Management',
+  'MSc Environmental Science', 'MSc Robotics', 'PhD Artificial Intelligence',
+  'MSc Architecture & Design', 'MSc Supply Chain Management',
+];
+
+const UNI_LOGOS: Record<string, string> = {
+  'MIT': 'https://logo.clearbit.com/mit.edu',
+  'Harvard University': 'https://logo.clearbit.com/harvard.edu',
+  'University of Oxford': 'https://logo.clearbit.com/ox.ac.uk',
+  'Stanford University': 'https://logo.clearbit.com/stanford.edu',
+  'University of Cambridge': 'https://logo.clearbit.com/cam.ac.uk',
+  'ETH Zurich': 'https://logo.clearbit.com/ethz.ch',
+  'Imperial College London': 'https://logo.clearbit.com/imperial.ac.uk',
+  'University of Toronto': 'https://logo.clearbit.com/utoronto.ca',
+  'University of Melbourne': 'https://logo.clearbit.com/unimelb.edu.au',
+  'TU Munich': 'https://logo.clearbit.com/tum.de',
+  'University of Edinburgh': 'https://logo.clearbit.com/ed.ac.uk',
+  'University of British Columbia': 'https://logo.clearbit.com/ubc.ca',
+  'McGill University': 'https://logo.clearbit.com/mcgill.ca',
+  'University of Sydney': 'https://logo.clearbit.com/sydney.edu.au',
+  'National University of Singapore': 'https://logo.clearbit.com/nus.edu.sg',
+  'Yale University': 'https://logo.clearbit.com/yale.edu',
+  'Princeton University': 'https://logo.clearbit.com/princeton.edu',
+  'Columbia University': 'https://logo.clearbit.com/columbia.edu',
+  'University of Chicago': 'https://logo.clearbit.com/uchicago.edu',
+  'University of Amsterdam': 'https://logo.clearbit.com/uva.nl',
+  'Monash University': 'https://logo.clearbit.com/monash.edu',
+  "King's College London": 'https://logo.clearbit.com/kcl.ac.uk',
+  'University of Auckland': 'https://logo.clearbit.com/auckland.ac.nz',
+  'Delft University of Technology': 'https://logo.clearbit.com/tudelft.nl',
+  'University of Waterloo': 'https://logo.clearbit.com/uwaterloo.ca',
+};
+
+const COURSE_ICON_MAP: Array<[RegExp, React.ElementType]> = [
+  [/computer science|software|cloud|cyber|computing/i, Monitor],
+  [/mba|business|marketing|management|supply chain/i, Briefcase],
+  [/engineering|robotics|mechanical|electrical/i, Cog],
+  [/data science|machine learning|artificial intelligence|\bai\b/i, Brain],
+  [/medicine|medical|health|biotechnology/i, Stethoscope],
+  [/finance|investment/i, Activity],
+  [/architecture|design/i, LayoutGrid],
+  [/environmental|science|international/i, Globe],
+];
+
+const COURSE_PILL_STYLES: Record<string, { pill: string; icon: string }> = {
+  'Computer Science':  { pill: 'bg-sky-50 border border-blue-100 text-blue-700 hover:bg-blue-100 hover:border-blue-300',     icon: 'bg-sky-500' },
+  'Data Science & AI': { pill: 'bg-violet-50 border border-violet-100 text-violet-700 hover:bg-violet-100 hover:border-violet-300', icon: 'bg-violet-600' },
+  'Business & MBA':    { pill: 'bg-amber-50 border border-amber-100 text-amber-700 hover:bg-amber-100 hover:border-amber-300',   icon: 'bg-amber-600' },
+  'Engineering':       { pill: 'bg-orange-50 border border-orange-100 text-orange-700 hover:bg-orange-100 hover:border-orange-300', icon: 'bg-orange-600' },
+  'Medicine':          { pill: 'bg-red-50 border border-red-100 text-red-700 hover:bg-red-100 hover:border-red-300',             icon: 'bg-red-600' },
+  'Other':             { pill: 'bg-purple-50 border border-purple-100 text-purple-700 hover:bg-purple-100 hover:border-purple-300', icon: 'bg-purple-600' },
+};
+
+function getCourseIcon(name: string): React.ElementType {
+  for (const [re, Icon] of COURSE_ICON_MAP) {
+    if (re.test(name)) return Icon;
+  }
+  return BookOpen;
+}
+
+function getUniLogoUrl(name: string, website?: string): string | null {
+  if (UNI_LOGOS[name]) return UNI_LOGOS[name];
+  if (website) {
+    try {
+      const domain = new URL(website).hostname.replace(/^www\./, '');
+      if (domain) return `https://logo.clearbit.com/${domain}`;
+    } catch {}
+  }
+  return null;
+}
+
+function UniLogo({ name, website, size = 'sm', className = '' }: { name: string; website?: string; size?: 'sm' | 'md' | 'lg'; className?: string }) {
+  const [imgErr, setImgErr] = React.useState(false);
+  const url = getUniLogoUrl(name, website);
+  if (size === 'sm') {
+    if (!url || imgErr) {
+      return (
+        <span className={`w-7 h-7 rounded-full bg-sky-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 ${className}`}>
+          {name.charAt(0)}
+        </span>
+      );
+    }
+    return (
+      <span className={`w-7 h-7 rounded-full bg-white border border-blue-200 shadow-sm flex items-center justify-center flex-shrink-0 overflow-hidden p-0.5 ${className}`}>
+        <img src={url} alt="" onError={() => setImgErr(true)} className="w-full h-full object-contain" />
+      </span>
+    );
+  }
+  const dim = size === 'md' ? 'w-12 h-12' : 'w-14 h-14';
+  const pad = size === 'md' ? 'p-1.5' : 'p-2';
+  const textSize = size === 'md' ? 'text-lg' : 'text-xl';
+  if (!url || imgErr) {
+    return (
+      <div className={`${dim} bg-sky-500 rounded-xl flex items-center justify-center text-white font-bold ${textSize} flex-shrink-0 ${className}`}>
+        {name.charAt(0)}
+      </div>
+    );
+  }
+  return (
+    <div className={`${dim} bg-white rounded-xl border border-gray-200 shadow-sm flex-shrink-0 overflow-hidden ${pad} flex items-center justify-center ${className}`}>
+      <img src={url} alt="" onError={() => setImgErr(true)} className="w-full h-full object-contain" />
+    </div>
+  );
+}
+
+function CountryFlagImg({
+  name, flag, sizeCls = 'w-6 h-6', rounded = 'rounded-full', className = '', quality = 'w40',
+}: {
+  name: string; flag: string; sizeCls?: string; rounded?: string; className?: string;
+  quality?: 'w20' | 'w40' | 'w80' | 'w160';
+}) {
+  const [imgErr, setImgErr] = React.useState(false);
+  const code = FLAG_CODES[name];
+  if (!code || imgErr) {
+    return (
+      <span className={`${sizeCls} ${rounded} ${className} bg-white border border-gray-200 shadow-sm flex items-center justify-center text-base leading-none flex-shrink-0 overflow-hidden`}>
+        {flag}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={`https://flagcdn.com/${quality}/${code}.png`}
+      alt={name}
+      onError={() => setImgErr(true)}
+      className={`${sizeCls} ${rounded} ${className} object-cover flex-shrink-0 shadow-sm border border-gray-200`}
+    />
+  );
+}
+
 const TABS = ['All', 'Computer Science', 'Business & MBA', 'Engineering', 'Data Science & AI', 'Medicine'];
+
+const TAB_ICONS: Record<string, React.ElementType> = {
+  'All': LayoutGrid,
+  'Computer Science': Monitor,
+  'Business & MBA': Briefcase,
+  'Engineering': Cog,
+  'Data Science & AI': Brain,
+  'Medicine': Stethoscope,
+};
 
 const BADGE_STYLES: Record<string, string> = {
   'Scholarship Available': 'bg-green-100 text-green-700',
@@ -43,17 +222,94 @@ const STEPS = [
 ];
 
 const TRACKER_DEMO = [
-  { uni: 'MIT', course: 'MSc Computer Science & AI', flag: '🇺🇸', progress: 100, status: 'Accepted', statusCls: 'text-green-700 bg-green-100' },
-  { uni: 'University of Oxford', course: 'MBA', flag: '🇬🇧', progress: 60, status: 'Under Review', statusCls: 'text-amber-700 bg-amber-100' },
-  { uni: 'TU Munich', course: 'MSc Electrical Engineering', flag: '🇩🇪', progress: 100, status: 'Submitted', statusCls: 'text-blue-700 bg-blue-100' },
-  { uni: 'University of Toronto', course: 'MSc Data Science', flag: '🇨🇦', progress: 40, status: 'Docs Needed', statusCls: 'text-orange-700 bg-orange-100' },
+  { uni: 'MIT', course: 'MSc Computer Science & AI', flag: '🇺🇸', country: 'United States', progress: 100, status: 'Accepted', statusCls: 'text-green-700 bg-green-100' },
+  { uni: 'University of Oxford', course: 'MBA', flag: '🇬🇧', country: 'United Kingdom', progress: 60, status: 'Under Review', statusCls: 'text-amber-700 bg-amber-100' },
+  { uni: 'TU Munich', course: 'MSc Electrical Engineering', flag: '🇩🇪', country: 'Germany', progress: 100, status: 'Submitted', statusCls: 'text-blue-700 bg-blue-100' },
+  { uni: 'University of Toronto', course: 'MSc Data Science', flag: '🇨🇦', country: 'Canada', progress: 40, status: 'Docs Needed', statusCls: 'text-orange-700 bg-orange-100' },
+];
+
+const SUCCESS_RATES = [
+  { label: 'Visa Approval Rate', value: '96%', icon: '✈️', desc: 'Student visas approved across all major destinations' },
+  { label: 'University Acceptance', value: '94%', icon: '🎓', desc: 'Students admitted to their first or second choice university' },
+  { label: 'Scholarship Success', value: '88%', icon: '🏆', desc: 'Applicants who received at least one scholarship offer' },
+  { label: 'Student Satisfaction', value: '4.9/5', icon: '⭐', desc: 'Average rating from students we have counseled' },
+];
+
+const TEAM = [
+  { name: 'Rahul Mehta', role: 'Founder & CEO', exp: '12 years', specialization: 'UK & Europe', photo: 'https://randomuser.me/api/portraits/men/32.jpg' },
+  { name: 'Preethi Nair', role: 'Senior Counselor', exp: '8 years', specialization: 'Canada & USA', photo: 'https://randomuser.me/api/portraits/women/44.jpg' },
+  { name: 'Arjun Shetty', role: 'Visa Expert', exp: '6 years', specialization: 'Visa & Immigration', photo: 'https://randomuser.me/api/portraits/men/67.jpg' },
+  { name: 'Kavitha Reddy', role: 'University Relations', exp: '5 years', specialization: 'Australia & NZ', photo: 'https://randomuser.me/api/portraits/women/68.jpg' },
 ];
 
 const TESTIMONIALS = [
-  { name: 'Rahul Mehta', from: '🇮🇳 India', uni: 'University of Toronto', text: 'The platform made my dream of studying in Canada a reality. My counselor guided me every step from shortlisting to visa!' },
-  { name: 'Fatima Al-Rashid', from: '🇦🇪 UAE', uni: 'TU Munich', text: 'Got into TU Munich with a full scholarship! The search tools and advisor helped me find the perfect affordable program.' },
-  { name: 'Linh Nguyen', from: '🇻🇳 Vietnam', uni: 'University of Edinburgh', text: 'Incredibly easy to use. I compared 20+ universities and found my ideal match. Accepted in just 6 weeks!' },
+  { name: 'Priya Sharma', from: '🇮🇳 Bengaluru, India', uni: 'University of Melbourne', rating: 5, text: 'Magzest helped me secure a scholarship for my Master\'s in Data Science at Melbourne. Their counselors guided me on every SOP, LOR, and visa step. Life-changing experience!' },
+  { name: 'Arjun Reddy', from: '🇮🇳 Hyderabad, India', uni: 'University of Toronto', rating: 5, text: 'I applied to 5 universities in Canada and got into my top choice MBA program. Magzest made the whole process stress-free and incredibly smooth from start to finish.' },
+  { name: 'Divya Krishnan', from: '🇮🇳 Chennai, India', uni: 'TU Munich', rating: 5, text: 'Got into TU Munich\'s free tuition Engineering program! The scholarship and financial guidance from Magzest saved my family lakhs. 100% recommend to every student.' },
+  { name: 'Rohit Nair', from: '🇮🇳 Kochi, India', uni: 'University of Edinburgh', rating: 5, text: 'My UK student visa was approved in just 3 weeks. Magzest\'s end-to-end support — from shortlisting to pre-departure briefing — was absolutely outstanding.' },
 ];
+
+const FAQS = [
+  {
+    q: 'How does Magzest help me study abroad?',
+    a: 'Magzest provides end-to-end support — from shortlisting universities and programs that match your profile, to assisting with application documents, SOPs, LORs, scholarships, and visa applications. Our counselors guide you at every step until you land at your dream university.',
+  },
+  {
+    q: 'Is the counseling service free for students?',
+    a: 'Yes! Registering and getting initial counseling on Magzest is completely free. Our platform connects you with expert advisors who help you find the right programs without any upfront cost.',
+  },
+  {
+    q: 'What documents do I need to apply for a university abroad?',
+    a: 'Typical requirements include academic transcripts, English proficiency scores (IELTS/TOEFL), a Statement of Purpose (SOP), Letters of Recommendation (LOR), a resume/CV, passport copy, and sometimes work experience certificates. Our counselors will give you a personalized checklist.',
+  },
+  {
+    q: 'How long does the entire application process take?',
+    a: 'The timeline varies by destination and intake. Generally, we recommend starting 12–18 months before your intended intake. Some countries like Canada and Australia have rolling intakes, while the UK and US have fixed deadlines. Our counselors help you plan your timeline carefully.',
+  },
+  {
+    q: 'Can Magzest help me find scholarships?',
+    a: 'Absolutely. We have a dedicated scholarship team that identifies merit-based, need-based, and country-specific scholarships you may be eligible for. Over 88% of students we counsel receive at least one scholarship offer.',
+  },
+  {
+    q: 'What is the visa approval rate for Magzest students?',
+    a: 'Our students enjoy a 96% visa approval rate across all major study destinations including Canada, UK, Australia, Germany, and the US. Our visa specialists prepare your application thoroughly to maximize approval chances.',
+  },
+  {
+    q: 'Which countries does Magzest cover?',
+    a: 'We help students apply to universities in 20+ countries including the United States, United Kingdom, Canada, Australia, Germany, Singapore, Netherlands, Ireland, New Zealand, and more. Our counselors specialize in their respective regions.',
+  },
+  {
+    q: 'How do I track my application status?',
+    a: 'Once registered on Magzest, you get access to a real-time application tracker in your student dashboard. You can see the status of every application — from document submission to university decision — in one place.',
+  },
+];
+
+// Maps a stagger step to a CSS delay class
+const STAGGER: Record<number, string> = {
+  0: '', 60: 'delay-60', 80: 'delay-80', 90: 'delay-90', 100: 'delay-100',
+  120: 'delay-120', 160: 'delay-160', 180: 'delay-180', 200: 'delay-200',
+  240: 'delay-240', 270: 'delay-270', 300: 'delay-300', 320: 'delay-320',
+  360: 'delay-360', 400: 'delay-400', 420: 'delay-420', 450: 'delay-450',
+};
+
+const COUNTRY_VISA_INFO: Record<string, { visa: string; processing: string; intake: string; minFunds: string; documents: string[]; tip?: string }> = {
+  'United States': { visa: 'F-1 Student Visa', processing: '3–8 weeks', intake: 'September, January', minFunds: 'USD 25,000+/year', documents: ['I-20 form from university', 'SEVIS fee receipt', 'DS-160 online application', 'IELTS/TOEFL scores', 'Financial proof (bank statement)'], tip: 'Apply at least 3 months before your intake date' },
+  'United Kingdom': { visa: 'UK Student Visa', processing: '~3 weeks', intake: 'September, January', minFunds: 'GBP 1,334/month (London)', documents: ['CAS number from university', 'IELTS Academic (5.5+)', 'Bank statements (28-day history)', 'Tuberculosis test result'], tip: 'Apply up to 6 months before course start' },
+  'Canada': { visa: 'Study Permit', processing: '4–8 weeks', intake: 'September, January, May', minFunds: 'CAD 10,000+/year', documents: ['Acceptance letter', 'IELTS/TOEFL scores', 'Financial proof', 'Statement of Purpose', 'Biometrics'], tip: 'Apply online via the IRCC portal' },
+  'Australia': { visa: 'Student Visa (Subclass 500)', processing: '4–6 weeks', intake: 'February, July', minFunds: 'AUD 21,041/year', documents: ['Confirmation of Enrolment (CoE)', 'IELTS/PTE scores', 'Health insurance (OSHC)', 'Health examination', 'GTE statement'] },
+  'Germany': { visa: 'National Visa for Study (D-Visa)', processing: '6–12 weeks', intake: 'October, April', minFunds: 'EUR 11,208/year (blocked account)', documents: ['University admission letter', 'Blocked account proof', 'Academic certificates', 'Language proficiency proof', 'Health insurance'], tip: 'Most public university programs are tuition-free' },
+  'Singapore': { visa: 'Student Pass', processing: '4–8 weeks', intake: 'August, January', minFunds: 'SGD 1,500+/month', documents: ['University offer letter', 'Financial proof', 'Academic transcripts', 'Passport copy'], tip: 'Apply via ICA SOLAR online system' },
+  'Netherlands': { visa: 'MVV + Residence Permit', processing: '2–8 weeks', intake: 'September, February', minFunds: 'EUR 900/month', documents: ['University enrollment letter', 'Financial proof', 'Health insurance', 'English proficiency proof'], tip: 'University typically assists with the permit application' },
+  'New Zealand': { visa: 'Student Visa', processing: '4–6 weeks', intake: 'February, July', minFunds: 'NZD 15,000+/year', documents: ['Offer of Place', 'Financial proof', 'English proficiency', 'Medical certificate', 'Police clearance'] },
+  'Ireland': { visa: 'Study Visa (C/D)', processing: '4–8 weeks', intake: 'September, January', minFunds: 'EUR 7,000+/year', documents: ['University acceptance letter', 'Financial proof', 'English proficiency', 'Travel insurance'] },
+  'France': { visa: 'Long-stay Student Visa (VLS-TS)', processing: '3–4 weeks', intake: 'September, January', minFunds: 'EUR 615/month', documents: ['University enrollment proof', 'Campus France registration', 'Financial proof', 'French/English proficiency'], tip: 'Campus France interview may be required' },
+  'Sweden': { visa: 'Residence Permit for Studies', processing: '2–4 months', intake: 'September, January', minFunds: 'SEK 9,520/month', documents: ['Admission letter', 'Financial proof', 'Health insurance', 'Language proficiency'] },
+  'Switzerland': { visa: 'Student Residence Permit (D Visa)', processing: '4–8 weeks', intake: 'September, February', minFunds: 'CHF 21,000/year', documents: ['Enrollment letter', 'Financial proof', 'Health insurance', 'Language proficiency'] },
+  'Japan': { visa: 'College Student Visa', processing: '1–3 months', intake: 'April, October', minFunds: 'JPY 120,000/month', documents: ['Certificate of Eligibility', 'Financial proof', 'Academic records', 'Japanese language certificate (N2 preferred)'] },
+  'South Korea': { visa: 'D-2 Student Visa', processing: '4–6 weeks', intake: 'March, September', minFunds: 'KRW 9,000,000/year', documents: ['University admission letter', 'Financial proof', 'Academic transcripts', 'TOPIK certificate (preferred)'] },
+  'Austria': { visa: 'Student Visa (D-Visa)', processing: '6–10 weeks', intake: 'October, March', minFunds: 'EUR 12,000/year', documents: ['University acceptance letter', 'Financial proof', 'Health insurance', 'Language proficiency'] },
+  'Denmark': { visa: 'Residence Permit for Studies', processing: '2–4 months', intake: 'September, February', minFunds: 'DKK 6,397/month', documents: ['Admission letter', 'Financial proof', 'Health insurance', 'Language proficiency'] },
+};
 
 function getField(name: string): string {
   const n = (name || '').toLowerCase();
@@ -75,8 +331,301 @@ function progressWidth(pct: number): string {
   return 'w-1/5';
 }
 
+function inferCourseLevel(name: string): string {
+  const n = name.toLowerCase();
+  if (n.startsWith('phd') || n.startsWith('doctorate')) return 'PhD';
+  if (n.startsWith('beng') || n.startsWith('bba') || n.startsWith('bachelor')) return "Bachelor's";
+  return "Master's";
+}
+
+function inferCourseDuration(name: string): string {
+  const n = name.toLowerCase();
+  if (n.startsWith('phd')) return '3–5 years';
+  if (n.startsWith('mba')) return '1–2 years';
+  if (n.startsWith('beng') || n.startsWith('bba')) return '3–4 years';
+  return '1–2 years';
+}
+
+function DetailModal({
+  modal, onClose, universities, allPrograms, navigate,
+}: {
+  modal: { type: 'university' | 'country' | 'course'; name: string; flag?: string } | null;
+  onClose: () => void;
+  universities: any[];
+  allPrograms: { key: string; uniId: any; uni: string; website?: string; course: string; country: string; city: string; flag: string; level: string; duration: string; fee: string; badge: string; field: string }[];
+  navigate: (path: string) => void;
+}) {
+  if (!modal) return null;
+
+  const renderContent = () => {
+    if (modal.type === 'university') {
+      const uni = universities.find(u =>
+        u.name === modal.name ||
+        u.name?.toLowerCase() === modal.name.toLowerCase() ||
+        u.name?.toLowerCase().includes(modal.name.toLowerCase()) ||
+        modal.name.toLowerCase().includes((u.name || '').toLowerCase().split(' ')[0])
+      );
+      if (uni) {
+        return (
+          <>
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 text-white relative rounded-t-2xl">
+              <button type="button" aria-label="Close" onClick={onClose} className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-colors"><X className="w-4 h-4" /></button>
+              {getUniLogoUrl(uni.name, uni.website) ? (
+                <UniLogo name={uni.name} website={uni.website} size="lg" className="mb-3" />
+              ) : (
+                <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center font-bold text-2xl mb-3">{uni.name.charAt(0)}</div>
+              )}
+              <h2 className="text-xl font-bold pr-10">{uni.name}</h2>
+              <p className="text-sky-100 text-sm mt-1 flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{uni.city}, {uni.country}{uni.type && <span className="ml-1 opacity-70">• {uni.type}</span>}</p>
+              <div className="flex gap-2 mt-3 flex-wrap">
+                <span className="bg-white/20 text-xs px-2.5 py-1 rounded-full font-medium">#{uni.ranking} World</span>
+                <span className="flex items-center gap-1 bg-white/20 text-xs px-2.5 py-1 rounded-full"><Star className="w-3 h-3 fill-yellow-300 text-yellow-300" />{uni.rating}</span>
+                {uni.acceptanceRate && <span className="bg-white/20 text-xs px-2.5 py-1 rounded-full">{uni.acceptanceRate}% acceptance</span>}
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              {uni.description && <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">{uni.description}</p>}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-sky-50 rounded-xl p-3"><p className="font-bold text-blue-700 text-lg">{(uni.courses || []).length}</p><p className="text-xs text-gray-500">Programs</p></div>
+                <div className="bg-sky-50 rounded-xl p-3"><p className="font-bold text-blue-700 text-lg">{uni.totalStudents ? `${(uni.totalStudents / 1000).toFixed(0)}k` : 'N/A'}</p><p className="text-xs text-gray-500">Students</p></div>
+                <div className="bg-sky-50 rounded-xl p-3"><p className="font-bold text-blue-700 text-sm">{uni.averageFees?.postgraduate > 0 ? `${uni.averageFees.currency} ${(uni.averageFees.postgraduate / 1000).toFixed(0)}k` : 'Free/Varies'}</p><p className="text-xs text-gray-500">PG/year</p></div>
+              </div>
+              {uni.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {uni.tags.slice(0, 5).map((t: string) => <span key={t} className="text-xs bg-sky-50 text-blue-700 px-2 py-0.5 rounded-full">{t}</span>)}
+                </div>
+              )}
+              {uni.facilities?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Campus Facilities</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {uni.facilities.slice(0, 6).map((f: string) => (
+                      <span key={f} className="flex items-center gap-1 text-xs text-gray-600"><CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />{f}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <button type="button" onClick={() => { onClose(); navigate(`/university/${uni.id}`); }} className="w-full bg-sky-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-sky-600 transition-colors flex items-center justify-center gap-2">
+                View Full Profile <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        );
+      }
+      return (
+        <>
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 text-white relative rounded-t-2xl">
+            <button type="button" aria-label="Close" onClick={onClose} className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-colors"><X className="w-4 h-4" /></button>
+            <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center text-2xl mb-3">🎓</div>
+            <h2 className="text-xl font-bold pr-10">{modal.name}</h2>
+            <p className="text-sky-100 text-sm mt-1">World-renowned research university</p>
+          </div>
+          <div className="p-5">
+            <p className="text-sm text-gray-600 mb-5 leading-relaxed">{modal.name} is one of the world's leading research universities, known for academic excellence and global impact. Contact a Magzest counselor to explore admission pathways.</p>
+            <button type="button" onClick={() => { onClose(); navigate('/universities'); }} className="w-full bg-sky-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-sky-600 transition-colors flex items-center justify-center gap-2">
+              Browse Partner Universities <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </>
+      );
+    }
+
+    if (modal.type === 'country') {
+      const info = COUNTRY_VISA_INFO[modal.name];
+      return (
+        <>
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-white relative rounded-t-2xl">
+            <button type="button" aria-label="Close" onClick={onClose} className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-colors"><X className="w-4 h-4" /></button>
+            <div className="mb-3">
+              <CountryFlagImg name={modal.name} flag={modal.flag || '🌍'} sizeCls="w-24 h-16" rounded="rounded-xl" className="shadow-lg" quality="w160" />
+            </div>
+            <h2 className="text-xl font-bold">{modal.name}</h2>
+            {info && <p className="text-emerald-100 text-sm mt-1">{info.visa}</p>}
+          </div>
+          <div className="p-5 space-y-4">
+            {info ? (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-emerald-50 rounded-xl p-3">
+                    <div className="flex items-center gap-1.5 mb-1"><Clock className="w-3.5 h-3.5 text-emerald-600" /><p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Processing</p></div>
+                    <p className="font-bold text-gray-900 text-sm">{info.processing}</p>
+                  </div>
+                  <div className="bg-emerald-50 rounded-xl p-3">
+                    <div className="flex items-center gap-1.5 mb-1"><Calendar className="w-3.5 h-3.5 text-emerald-600" /><p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Intakes</p></div>
+                    <p className="font-bold text-gray-900 text-sm">{info.intake}</p>
+                  </div>
+                </div>
+                <div className="bg-sky-50 rounded-xl p-3">
+                  <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-blue-600" /><p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Min. Funds Required</p></div>
+                  <p className="font-bold text-blue-700 text-sm">{info.minFunds}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Required Documents</p>
+                  <div className="space-y-1.5">
+                    {info.documents.map(doc => (
+                      <div key={doc} className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700">{doc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {info.tip && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2">
+                    <span className="text-base">💡</span>
+                    <p className="text-sm text-amber-800">{info.tip}</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">Explore study opportunities in {modal.name}. Our counselors can guide you through visa requirements, university applications, and scholarship options.</p>
+            )}
+            <button type="button" onClick={() => { onClose(); navigate(`/search?country=${encodeURIComponent(modal.name)}`); }} className="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+              Explore Programs in {modal.name} <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </>
+      );
+    }
+
+    if (modal.type === 'course') {
+      const matches = allPrograms.filter(p =>
+        p.course === modal.name ||
+        p.course?.toLowerCase().includes(modal.name.toLowerCase()) ||
+        modal.name.toLowerCase().includes(p.course?.toLowerCase() || '')
+      );
+      const level = inferCourseLevel(modal.name);
+      const duration = inferCourseDuration(modal.name);
+      const field = getField(modal.name);
+      return (
+        <>
+          <div className="bg-gradient-to-br from-purple-500 to-violet-600 p-6 text-white relative rounded-t-2xl">
+            <button type="button" aria-label="Close" onClick={onClose} className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-colors"><X className="w-4 h-4" /></button>
+            <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center text-2xl mb-3">📚</div>
+            <h2 className="text-xl font-bold pr-10 leading-tight">{modal.name}</h2>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              <span className="bg-white/20 text-xs px-2.5 py-1 rounded-full font-medium">{level}</span>
+              {field !== 'Other' && <span className="bg-white/20 text-xs px-2.5 py-1 rounded-full">{field}</span>}
+            </div>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-purple-50 rounded-xl p-3">
+                <div className="flex items-center gap-1.5 mb-1"><Clock className="w-3.5 h-3.5 text-purple-600" /><p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Duration</p></div>
+                <p className="font-bold text-gray-900 text-sm">{matches[0]?.duration || duration}</p>
+              </div>
+              <div className="bg-purple-50 rounded-xl p-3">
+                <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-purple-600" /><p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tuition</p></div>
+                <p className="font-bold text-gray-900 text-sm">{matches[0]?.fee || 'Varies by university'}</p>
+              </div>
+            </div>
+            {matches.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Available At ({matches.length} {matches.length === 1 ? 'university' : 'universities'})</p>
+                <div className="space-y-2">
+                  {matches.slice(0, 3).map((p) => (
+                    <button key={p.key} type="button" onClick={() => { onClose(); navigate(`/university/${p.uniId}`); }} className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-purple-50 transition-colors text-left">
+                      {getUniLogoUrl(p.uni, p.website) ? (
+                        <div className="w-9 h-9 bg-white rounded-lg border border-gray-200 shadow-sm flex-shrink-0 overflow-hidden p-1 flex items-center justify-center">
+                          <img src={getUniLogoUrl(p.uni, p.website)!} alt="" className="w-full h-full object-contain" />
+                        </div>
+                      ) : (
+                        <div className="w-9 h-9 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">{p.uni.charAt(0)}</div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-sm text-gray-900 truncate">{p.uni}</p>
+                        <p className="text-xs text-gray-500">{p.flag} {p.city}, {p.country}</p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button type="button" onClick={() => { onClose(); navigate(`/search?q=${encodeURIComponent(modal.name)}`); }} className="w-full bg-purple-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+              Search This Program <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        {renderContent()}
+      </div>
+    </div>
+  );
+}
+
+/* ── Animation helpers ── */
+
+function FadeIn({
+  children,
+  className = '',
+  delayClass = '',
+  direction = 'up',
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delayClass?: string;
+  direction?: 'up' | 'left' | 'right';
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  const dirClass =
+    direction === 'left' ? 'animate-fade-in-left' :
+    direction === 'right' ? 'animate-fade-in-right' :
+    'animate-fade-in-up';
+  return (
+    <div ref={ref} className={`${className} ${delayClass} ${visible ? dirClass : 'opacity-0'}`}>
+      {children}
+    </div>
+  );
+}
+
+function StatCounter({ raw, active }: { raw: string; active: boolean }) {
+  const match = raw.match(/^([\d,]+(?:\.\d+)?)(.*)$/);
+  const num = match ? parseFloat(match[1].replace(/,/g, '')) : 0;
+  const suffix = match ? match[2] : raw;
+  const [cur, setCur] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const startTs = performance.now();
+    const dur = 1500;
+    const tick = (now: number) => {
+      const t = Math.min((now - startTs) / dur, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setCur(num * eased);
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [active, num]);
+  const display =
+    num >= 1000 ? Math.floor(cur).toLocaleString() :
+    num % 1 !== 0 ? cur.toFixed(1) :
+    Math.floor(cur).toString();
+  return <>{active ? `${display}${suffix}` : '0'}</>;
+}
+
+/* ── Page component ── */
+
 export default function Home() {
   const { isAuthenticated, user } = useAuth();
+  const { open } = useAuthModal();
   const navigate = useNavigate();
   const [universities, setUniversities] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('All');
@@ -85,9 +634,36 @@ export default function Home() {
   const [level, setLevel] = useState('');
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [detailModal, setDetailModal] = useState<{ type: 'university' | 'country' | 'course'; name: string; flag?: string } | null>(null);
+
+  const statsRef = useRef<HTMLElement>(null);
+  const [statsActive, setStatsActive] = useState(false);
+  const aboutRef = useRef<HTMLElement>(null);
+  const [aboutActive, setAboutActive] = useState(false);
+  const successRef = useRef<HTMLElement>(null);
+  const [successActive, setSuccessActive] = useState(false);
 
   useEffect(() => {
     api.universities.list().then(setUniversities).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const entries: [React.RefObject<HTMLElement | null>, React.Dispatch<React.SetStateAction<boolean>>][] = [
+      [statsRef, setStatsActive],
+      [aboutRef, setAboutActive],
+      [successRef, setSuccessActive],
+    ];
+    const observers = entries.map(([ref, set]) => {
+      if (!ref.current) return null;
+      const obs = new IntersectionObserver(
+        ([e]) => { if (e.isIntersecting) { set(true); obs.disconnect(); } },
+        { threshold: 0.3 }
+      );
+      obs.observe(ref.current);
+      return obs;
+    });
+    return () => observers.forEach(o => o?.disconnect());
   }, []);
 
   const handleSearch = () => {
@@ -113,6 +689,7 @@ export default function Home() {
       key: `${u.id}-${ci}`,
       uniId: u.id,
       uni: u.name,
+      website: u.website,
       course: c.name,
       country: u.country,
       city: u.city,
@@ -128,26 +705,53 @@ export default function Home() {
   const filteredPrograms = (activeTab === 'All' ? allPrograms : allPrograms.filter(p => p.field === activeTab)).slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-sky-50">
 
       {/* ── HERO ── */}
-      <section className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 pt-16 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
-            ⭐ Trusted by 50,000+ students worldwide
+      <section className="relative bg-gradient-to-br from-sky-700 via-sky-600 to-sky-800 pt-16 pb-20 overflow-hidden">
+        {/* Decorative glows */}
+        <div className="absolute -top-40 -right-32 w-[500px] h-[500px] bg-sky-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-64 bg-blue-700/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <div className="animate-fade-in-up animate-float-y inline-flex items-center gap-2 bg-white/10 text-sky-100 border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6 backdrop-blur-sm">
+            ⭐ Trusted by students across India & beyond — by GradZest
           </div>
-          <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-5">
-            Find Your Perfect{' '}
-            <span className="text-blue-600">Program</span>
-            <br className="hidden sm:block" />
-            to Study Abroad
-          </h1>
-          <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
-            Search 200,000+ courses at top universities across 40+ countries. Free counseling included.
-          </p>
+          <div className="animate-fade-in-up delay-80">
+            <h1 className="text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-5">
+              Find Your Perfect{' '}
+              <span className="text-sky-300">Program</span>
+              <br className="hidden sm:block" />
+              to Study Abroad
+            </h1>
+          </div>
+          <div className="animate-fade-in-up delay-160">
+            <p className="text-xl text-sky-100 mb-7 max-w-2xl mx-auto">
+              Search 200,000+ courses at top universities across 40+ countries. Free counseling included.
+            </p>
+          </div>
+
+          {!isAuthenticated && (
+            <div className="animate-fade-in-up delay-240 flex items-center justify-center gap-3 mb-8">
+              <button
+                type="button"
+                onClick={() => open('register')}
+                className="bg-white text-sky-600 font-semibold px-7 py-3 rounded-xl hover:bg-sky-50 active:scale-95 transition-all shadow-lg shadow-black/20 flex items-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" /> Register Free <ChevronRight className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => open('login')}
+                className="border-2 border-white/40 text-white font-semibold px-7 py-3 rounded-xl hover:bg-white/10 active:scale-95 transition-all flex items-center gap-2 backdrop-blur-sm"
+              >
+                <LogIn className="w-4 h-4" /> Log In
+              </button>
+            </div>
+          )}
 
           {/* Search box */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-3 max-w-4xl mx-auto">
+          <div className="animate-fade-in-up delay-320 bg-white rounded-2xl shadow-lg border border-gray-100 p-3 max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 relative">
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -193,7 +797,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleSearch}
-                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                className="bg-sky-500 text-white px-8 py-3 rounded-xl font-semibold hover:bg-sky-600 active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Search className="w-4 h-4" /> Search
               </button>
@@ -201,22 +805,22 @@ export default function Home() {
           </div>
 
           {/* Popular tags */}
-          <div className="flex flex-wrap justify-center gap-2 mt-5 items-center">
-            <span className="text-sm text-gray-400">Popular:</span>
+          <div className="animate-fade-in-up delay-400 flex flex-wrap justify-center gap-2 mt-5 items-center">
+            <span className="text-sm text-sky-300">Popular:</span>
             {[
-              { label: 'Canada', param: 'country=Canada' },
-              { label: 'Germany', param: 'country=Germany' },
-              { label: 'Computer Science', param: 'q=Computer+Science' },
-              { label: "Master's", param: 'level=Master' },
-              { label: 'Scholarship', param: 'q=scholarship' },
+              { label: 'Canada', param: 'country=Canada', icon: '🇨🇦' },
+              { label: 'Germany', param: 'country=Germany', icon: '🇩🇪' },
+              { label: 'Computer Science', param: 'q=Computer+Science', icon: '💻' },
+              { label: "Master's", param: 'level=Master', icon: '🎓' },
+              { label: 'Scholarship', param: 'q=scholarship', icon: '🏆' },
             ].map(tag => (
               <button
                 key={tag.label}
                 type="button"
                 onClick={() => navigate(`/search?${tag.param}`)}
-                className="text-sm text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors"
+                className="text-sm text-sky-100 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 active:scale-95 px-3 py-1 rounded-full transition-all flex items-center gap-1 backdrop-blur-sm"
               >
-                {tag.label}
+                <span>{tag.icon}</span>{tag.label}
               </button>
             ))}
           </div>
@@ -224,120 +828,216 @@ export default function Home() {
       </section>
 
       {/* ── STATS ── */}
-      <section className="bg-white border-y border-gray-100 py-10">
+      <section ref={statsRef} className="bg-sky-50 border-y border-sky-100 py-10">
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: '200K+', label: 'Programs Listed' },
-              { value: '2,400+', label: 'Partner Universities' },
-              { value: '40+', label: 'Countries' },
-              { value: '50K+', label: 'Students Helped' },
-            ].map(s => (
-              <div key={s.label}>
-                <div className="text-3xl font-extrabold text-blue-600">{s.value}</div>
+              { value: '96%', label: 'Visa Success Rate' },
+              { value: '1,000+', label: 'Students Placed Abroad' },
+              { value: '20+', label: 'Partner Countries' },
+              { value: '10+', label: 'Expert Counselors' },
+            ].map((s, i) => (
+              <FadeIn key={s.label} delayClass={STAGGER[i * 100]}>
+                <div className="text-3xl font-extrabold text-sky-600">
+                  <StatCounter raw={s.value} active={statsActive} />
+                </div>
                 <div className="text-sm text-gray-500 mt-1">{s.label}</div>
-              </div>
+              </FadeIn>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SCROLLING TICKER ── */}
+      <section className="py-10 bg-sky-50 border-y border-sky-100 overflow-hidden">
+        <div className="text-center mb-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Explore our network of universities, countries &amp; courses</p>
+        </div>
+        <div className="marquee-wrap overflow-hidden mb-3">
+          <div className="flex animate-marquee-left whitespace-nowrap w-max">
+            {[...MARQUEE_UNIS, ...MARQUEE_UNIS].map((uni, i) => (
+              <button key={i} type="button" onClick={() => setDetailModal({ type: 'university', name: uni })}
+                className="inline-flex items-center gap-2 mx-3 px-3 py-1.5 bg-sky-50 border border-blue-100 rounded-full text-sm font-semibold text-blue-700 shrink-0 hover:bg-blue-100 hover:border-blue-300 transition-colors cursor-pointer">
+                <UniLogo name={uni} />
+                {uni}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="marquee-wrap overflow-hidden mb-3">
+          <div className="flex animate-marquee-right whitespace-nowrap w-max">
+            {[...MARQUEE_COUNTRIES, ...MARQUEE_COUNTRIES].map((c, i) => (
+              <button key={i} type="button" onClick={() => setDetailModal({ type: 'country', name: c.name, flag: c.flag })}
+                className="inline-flex items-center gap-2 mx-3 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full text-sm font-semibold text-emerald-700 shrink-0 hover:bg-emerald-100 hover:border-emerald-300 transition-colors cursor-pointer">
+                <CountryFlagImg name={c.name} flag={c.flag} />
+                {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="marquee-wrap overflow-hidden">
+          <div className="flex animate-marquee-left2 whitespace-nowrap w-max">
+            {[...MARQUEE_COURSES, ...MARQUEE_COURSES].map((course, i) => {
+              const CourseIcon = getCourseIcon(course);
+              const field = getField(course);
+              const styles = COURSE_PILL_STYLES[field] || COURSE_PILL_STYLES['Other'];
+              return (
+                <button key={i} type="button" onClick={() => setDetailModal({ type: 'course', name: course })}
+                  className={`inline-flex items-center gap-2 mx-3 px-3 py-1.5 rounded-full text-sm font-semibold shrink-0 transition-colors cursor-pointer ${styles.pill}`}>
+                  <span className={`w-5 h-5 rounded-lg ${styles.icon} flex items-center justify-center flex-shrink-0`}>
+                    <CourseIcon className="w-3 h-3 text-white" />
+                  </span>
+                  {course}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── ABOUT US ── */}
+      <section ref={aboutRef} className="py-16 bg-sky-500 text-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <FadeIn direction="left">
+              <span className="inline-block bg-white/20 text-white text-sm font-medium px-3 py-1 rounded-full mb-4">About Magzest</span>
+              <h2 className="text-3xl font-bold mb-4">Your Trusted Partner for Studying Abroad</h2>
+              <p className="text-sky-100 leading-relaxed mb-4">
+                Magzest Consultancy Services was founded with a single mission: to help every Indian student access world-class education without the confusion and stress of applying abroad alone.
+              </p>
+              <p className="text-sky-100 leading-relaxed">
+                With a team of experienced counselors, visa specialists, and university relationship managers, we guide students from shortlisting the right program to landing at their dream university — handling every document, deadline, and detail along the way.
+              </p>
+            </FadeIn>
+            <FadeIn direction="right">
+              <div className="grid grid-cols-2 gap-5">
+                {[
+                  { value: '10+', label: 'Years of Experience' },
+                  { value: '1,000+', label: 'Students Placed Abroad' },
+                  { value: '20+', label: 'Partner Countries' },
+                  { value: '10+', label: 'Expert Counselors' },
+                ].map(s => (
+                  <div key={s.label} className="bg-white/10 rounded-2xl p-5 text-center backdrop-blur-sm hover:bg-white/20 transition-colors cursor-default">
+                    <div className="text-3xl font-extrabold">
+                      <StatCounter raw={s.value} active={aboutActive} />
+                    </div>
+                    <div className="text-sky-100 text-sm mt-1">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
       {/* ── FEATURED PROGRAMS ── */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-sky-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8">
+          <FadeIn className="flex items-end justify-between mb-8">
             <div>
               <h2 className="text-3xl font-bold text-gray-900">Featured Programs</h2>
               <p className="text-gray-500 mt-2">Handpicked programs from top-ranked universities</p>
             </div>
-            <Link to="/universities" className="hidden md:flex items-center gap-1 text-blue-600 font-medium hover:text-blue-700 text-sm">
+            <Link to="/universities" className="hidden md:flex items-center gap-1 text-sky-600 font-medium hover:text-sky-700 text-sm">
               View all <ArrowRight className="w-4 h-4" />
             </Link>
-          </div>
+          </FadeIn>
 
           {/* Filter tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-8">
-            {TABS.map(tab => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === tab ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          <FadeIn className="flex gap-2 overflow-x-auto pb-2 mb-8" delayClass="delay-80">
+            {TABS.map(tab => {
+              const Icon = TAB_ICONS[tab];
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`whitespace-nowrap inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all active:scale-95 ${activeTab === tab ? 'bg-sky-500 text-white shadow-sm scale-105' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                >
+                  <Icon className="w-3.5 h-3.5" />{tab}
+                </button>
+              );
+            })}
+          </FadeIn>
 
           {/* Program cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredPrograms.map(p => (
-              <div key={p.key} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all flex flex-col">
-                <div className="p-5 flex-1">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center font-bold text-blue-700 text-lg flex-shrink-0">
-                      {p.uni.charAt(0)}
+            {filteredPrograms.map((p, i) => (
+              <FadeIn key={p.key} className="flex flex-col" delayClass={STAGGER[i * 80]}>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+                  <div className="p-5 flex-1">
+                    <div className="flex items-start justify-between mb-3">
+                      <UniLogo name={p.uni} website={p.website} size="md" />
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${BADGE_STYLES[p.badge]}`}>{p.badge}</span>
                     </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${BADGE_STYLES[p.badge]}`}>{p.badge}</span>
+                    <h3 className="font-bold text-gray-900 leading-snug mb-1">{p.course}</h3>
+                    <p className="text-sm text-gray-500 mb-3">{p.uni}</p>
+                    <div className="flex items-center gap-1 text-gray-400 text-xs mb-3">
+                      <MapPin className="w-3 h-3" /> {p.flag} {p.city}, {p.country}
+                    </div>
+                    <div className="flex gap-2 text-xs text-gray-500 flex-wrap">
+                      <span className="bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">{p.level}</span>
+                      <span className="bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">{p.duration}</span>
+                      {(() => {
+                        const CourseIcon = getCourseIcon(p.course);
+                        const styles = COURSE_PILL_STYLES[p.field] || COURSE_PILL_STYLES['Other'];
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border font-medium ${styles.pill}`}>
+                            <CourseIcon className="w-3 h-3" />{p.field !== 'Other' ? p.field : 'General'}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </div>
-                  <h3 className="font-bold text-gray-900 leading-snug mb-1">{p.course}</h3>
-                  <p className="text-sm text-gray-500 mb-3">{p.uni}</p>
-                  <div className="flex items-center gap-1 text-gray-400 text-xs mb-3">
-                    <MapPin className="w-3 h-3" /> {p.flag} {p.city}, {p.country}
-                  </div>
-                  <div className="flex gap-2 text-xs text-gray-500">
-                    <span className="bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">{p.level}</span>
-                    <span className="bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">{p.duration}</span>
+                  <div className="px-5 pb-5 pt-4 border-t border-gray-50 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-400">Tuition / year</p>
+                      <p className="font-bold text-gray-900 text-sm">{p.fee}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleApply}
+                      className="bg-sky-500 text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-sky-600 active:scale-95 transition-all inline-flex items-center gap-1.5"
+                    >
+                      <Zap className="w-3.5 h-3.5" /> Apply Now
+                    </button>
                   </div>
                 </div>
-                <div className="px-5 pb-5 pt-4 border-t border-gray-50 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-400">Tuition / year</p>
-                    <p className="font-bold text-gray-900 text-sm">{p.fee}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleApply}
-                    className="bg-blue-600 text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-blue-700 transition-colors"
-                  >
-                    Apply Now
-                  </button>
-                </div>
-              </div>
+              </FadeIn>
             ))}
           </div>
 
-          <div className="text-center mt-10">
-            <Link to="/universities" className="inline-flex items-center gap-2 border-2 border-blue-600 text-blue-600 font-semibold px-8 py-3 rounded-xl hover:bg-blue-600 hover:text-white transition-all">
+          <FadeIn className="text-center mt-10" delayClass="delay-200">
+            <Link to="/universities" className="inline-flex items-center gap-2 border-2 border-sky-500 text-sky-600 font-semibold px-8 py-3 rounded-xl hover:bg-sky-600 hover:text-white active:scale-95 transition-all">
               Browse All Programs <ArrowRight className="w-4 h-4" />
             </Link>
-          </div>
+          </FadeIn>
         </div>
       </section>
 
       {/* ── PARTNER UNIVERSITIES ── */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-sky-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-10">
+          <FadeIn className="flex items-end justify-between mb-10">
             <div>
               <h2 className="text-3xl font-bold text-gray-900">Partner Universities</h2>
               <p className="text-gray-500 mt-2">Top-ranked institutions from around the world</p>
             </div>
-            <Link to="/universities" className="hidden md:flex items-center gap-1 text-blue-600 font-medium hover:text-blue-700 text-sm">
+            <Link to="/universities" className="hidden md:flex items-center gap-1 text-sky-600 font-medium hover:text-sky-700 text-sm">
               View all <ArrowRight className="w-4 h-4" />
             </Link>
-          </div>
+          </FadeIn>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {universities.map((u: any) => (
-              <Link key={u.id} to={`/university/${u.id}`} className="bg-gray-50 rounded-2xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all group text-center">
-                <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl mx-auto mb-3 group-hover:bg-blue-700 transition-colors">
-                  {u.name.charAt(0)}
-                </div>
-                <p className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">{u.name}</p>
-                <p className="text-xs text-gray-400 mt-1">{FLAGS[u.country] || ''} {u.city}, {u.country}</p>
-                <p className="text-xs text-blue-600 font-medium mt-2">#{u.ranking} World</p>
-                <p className="text-xs text-gray-400"><BookOpen className="w-3 h-3 inline mr-0.5" />{(u.courses || []).length} programs</p>
-              </Link>
+            {universities.map((u: any, i: number) => (
+              <FadeIn key={u.id} delayClass={STAGGER[i * 60]}>
+                <Link to={`/university/${u.id}`} className="block bg-white rounded-2xl p-5 border border-blue-100 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group text-center">
+                  <UniLogo name={u.name} website={u.website} size="lg" className="mx-auto mb-3 group-hover:scale-110 transition-all duration-300" />
+                  <p className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-sky-600 transition-colors line-clamp-2">{u.name}</p>
+                  <p className="text-xs text-gray-400 mt-1">{FLAGS[u.country] || ''} {u.city}, {u.country}</p>
+                  <p className="text-xs text-sky-600 font-medium mt-2">#{u.ranking} World</p>
+                  <p className="text-xs text-gray-400"><BookOpen className="w-3 h-3 inline mr-0.5" />{(u.courses || []).length} programs</p>
+                </Link>
+              </FadeIn>
             ))}
           </div>
         </div>
@@ -346,62 +1046,65 @@ export default function Home() {
       {/* ── STUDY DESTINATIONS ── */}
       <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <FadeIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900">Top Study Destinations</h2>
             <p className="text-gray-500 mt-3">Choose your dream country and explore programs</p>
-          </div>
+          </FadeIn>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {DESTINATIONS.map(d => (
-              <Link
-                key={d.country}
-                to={`/search?country=${encodeURIComponent(d.country)}`}
-                className="bg-white rounded-2xl p-5 text-center border border-white hover:border-blue-200 hover:shadow-md transition-all group relative"
-              >
-                {'badge' in d && (
-                  <span className="absolute top-3 right-3 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{d.badge}</span>
-                )}
-                <div className="text-4xl mb-3">{d.flag}</div>
-                <p className="font-semibold text-gray-900 text-sm group-hover:text-blue-600 transition-colors">{d.country}</p>
-                <p className="text-xs text-gray-400 mt-1">{d.count}</p>
-              </Link>
+            {DESTINATIONS.map((d, i) => (
+              <FadeIn key={d.country} delayClass={STAGGER[i * 60]}>
+                <Link
+                  to={`/search?country=${encodeURIComponent(d.country)}`}
+                  className="block bg-white rounded-2xl p-5 text-center border border-white hover:border-blue-200 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative"
+                >
+                  {'badge' in d && (
+                    <span className="absolute top-3 right-3 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{d.badge}</span>
+                  )}
+                  <div className="mb-3 flex justify-center group-hover:scale-110 transition-transform duration-300">
+                    <CountryFlagImg name={d.country} flag={d.flag} sizeCls="w-20 h-14" rounded="rounded-xl" className="shadow-md" quality="w80" />
+                  </div>
+                  <p className="font-semibold text-gray-900 text-sm group-hover:text-sky-600 transition-colors">{d.country}</p>
+                  <p className="text-xs text-gray-400 mt-1">{d.count}</p>
+                </Link>
+              </FadeIn>
             ))}
           </div>
         </div>
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-20 bg-white">
+      <section id="how-it-works" className="py-20 bg-sky-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
+          <FadeIn className="text-center mb-14">
             <h2 className="text-3xl font-bold text-gray-900">How It Works</h2>
             <p className="text-gray-500 mt-3 text-lg">Six simple steps to your dream university abroad</p>
-          </div>
+          </FadeIn>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {STEPS.map(s => (
-              <div key={s.num} className="flex gap-4">
-                <div className="flex-shrink-0 w-11 h-11 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold shadow-sm shadow-blue-200">
+            {STEPS.map((s, i) => (
+              <FadeIn key={s.num} delayClass={STAGGER[i * 90]} className="flex gap-4 group">
+                <div className="flex-shrink-0 w-11 h-11 bg-sky-500 text-white rounded-xl flex items-center justify-center font-bold shadow-sm shadow-blue-200 group-hover:scale-110 group-hover:bg-sky-600 transition-all duration-300">
                   {s.num}
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1">{s.title}</h3>
                   <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
                 </div>
-              </div>
+              </FadeIn>
             ))}
           </div>
-          <div className="text-center mt-12">
-            <Link to="/login" className="bg-blue-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-700 transition-colors inline-flex items-center gap-2">
-              Register Free <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
+          <FadeIn className="text-center mt-12" delayClass="delay-300">
+            <button type="button" onClick={() => open('register')} className="bg-sky-500 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-sky-600 active:scale-95 transition-all inline-flex items-center gap-2">
+              <Rocket className="w-4 h-4" /> Register Free <ChevronRight className="w-4 h-4" />
+            </button>
+          </FadeIn>
         </div>
       </section>
 
       {/* ── APPLICATION TRACKER ── */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-sky-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
+            <FadeIn direction="left">
               <span className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
                 Real-time Tracking
               </span>
@@ -411,96 +1114,201 @@ export default function Home() {
               </p>
               <Link
                 to={isAuthenticated && user?.role === 'student' ? '/student/applications' : '/login'}
-                className="inline-flex items-center gap-2 bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-2 bg-sky-500 text-white font-semibold px-6 py-3 rounded-xl hover:bg-sky-600 active:scale-95 transition-all"
               >
-                Start Tracking Free <ArrowRight className="w-4 h-4" />
+                <Activity className="w-4 h-4" /> Start Tracking Free <ArrowRight className="w-4 h-4" />
               </Link>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-              {TRACKER_DEMO.map((item, i) => (
-                <div key={i} className="p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm">{item.flag} {item.uni}</p>
-                      <p className="text-xs text-gray-500">{item.course}</p>
+            </FadeIn>
+            <FadeIn direction="right">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                {TRACKER_DEMO.map((item, i) => (
+                  <div key={i} className="p-4 bg-gray-50 rounded-xl hover:bg-sky-50 transition-colors duration-200">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start gap-2.5">
+                        <UniLogo name={item.uni} className="mt-0.5" />
+                        <div>
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <CountryFlagImg name={item.country} flag={item.flag} sizeCls="w-5 h-3.5" rounded="rounded-sm" quality="w40" />
+                            <p className="font-semibold text-gray-900 text-sm">{item.uni}</p>
+                          </div>
+                          <p className="text-xs text-gray-500">{item.course}</p>
+                        </div>
+                      </div>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-2 ${item.statusCls}`}>{item.status}</span>
                     </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-2 ${item.statusCls}`}>{item.status}</span>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                      <div className={`bg-sky-500 h-1.5 rounded-full transition-all duration-1000 ${progressWidth(item.progress)}`} />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">{item.progress}% complete</p>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                    <div className={`bg-blue-600 h-1.5 rounded-full ${progressWidth(item.progress)}`} />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">{item.progress}% complete</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-sky-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">What Students Say</h2>
-            <p className="text-gray-500 mt-3">Real stories from students who achieved their dreams</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map(t => (
-              <div key={t.name} className="bg-gray-50 rounded-2xl p-7 border border-gray-100">
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />)}
-                </div>
-                <p className="text-gray-700 leading-relaxed mb-5 italic">"{t.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
-                    {t.name.charAt(0)}
+          <FadeIn className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900">What Our Students Say</h2>
+            <p className="text-gray-500 mt-3">Real stories from Indian students who achieved their dream abroad with Magzest</p>
+          </FadeIn>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {TESTIMONIALS.map((t, i) => (
+              <FadeIn key={t.name} delayClass={STAGGER[i * 80]} className="flex flex-col">
+                <div className="bg-white rounded-2xl p-6 border border-blue-100 flex flex-col h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex gap-0.5 mb-3">
+                    {[...Array(5)].map((_, j) => (
+                      <Star key={j} className={`w-4 h-4 ${j < t.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                    ))}
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                    <p className="text-xs text-gray-500">{t.from} → {t.uni}</p>
+                  <p className="text-gray-700 leading-relaxed mb-5 italic flex-1">"{t.text}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                      {t.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
+                      <p className="text-xs text-gray-500">{t.from}</p>
+                      <p className="text-xs text-sky-600 font-medium mt-0.5">→ {t.uni}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </FadeIn>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER CTA ── */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-600 py-20 text-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4">Your Dream University is One Click Away</h2>
-          <p className="text-blue-100 text-lg mb-8">Join 50,000+ students who found their perfect program with EduAbroad</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-            <Link to="/login" className="bg-white text-blue-700 font-bold px-8 py-4 rounded-xl hover:bg-blue-50 transition-colors">
-              Register for Free
-            </Link>
-            <Link to="/universities" className="border-2 border-white/40 text-white font-semibold px-8 py-4 rounded-xl hover:bg-white/10 transition-colors inline-flex items-center justify-center gap-2">
-              Browse Programs <ArrowRight className="w-4 h-4" />
-            </Link>
+      {/* ── SUCCESS RATE ── */}
+      <section ref={successRef} className="py-20 bg-sky-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeIn className="text-center mb-12">
+            <span className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full mb-4">Proven Results</span>
+            <h2 className="text-3xl font-bold text-gray-900">Our Track Record Speaks</h2>
+            <p className="text-gray-500 mt-3">Numbers that reflect our commitment to every student's success</p>
+          </FadeIn>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {SUCCESS_RATES.map((r, i) => (
+              <FadeIn key={r.label} delayClass={STAGGER[i * 80]}>
+                <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full">
+                  <div className="text-4xl mb-3">{r.icon}</div>
+                  <div className="text-4xl font-extrabold text-sky-600 mb-2">
+                    <StatCounter raw={r.value} active={successActive} />
+                  </div>
+                  <div className="font-semibold text-gray-900 mb-2">{r.label}</div>
+                  <p className="text-xs text-gray-500 leading-relaxed">{r.desc}</p>
+                </div>
+              </FadeIn>
+            ))}
           </div>
-          <p className="text-blue-200 text-sm mb-3">Get study abroad tips in your inbox</p>
-          {subscribed ? (
-            <p className="text-white font-medium">Thanks for subscribing! 🎉 Check your inbox soon.</p>
-          ) : (
-            <div className="flex max-w-md mx-auto gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
-                placeholder="Your email address"
-                className="flex-1 px-4 py-2.5 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-white"
-              />
-              <button
-                type="button"
-                onClick={handleSubscribe}
-                className="bg-white text-blue-700 font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-colors whitespace-nowrap text-sm"
-              >
-                Subscribe Free
+        </div>
+      </section>
+
+      {/* ── MEET OUR TEAM ── */}
+      <section className="py-20 bg-sky-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeIn className="text-center mb-12">
+            <span className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full mb-4">Our Team</span>
+            <h2 className="text-3xl font-bold text-gray-900">Meet Your Counselors</h2>
+            <p className="text-gray-500 mt-3">Experienced advisors dedicated to your success abroad</p>
+          </FadeIn>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {TEAM.map((member, i) => (
+              <FadeIn key={member.name} delayClass={STAGGER[i * 80]}>
+                <div className="bg-white rounded-2xl p-6 border border-blue-100 text-center hover:border-blue-300 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
+                  <div className="w-28 h-28 rounded-2xl overflow-hidden mx-auto mb-4 border-4 border-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                    <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
+                  </div>
+                  <h3 className="font-bold text-gray-900">{member.name}</h3>
+                  <p className="text-blue-600 text-sm font-medium mt-0.5">{member.role}</p>
+                  <p className="text-xs text-gray-500 mt-1">{member.exp} experience</p>
+                  <span className="inline-block mt-3 bg-sky-50 text-blue-700 text-xs px-3 py-1 rounded-full font-medium border border-blue-100">{member.specialization}</span>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="py-20 bg-sky-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <FadeIn className="text-center mb-12">
+            <span className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full mb-4">FAQ</span>
+            <h2 className="text-3xl font-bold text-gray-900">Frequently Asked Questions</h2>
+            <p className="text-gray-500 mt-3">Everything students ask before starting their study abroad journey</p>
+          </FadeIn>
+          <div className="space-y-3">
+            {FAQS.map((faq, i) => (
+              <FadeIn key={i} delayClass={STAGGER[Math.min(i * 60, 450)]}>
+                <div className={`border rounded-2xl overflow-hidden transition-all duration-300 ${openFaq === i ? 'border-blue-300 shadow-md' : 'border-gray-200 hover:border-blue-200 hover:shadow-sm'}`}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left bg-white hover:bg-sky-50 active:bg-blue-100 transition-colors"
+                  >
+                    <span className={`font-semibold transition-colors ${openFaq === i ? 'text-blue-700' : 'text-gray-900'}`}>{faq.q}</span>
+                    <ChevronDown className={`w-5 h-5 text-blue-600 flex-shrink-0 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
+                  </button>
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === i ? 'max-h-48' : 'max-h-0'}`}>
+                    <p className="px-6 pb-5 pt-1 text-gray-600 leading-relaxed border-t border-blue-100">{faq.a}</p>
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+          <FadeIn className="text-center mt-10" delayClass="delay-200">
+            <p className="text-gray-500 text-sm">Still have questions?{' '}
+              <button type="button" onClick={() => open('register')} className="text-blue-600 font-semibold hover:underline">
+                Talk to a counselor for free →
               </button>
-            </div>
-          )}
+            </p>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* ── FOOTER CTA ── */}
+      <section className="bg-gradient-to-br from-sky-700 via-sky-600 to-indigo-900 py-20 text-white">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <FadeIn>
+            <h2 className="text-4xl font-bold mb-4">Your Dream University Starts with Magzest</h2>
+            <p className="text-sky-100 text-lg mb-8">Join students across India who found their perfect program with Magzest</p>
+          </FadeIn>
+          <FadeIn delayClass="delay-120" className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+            <button type="button" onClick={() => open('register')} className="bg-white text-sky-600 font-bold px-8 py-4 rounded-xl hover:bg-sky-50 active:scale-95 transition-all inline-flex items-center justify-center gap-2">
+              <Rocket className="w-4 h-4" /> Register for Free
+            </button>
+            <Link to="/universities" className="border-2 border-white/40 text-white font-semibold px-8 py-4 rounded-xl hover:bg-white/10 active:scale-95 transition-all inline-flex items-center justify-center gap-2">
+              <BookOpen className="w-4 h-4" /> Browse Programs <ArrowRight className="w-4 h-4" />
+            </Link>
+          </FadeIn>
+          <FadeIn delayClass="delay-200">
+            <p className="text-blue-200 text-sm mb-3">Get study abroad tips in your inbox</p>
+            {subscribed ? (
+              <p className="text-white font-medium">Thanks for subscribing! 🎉 Check your inbox soon.</p>
+            ) : (
+              <div className="flex max-w-md mx-auto gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
+                  placeholder="Your email address"
+                  className="flex-1 px-4 py-2.5 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-white"
+                />
+                <button
+                  type="button"
+                  onClick={handleSubscribe}
+                  className="bg-white text-sky-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-sky-50 active:scale-95 transition-all whitespace-nowrap text-sm inline-flex items-center gap-1.5"
+                >
+                  <Mail className="w-3.5 h-3.5" /> Subscribe Free
+                </button>
+              </div>
+            )}
+          </FadeIn>
         </div>
       </section>
 
@@ -509,11 +1317,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="bg-blue-600 p-1.5 rounded-lg"><Globe className="w-4 h-4 text-white" /></div>
-                <span className="text-white font-bold text-lg">EduAbroad</span>
+              <div className="flex items-center mb-4">
+                <div className="flex items-center gap-1.5 bg-sky-500 rounded-xl px-3 py-1.5">
+                  <GraduationCap className="w-5 h-5 text-white" />
+                  <span className="font-bold text-white text-lg tracking-tight">GradZest</span>
+                </div>
               </div>
-              <p className="text-sm leading-relaxed mb-4">Empowering students worldwide to discover, apply, and thrive at the world's best universities.</p>
+              <p className="text-sm leading-relaxed mb-4">Empowering Indian students to discover, apply, and thrive at top universities worldwide with expert counseling.</p>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Students</h4>
@@ -544,7 +1354,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-sm">
-            <p>© 2026 EduAbroad. All rights reserved.</p>
+            <p>© 2026 Magzest. All rights reserved.</p>
             <p className="flex items-center gap-4">
               <span>🔒 SSL Secured</span>
               <span>GDPR Compliant</span>
@@ -554,6 +1364,13 @@ export default function Home() {
         </div>
       </footer>
 
+      <DetailModal
+        modal={detailModal}
+        onClose={() => setDetailModal(null)}
+        universities={universities}
+        allPrograms={allPrograms}
+        navigate={navigate}
+      />
     </div>
   );
 }

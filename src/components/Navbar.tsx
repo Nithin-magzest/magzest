@@ -1,10 +1,12 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { GraduationCap, Menu, X, ChevronDown, LogOut, User, LayoutDashboard } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, User, LayoutDashboard, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useAuthModal } from '../context/AuthModalContext';
 
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
+  const { open } = useAuthModal();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -32,11 +34,11 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           {/* Logo + nav */}
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="bg-blue-600 p-1.5 rounded-lg">
+            <Link to="/" className="flex items-center">
+              <div className="flex items-center gap-1.5 bg-sky-500 rounded-xl px-3 py-1.5">
                 <GraduationCap className="w-5 h-5 text-white" />
+                <span className="font-bold text-white text-lg tracking-tight">GradZest</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">EduAbroad</span>
             </Link>
             <div className="hidden md:flex items-center gap-1">
               <Link
@@ -74,10 +76,11 @@ export default function Navbar() {
             {isAuthenticated ? (
               <div className="relative">
                 <button
+                  type="button"
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                  <div className="w-8 h-8 bg-sky-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                     {user?.name.charAt(0)}
                   </div>
                   <span className="hidden md:block text-sm font-medium text-gray-700">{user?.name.split(' ')[0]}</span>
@@ -108,14 +111,22 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <div className="hidden md:flex items-center gap-3">
-                <Link to="/login" className="text-sm font-medium text-gray-700 hover:text-gray-900 px-3 py-2">
+              <>
+                <button
+                  type="button"
+                  onClick={() => open('login')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
                   Log In
-                </Link>
-                <Link to="/login" className="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors">
+                </button>
+                <button
+                  type="button"
+                  onClick={() => open('register')}
+                  className="hidden md:block bg-sky-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-sky-600 transition-colors"
+                >
                   Get Started
-                </Link>
-              </div>
+                </button>
+              </>
             )}
             <button type="button" aria-label="Toggle menu" className="md:hidden p-2 text-gray-600" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -136,8 +147,8 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/login" className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => setMenuOpen(false)}>Log In</Link>
-                <Link to="/login" className="block px-3 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 rounded-md" onClick={() => setMenuOpen(false)}>Get Started</Link>
+                <button type="button" onClick={() => { setMenuOpen(false); open('login'); }} className="block w-full text-left px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">Log In</button>
+                <button type="button" onClick={() => { setMenuOpen(false); open('register'); }} className="block w-full text-left px-3 py-2 text-sm font-semibold text-sky-600 hover:bg-sky-50 rounded-md">Get Started</button>
               </>
             )}
           </div>

@@ -17,6 +17,19 @@ async function req<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+async function upload<T>(url: string, formData: FormData): Promise<T> {
+  const res = await fetch(`${BASE}${url}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: 'Upload failed' }));
+    throw new Error(err.message || 'Upload failed');
+  }
+  return res.json();
+}
+
 export const api = {
   auth: {
     login: (email: string, password: string) =>
@@ -26,6 +39,12 @@ export const api = {
         body: JSON.stringify({ email, password }),
       }),
     me: () => req<any>('/auth/me', { headers: authHeaders() }),
+    register: (data: { name: string; email: string; password: string; phone?: string; nationality?: string }) =>
+      req<{ token: string; user: any }>('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }),
   },
 
   universities: {
@@ -47,10 +66,9 @@ export const api = {
       req<any>(`/students/${studentId}/documents/${docId}`, {
         method: 'PUT', headers: authHeaders(), body: JSON.stringify({ status }),
       }),
-    addDocument: (data: { name: string; type: string }) =>
-      req<any>('/students/me/documents', {
-        method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
-      }),
+    uploadDocument: (formData: FormData) => upload<any>('/students/me/documents', formData),
+    deleteDocument: (docId: string) =>
+      req<any>(`/students/me/documents/${docId}`, { method: 'DELETE', headers: authHeaders() }),
     requestDocument: (studentId: string, data: { name: string; type: string }) =>
       req<any>(`/students/${studentId}/documents`, {
         method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
@@ -83,6 +101,19 @@ export const api = {
         method: 'POST', headers: authHeaders(),
         body: JSON.stringify({ participantIds, callStatus, callDuration, callerName }),
       }),
+    sendFile: (roomId: string, formData: FormData) => upload<any>(`/chat/rooms/${roomId}/files`, formData),
+    scheduleMeeting: (roomId: string, data: { senderName: string; meetingDate: string; meetingTime: string; meetingNotes: string }) =>
+      req<any>(`/chat/rooms/${roomId}/meetings`, {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+      }),
+  },
+
+  counselors: {
+    me: () => req<any>('/counselors/me', { headers: authHeaders() }),
+    myDocuments: () => req<any[]>('/counselors/me/documents', { headers: authHeaders() }),
+    uploadDocument: (formData: FormData) => upload<any>('/counselors/me/documents', formData),
+    deleteDocument: (docId: string) =>
+      req<any>(`/counselors/me/documents/${docId}`, { method: 'DELETE', headers: authHeaders() }),
   },
 
   admin: {
@@ -107,10 +138,42 @@ export const api = {
     deleteStudent: (id: string) => req<any>(`/admin/students/${id}`, {
       method: 'DELETE', headers: authHeaders(),
     }),
+    assignCounselor: (studentId: string, counselorId: string | null) => req<any>(`/admin/students/${studentId}/assign`, {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify({ counselorId }),
+    }),
+    universities: () => req<any[]>('/admin/universities', { headers: authHeaders() }),
+    createUniversity: (data: any) => req<any>('/admin/universities', {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    updateUniversity: (id: string, data: any) => req<any>(`/admin/universities/${id}`, {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    deleteUniversity: (id: string) => req<any>(`/admin/universities/${id}`, {
+      method: 'DELETE', headers: authHeaders(),
+    }),
+    addCourse: (uniId: string, data: any) => req<any>(`/admin/universities/${uniId}/courses`, {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    updateCourse: (uniId: string, courseId: string, data: any) => req<any>(`/admin/universities/${uniId}/courses/${courseId}`, {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    deleteCourse: (uniId: string, courseId: string) => req<any>(`/admin/universities/${uniId}/courses/${courseId}`, {
+      method: 'DELETE', headers: authHeaders(),
+    }),
     applications: () => req<any[]>('/admin/applications', { headers: authHeaders() }),
     updateApplication: (studentId: string, appId: string, data: { status?: string; notes?: string }) =>
       req<any>(`/admin/applications/${studentId}/${appId}`, {
         method: 'PUT', headers: authHeaders(), body: JSON.stringify(data),
       }),
+    countries: () => req<any[]>('/admin/countries', { headers: authHeaders() }),
+    createCountry: (data: any) => req<any>('/admin/countries', {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    updateCountry: (id: string, data: any) => req<any>(`/admin/countries/${id}`, {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    deleteCountry: (id: string) => req<any>(`/admin/countries/${id}`, {
+      method: 'DELETE', headers: authHeaders(),
+    }),
   },
 };

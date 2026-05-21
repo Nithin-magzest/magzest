@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -76,51 +76,51 @@ function NewStudentModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Full Name <span className="text-red-500">*</span></label>
               <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Rahul Singh"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
               <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="student@example.com"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
               <input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+91 99999 00000"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
               <input value={form.nationality} onChange={e => set('nationality', e.target.value)} placeholder="e.g. Indian"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Education Level</label>
               <select aria-label="Education Level" value={form.educationLevel} onChange={e => set('educationLevel', e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
                 {EDUCATION_LEVELS.map(l => <option key={l}>{l}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">GPA (out of 10)</label>
               <input type="number" min="0" max="10" step="0.1" value={form.gpa} onChange={e => set('gpa', e.target.value)} placeholder="8.5"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Budget (USD/yr)</label>
               <input type="number" min="0" value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="30000"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">English Test</label>
               <select aria-label="English Test Type" value={form.englishType} onChange={e => set('englishType', e.target.value as any)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
                 <option>IELTS</option><option>TOEFL</option><option>PTE</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Score</label>
               <input type="number" min="0" step="0.5" value={form.englishScore} onChange={e => set('englishScore', e.target.value)} placeholder="7.0"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
           </div>
 
@@ -129,7 +129,7 @@ function NewStudentModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <div className="flex flex-wrap gap-2">
               {COUNTRIES.map(c => (
                 <button key={c} type="button" onClick={() => toggleCountry(c)}
-                  className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${form.preferredCountries.includes(c) ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'}`}>
+                  className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${form.preferredCountries.includes(c) ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-900'}`}>
                   {c}
                 </button>
               ))}
@@ -139,14 +139,14 @@ function NewStudentModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Interested Courses <span className="text-gray-400 font-normal">(comma-separated)</span></label>
             <input value={form.interestedCourses} onChange={e => set('interestedCourses', e.target.value)} placeholder="Computer Science, Data Science"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
           </div>
 
           {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-60">
+            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-sky-500 text-white rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors disabled:opacity-60">
               {saving ? 'Adding…' : 'Add Student'}
             </button>
           </div>
@@ -187,7 +187,7 @@ export default function CounselorDashboard() {
 
   const appBreakdown = [
     { label: 'Draft', count: allApplications.filter((a: any) => a.status === 'draft').length, color: 'bg-gray-400' },
-    { label: 'Submitted', count: allApplications.filter((a: any) => a.status === 'submitted').length, color: 'bg-blue-500' },
+    { label: 'Submitted', count: allApplications.filter((a: any) => a.status === 'submitted').length, color: 'bg-sky-500' },
     { label: 'Under Review', count: allApplications.filter((a: any) => a.status === 'under_review').length, color: 'bg-yellow-500' },
     { label: 'Offer Received', count: allApplications.filter((a: any) => a.status === 'offer_received').length, color: 'bg-green-500' },
     { label: 'Accepted', count: allApplications.filter((a: any) => a.status === 'accepted').length, color: 'bg-emerald-600' },
@@ -206,10 +206,10 @@ export default function CounselorDashboard() {
       />
     )}
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-green-600 to-teal-600 rounded-2xl p-6 text-white">
-        <p className="text-green-200 text-sm mb-1">Welcome back,</p>
+      <div className="bg-gradient-to-r from-sky-700 via-sky-600 to-indigo-900 rounded-2xl p-6 text-white">
+        <p className="text-blue-200 text-sm mb-1">Welcome back,</p>
         <h1 className="text-2xl font-bold">{counselor?.name || 'Counselor'}</h1>
-        <p className="text-green-200 mt-1 text-sm capitalize">{counselor?.specialization?.join(' • ')}</p>
+        <p className="text-blue-200 mt-1 text-sm capitalize">{counselor?.specialization?.join(' • ')}</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">
           {[
             { label: 'My Students', value: stats.totalStudents, icon: Users },
@@ -218,9 +218,9 @@ export default function CounselorDashboard() {
             { label: 'Offers Out', value: stats.offers, icon: Star },
           ].map(s => (
             <div key={s.label} className="bg-white/15 rounded-xl p-3 backdrop-blur-sm">
-              <s.icon className="w-4 h-4 text-green-200 mb-1" />
+              <s.icon className="w-4 h-4 text-blue-200 mb-1" />
               <div className="text-2xl font-bold">{s.value}</div>
-              <div className="text-xs text-green-200">{s.label}</div>
+              <div className="text-xs text-blue-200">{s.label}</div>
             </div>
           ))}
         </div>
@@ -245,16 +245,16 @@ export default function CounselorDashboard() {
             <h2 className="text-lg font-bold text-gray-900">My Students</h2>
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => setShowNewStudent(true)}
-                className="flex items-center gap-1.5 bg-green-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors">
+                className="flex items-center gap-1.5 bg-sky-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-sky-600 transition-colors">
                 <Plus className="w-4 h-4" /> New Student
               </button>
-              <Link to="/counselor/students" className="text-green-600 text-sm font-medium hover:text-green-700 flex items-center gap-1">Manage <ArrowRight className="w-3.5 h-3.5" /></Link>
+              <Link to="/counselor/students" className="text-blue-600 text-sm font-medium hover:text-blue-700 flex items-center gap-1">Manage <ArrowRight className="w-3.5 h-3.5" /></Link>
             </div>
           </div>
           <div className="space-y-3">
             {myStudents.map((s: any) => (
               <Link key={s._id || s.id} to={`/counselor/students/${s._id || s.id}`} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold flex-shrink-0">{s.name.charAt(0)}</div>
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold flex-shrink-0">{s.name.charAt(0)}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 text-sm">{s.name}</p>
                   <p className="text-xs text-gray-500">{s.nationality} • {(s.applications || []).length} application(s)</p>
@@ -273,7 +273,7 @@ export default function CounselorDashboard() {
           <div className="space-y-3">
             {recentActivity.map((a, i) => (
               <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
-                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${a.status === 'offer_received' ? 'bg-green-500' : a.status === 'accepted' ? 'bg-emerald-600' : a.status === 'rejected' ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${a.status === 'offer_received' ? 'bg-green-500' : a.status === 'accepted' ? 'bg-emerald-600' : a.status === 'rejected' ? 'bg-red-500' : 'bg-sky-500'}`}></div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{a.title}</p>
                   <p className="text-xs text-gray-500 truncate">{a.sub}</p>
@@ -289,8 +289,8 @@ export default function CounselorDashboard() {
         <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: 'View All Students', icon: Users, to: '/counselor/students', color: 'bg-green-50 text-green-700 border-green-200' },
-            { label: 'Open Chat', icon: MessageSquare, to: '/counselor/chat', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+            { label: 'View All Students', icon: Users, to: '/counselor/students', color: 'bg-sky-50 text-blue-700 border-blue-200' },
+            { label: 'Open Chat', icon: MessageSquare, to: '/counselor/chat', color: 'bg-sky-50 text-blue-700 border-blue-200' },
             { label: 'Browse Universities', icon: TrendingUp, to: '/counselor/universities', color: 'bg-purple-50 text-purple-700 border-purple-200' },
             { label: 'Search Engine', icon: FileText, to: '/search', color: 'bg-amber-50 text-amber-700 border-amber-200' },
           ].map(action => (

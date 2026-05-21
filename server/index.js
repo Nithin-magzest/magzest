@@ -3,7 +3,13 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
-require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+if (!process.env.JWT_SECRET || !process.env.MONGODB_URI) {
+  console.error('Missing required env vars: JWT_SECRET and MONGODB_URI must be set in server/.env');
+  process.exit(1);
+}
 
 const app = express();
 const httpServer = createServer(app);
@@ -13,6 +19,7 @@ const io = new Server(httpServer, {
 
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'], credentials: true }));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Share io and userSockets with route handlers
 const userSockets = new Map(); // userId -> socketId
@@ -22,6 +29,7 @@ app.set('userSockets', userSockets);
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/universities', require('./routes/universities'));
 app.use('/api/students', require('./routes/students'));
+app.use('/api/counselors', require('./routes/counselors'));
 app.use('/api/applications', require('./routes/applications'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/admin', require('./routes/admin'));

@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const University = require('../models/University');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -37,13 +38,15 @@ router.get('/counselors', authMiddleware, adminOnly, async (req, res) => {
 
 // Create counselor (admin only)
 router.post('/counselors', authMiddleware, adminOnly, async (req, res) => {
-  const { name, email, password, specialization, experience } = req.body;
+  const { name, email, password, ...rest } = req.body;
   if (!name || !email || !password) return res.status(400).json({ message: 'Name, email and password are required' });
   try {
     const hashed = await bcrypt.hash(password, 10);
     const counselor = new User({
+      ...rest,
       name, email: email.toLowerCase(), password: hashed, role: 'counselor',
-      specialization: specialization || [], assignedStudents: [], experience: experience || 0,
+      specialization: rest.specialization || [], assignedStudents: [],
+      experience: rest.experience || 0,
     });
     await counselor.save();
     const obj = counselor.toJSON();
@@ -141,6 +144,34 @@ router.delete('/students/:id', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
+// Assign student to counselor (or unassign)
+router.put('/students/:id/assign', authMiddleware, adminOnly, async (req, res) => {
+  const { counselorId } = req.body;
+  try {
+    const student = await User.findOne({ _id: req.params.id, role: 'student' });
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+
+    const prevCounselorId = student.counselorId;
+    const studentId = student._id.toString();
+
+    if (prevCounselorId) {
+      await User.findByIdAndUpdate(prevCounselorId, { $pull: { assignedStudents: studentId } });
+    }
+
+    student.counselorId = counselorId || undefined;
+    await student.save();
+
+    if (counselorId) {
+      await User.findByIdAndUpdate(counselorId, { $addToSet: { assignedStudents: studentId } });
+    }
+
+    const updated = await User.findById(req.params.id).select('-password');
+    res.json(updated.toJSON());
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Server error' });
+  }
+});
+
 // List all applications across all students
 router.get('/applications', authMiddleware, adminOnly, async (req, res) => {
   try {
@@ -192,6 +223,84 @@ router.put('/applications/:studentId/:appId', authMiddleware, adminOnly, async (
   } catch {
     res.status(500).json({ message: 'Server error' });
   }
+});
+
+// ── Universities CRUD ────────────────────────────────────────────────────────
+
+router.get('/universities', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const unis = await University.find({});
+    res.json(unis);
+  } catch { res.status(500).json({ message: 'Server error' }); }
+});
+
+router.post('/universities', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { name, country, city, ranking, type, founded, website, description,
+            acceptanceRate, totalStudents, internationalStudents, rating, tags,
+            averageFees, courses, facilities, scholarships, applicationDeadlines } = req.body;
+    if (!name || !country) return res.status(400).json({ message: 'Name and country are required' });
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+    const uni = new University({
+      id, name, country, city, ranking, type, founded, website, description,
+      acceptanceRate, totalStudents, internationalStudents, rating,
+      tags: tags || [], facilities: facilities || [],
+      averageFees: averageFees || {}, courses: courses || [],
+      scholarships: scholarships || [], applicationDeadlines: applicationDeadlines || [],
+    });
+    await uni.save();
+    res.status(201).json(uni);
+  } catch (err) { res.status(500).json({ message: err.message || 'Server error' }); }
+});
+
+router.put('/universities/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { _id, __v, ...updates } = req.body;
+    const uni = await University.findByIdAndUpdate(req.params.id, updates, { new: true });
+    if (!uni) return res.status(404).json({ message: 'University not found' });
+    res.json(uni);
+  } catch (err) { res.status(500).json({ message: err.message || 'Server error' }); }
+});
+
+router.delete('/universities/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    await University.findByIdAndDelete(req.params.id);
+    res.json({ message: 'University deleted' });
+  } catch { res.status(500).json({ message: 'Server error' }); }
+});
+
+// Course CRUD within a university
+router.post('/universities/:id/courses', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const uni = await University.findById(req.params.id);
+    if (!uni) return res.status(404).json({ message: 'University not found' });
+    const courseId = 'course-' + Date.now();
+    uni.courses.push({ ...req.body, id: courseId });
+    await uni.save();
+    res.status(201).json(uni);
+  } catch (err) { res.status(500).json({ message: err.message || 'Server error' }); }
+});
+
+router.put('/universities/:id/courses/:courseId', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const uni = await University.findById(req.params.id);
+    if (!uni) return res.status(404).json({ message: 'University not found' });
+    const course = uni.courses.id(req.params.courseId);
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+    Object.assign(course, req.body);
+    await uni.save();
+    res.json(uni);
+  } catch (err) { res.status(500).json({ message: err.message || 'Server error' }); }
+});
+
+router.delete('/universities/:id/courses/:courseId', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const uni = await University.findById(req.params.id);
+    if (!uni) return res.status(404).json({ message: 'University not found' });
+    uni.courses.pull({ _id: req.params.courseId });
+    await uni.save();
+    res.json(uni);
+  } catch (err) { res.status(500).json({ message: err.message || 'Server error' }); }
 });
 
 module.exports = router;

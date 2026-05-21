@@ -1,14 +1,27 @@
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCog, Shield, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, Shield, FileText, GraduationCap, BookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
 
-const navItems = [
+type NavIcon = React.ComponentType<{ className?: string }> | string;
+
+const navItems: { to: string; label: string; icon: NavIcon; end?: boolean }[] = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/admin/universities', label: 'Universities', icon: GraduationCap },
+  { to: '/admin/courses', label: 'Courses', icon: BookOpen },
+  { to: '/admin/countries', label: 'Countries & Visa', icon: '🌍' },
   { to: '/admin/counselors', label: 'Counselors', icon: UserCog },
   { to: '/admin/students', label: 'Students', icon: Users },
   { to: '/admin/applications', label: 'Applications', icon: FileText },
 ];
+
+function NavIcon({ icon, size }: { icon: NavIcon; size: 'sm' | 'md' }) {
+  if (typeof icon === 'string') {
+    return <span className={size === 'md' ? 'text-xl leading-none' : 'text-base leading-none'}>{icon}</span>;
+  }
+  const Icon = icon;
+  return <Icon className={size === 'md' ? 'w-5 h-5' : 'w-4 h-4'} />;
+}
 
 export default function AdminLayout() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -17,7 +30,7 @@ export default function AdminLayout() {
   if (user?.role !== 'admin') return <Navigate to="/login" />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-sky-50">
       <Navbar />
       <div className="flex">
         <aside className="hidden md:flex flex-col w-64 min-h-[calc(100vh-64px)] bg-white border-r border-gray-200 sticky top-16 p-4 gap-1">
@@ -43,7 +56,7 @@ export default function AdminLayout() {
                 }`
               }
             >
-              <item.icon className="w-4 h-4" />
+              <NavIcon icon={item.icon} size="sm" />
               {item.label}
             </NavLink>
           ))}
@@ -52,7 +65,7 @@ export default function AdminLayout() {
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-40">
           {navItems.map(item => (
             <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `flex-1 flex flex-col items-center py-3 text-xs gap-1 ${isActive ? 'text-purple-600' : 'text-gray-500'}`}>
-              <item.icon className="w-5 h-5" />
+              <NavIcon icon={item.icon} size="md" />
               <span>{item.label}</span>
             </NavLink>
           ))}

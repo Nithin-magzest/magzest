@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Users, UserCog, FileText, Activity, Plus, Trash2, X, Shield,
-  Eye, EyeOff, Check, UserPlus, Search,
-  ToggleLeft, ToggleRight, Info, GraduationCap, RefreshCw, AlertTriangle,
+  Eye, EyeOff, Check, UserPlus, Search, ExternalLink,
+  ToggleLeft, ToggleRight, Info, GraduationCap, RefreshCw, AlertTriangle, UserCheck,
 } from 'lucide-react';
 import { api } from '../../api';
 import StatusBadge from '../../components/StatusBadge';
@@ -16,8 +16,21 @@ const COUNTRIES = ['UK', 'Canada', 'Australia', 'Germany', 'Netherlands', 'Singa
 const COURSES = ['Computer Science', 'Engineering', 'Business', 'Medicine', 'Law', 'Arts', 'Data Science', 'Finance', 'Psychology'];
 const EDUCATION_LEVELS = ['High School', "Bachelor's", "Master's", 'PhD'];
 const ENGLISH_TYPES = ['IELTS', 'TOEFL', 'PTE', 'Duolingo'];
+const LANGUAGES = ['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'French', 'German', 'Spanish', 'Arabic', 'Mandarin', 'Japanese'];
+const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
+const COUNSELOR_DEGREES = ["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'];
+const GRAD_YEARS = Array.from({ length: 40 }, (_, i) => String(2025 - i));
 
-const DEFAULT_COUNSELOR_FORM = { name: '', email: '', password: '', specialization: [] as string[], experience: '' };
+const DEFAULT_COUNSELOR_FORM = {
+  name: '', email: '', password: '',
+  specialization: [] as string[], experience: '',
+  phone: '', nationality: '', dateOfBirth: '', gender: '',
+  title: '', bio: '',
+  languages: [] as string[], certifications: '',
+  linkedIn: '', website: '',
+  street: '', city: '', state: '', country: '', postalCode: '',
+  degree: '', institution: '', graduationYear: '',
+};
 const DEFAULT_STUDENT_FORM = {
   name: '', email: '', password: '', phone: '', nationality: '', educationLevel: '',
   gpa: '', englishType: '', englishScore: '', budget: '',
@@ -78,7 +91,7 @@ function BtnDanger({ children, onClick, disabled, className = '' }: {
 
 function BtnView({ onClick, color = 'purple' }: { onClick: () => void; color?: 'purple' | 'blue' }) {
   const s = color === 'blue'
-    ? 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 focus-visible:ring-blue-400'
+    ? 'text-blue-600 bg-sky-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 focus-visible:ring-blue-400'
     : 'text-purple-600 bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 focus-visible:ring-purple-400';
   return (
     <button type="button" onClick={onClick}
@@ -165,7 +178,7 @@ function StudentDetailModal({ student, onClose }: { student: any; onClose: () =>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Preferred Countries</p>
               <div className="flex flex-wrap gap-2">
                 {student.preferredCountries.map((c: string) => (
-                  <span key={c} className="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium border border-blue-100">{c}</span>
+                  <span key={c} className="text-xs bg-sky-50 text-blue-700 px-3 py-1 rounded-full font-medium border border-blue-100">{c}</span>
                 ))}
               </div>
             </div>
@@ -211,7 +224,15 @@ function StudentDetailModal({ student, onClose }: { student: any; onClose: () =>
                       <p className="text-xs font-medium text-gray-900">{doc.name}</p>
                       <p className="text-xs text-gray-400">{doc.type}</p>
                     </div>
-                    <StatusBadge status={doc.status} />
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {doc.url && (
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md hover:bg-gray-200 font-medium transition-colors">
+                          <ExternalLink className="w-3 h-3" /> Open
+                        </a>
+                      )}
+                      <StatusBadge status={doc.status} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -239,24 +260,76 @@ function CounselorDetailModal({ counselor, students, onClose }: { counselor: any
       <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md flex-shrink-0">
               {initials}
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">{counselor.name}</h2>
               <p className="text-sm text-gray-500">{counselor.email}</p>
+              {counselor.title && <p className="text-xs text-purple-600 font-semibold mt-0.5">{counselor.title}</p>}
             </div>
           </div>
           <BtnClose onClick={onClose} />
         </div>
         <div className="p-6 space-y-5">
+
+          {/* Profile overview */}
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Profile</p>
             <div className="bg-gray-50 rounded-xl p-3">
               <DetailRow label="Experience" value={counselor.experience !== undefined ? `${counselor.experience} years` : undefined} />
               <DetailRow label="Assigned Students" value={assignedIds.length} />
+              <DetailRow label="Phone" value={counselor.phone} />
+              <DetailRow label="Nationality" value={counselor.nationality} />
             </div>
           </div>
+
+          {/* Personal info */}
+          {(counselor.dateOfBirth || counselor.gender) && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Personal Information</p>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <DetailRow label="Date of Birth" value={counselor.dateOfBirth} />
+                <DetailRow label="Gender" value={counselor.gender} />
+              </div>
+            </div>
+          )}
+
+          {/* Address */}
+          {counselor.address && (counselor.address.city || counselor.address.country) && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Address</p>
+              <div className="bg-gray-50 rounded-xl p-3">
+                {counselor.address.street && <DetailRow label="Street" value={counselor.address.street} />}
+                <DetailRow label="City" value={counselor.address.city} />
+                <DetailRow label="State / Province" value={counselor.address.state} />
+                <DetailRow label="Country" value={counselor.address.country} />
+                <DetailRow label="Postal Code" value={counselor.address.postalCode} />
+              </div>
+            </div>
+          )}
+
+          {/* Education */}
+          {counselor.educationBackground && (counselor.educationBackground.degree || counselor.educationBackground.institution) && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Education</p>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <DetailRow label="Degree" value={counselor.educationBackground.degree} />
+                <DetailRow label="Institution" value={counselor.educationBackground.institution} />
+                <DetailRow label="Graduation Year" value={counselor.educationBackground.graduationYear} />
+              </div>
+            </div>
+          )}
+
+          {/* About */}
+          {counselor.bio && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">About</p>
+              <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3 leading-relaxed">{counselor.bio}</p>
+            </div>
+          )}
+
+          {/* Specializations */}
           {counselor.specialization?.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Specializations</p>
@@ -267,6 +340,43 @@ function CounselorDetailModal({ counselor, students, onClose }: { counselor: any
               </div>
             </div>
           )}
+
+          {/* Languages */}
+          {counselor.languages?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Languages</p>
+              <div className="flex flex-wrap gap-2">
+                {counselor.languages.map((l: string) => (
+                  <span key={l} className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full font-medium border border-green-100">{l}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Certifications */}
+          {counselor.certifications?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Certifications</p>
+              <div className="flex flex-wrap gap-2">
+                {counselor.certifications.map((c: string) => (
+                  <span key={c} className="text-xs bg-sky-50 text-blue-700 px-3 py-1 rounded-full font-medium border border-blue-100">{c}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Online Presence */}
+          {(counselor.linkedIn || counselor.website) && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Online Presence</p>
+              <div className="bg-gray-50 rounded-xl p-3">
+                <DetailRow label="LinkedIn" value={counselor.linkedIn} />
+                <DetailRow label="Website" value={counselor.website} />
+              </div>
+            </div>
+          )}
+
+          {/* Assigned Students */}
           {assignedStudentDetails.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
@@ -317,6 +427,10 @@ function NewCounselorModal({ onClose, onCreated }: { onClose: () => void; onCrea
     set('specialization', form.specialization.includes(s)
       ? form.specialization.filter(x => x !== s)
       : [...form.specialization, s]);
+  const toggleLang = (l: string) =>
+    set('languages', form.languages.includes(l)
+      ? form.languages.filter(x => x !== l)
+      : [...form.languages, l]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -328,17 +442,45 @@ function NewCounselorModal({ onClose, onCreated }: { onClose: () => void; onCrea
       const counselor = await api.admin.createCounselor({
         name: form.name.trim(), email: form.email.trim(), password: form.password,
         specialization: form.specialization, experience: parseInt(form.experience) || 0,
+        phone: form.phone.trim() || undefined,
+        nationality: form.nationality.trim() || undefined,
+        dateOfBirth: form.dateOfBirth || undefined,
+        gender: form.gender || undefined,
+        title: form.title.trim() || undefined,
+        bio: form.bio.trim() || undefined,
+        languages: form.languages,
+        certifications: form.certifications.split(',').map(s => s.trim()).filter(Boolean),
+        linkedIn: form.linkedIn.trim() || undefined,
+        website: form.website.trim() || undefined,
+        address: {
+          street: form.street.trim() || undefined,
+          city: form.city.trim() || undefined,
+          state: form.state.trim() || undefined,
+          country: form.country.trim() || undefined,
+          postalCode: form.postalCode.trim() || undefined,
+        },
+        educationBackground: {
+          degree: form.degree || undefined,
+          institution: form.institution.trim() || undefined,
+          graduationYear: form.graduationYear || undefined,
+        },
       });
       onCreated(counselor);
     } catch (err: any) { setError(err.message || 'Failed to create counselor.'); }
     setSaving(false);
   };
 
+  const inputCls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400';
+  const selectCls = `${inputCls} bg-white text-gray-700`;
+  const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">{children}</p>
+  );
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
               <UserPlus className="w-4 h-4 text-white" />
@@ -348,32 +490,44 @@ function NewCounselorModal({ onClose, onCreated }: { onClose: () => void; onCrea
           <BtnClose onClick={onClose} />
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+          {/* Account */}
+          <SectionLabel>Account Details</SectionLabel>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name <span className="text-red-500">*</span></label>
-            <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Dr. Anita Sharma"
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
+            <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Dr. Anita Sharma" className={inputCls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Email <span className="text-red-500">*</span></label>
-            <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="counselor@eduabroad.com"
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
+            <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="counselor@eduabroad.com" className={inputCls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Password <span className="text-red-500">*</span></label>
             <div className="relative">
               <input type={showPw ? 'text' : 'password'} value={form.password} onChange={e => set('password', e.target.value)}
-                placeholder="Set a strong password"
-                className="w-full px-3.5 py-2.5 pr-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
+                placeholder="Set a strong password" className={`${inputCls} pr-11`} />
               <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
+
+          {/* Professional */}
+          <SectionLabel>Professional Details</SectionLabel>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Years of Experience</label>
-            <input type="number" min="0" value={form.experience} onChange={e => set('experience', e.target.value)} placeholder="e.g. 5"
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Job Title / Designation</label>
+            <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Senior Education Counselor" className={inputCls} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Years of Experience</label>
+              <input type="number" min="0" value={form.experience} onChange={e => set('experience', e.target.value)} placeholder="e.g. 5" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+              <input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+91 9999999999" className={inputCls} />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Specialization</label>
@@ -390,6 +544,120 @@ function NewCounselorModal({ onClose, onCreated }: { onClose: () => void; onCrea
               })}
             </div>
           </div>
+
+          {/* Personal Info */}
+          <SectionLabel>Personal Information</SectionLabel>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Date of Birth</label>
+              <input type="date" value={form.dateOfBirth} onChange={e => set('dateOfBirth', e.target.value)} className={selectCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Gender</label>
+              <select value={form.gender} onChange={e => set('gender', e.target.value)} title="Gender" className={selectCls}>
+                <option value="">Select…</option>
+                {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nationality</label>
+            <input value={form.nationality} onChange={e => set('nationality', e.target.value)} placeholder="e.g. Indian" className={inputCls} />
+          </div>
+
+          {/* Address */}
+          <SectionLabel>Address</SectionLabel>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Street Address</label>
+            <input value={form.street} onChange={e => set('street', e.target.value)} placeholder="e.g. 123 Main Street" className={inputCls} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">City</label>
+              <input value={form.city} onChange={e => set('city', e.target.value)} placeholder="City" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">State / Province</label>
+              <input value={form.state} onChange={e => set('state', e.target.value)} placeholder="State" className={inputCls} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
+              <input value={form.country} onChange={e => set('country', e.target.value)} placeholder="Country" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Postal Code</label>
+              <input value={form.postalCode} onChange={e => set('postalCode', e.target.value)} placeholder="e.g. 600001" className={inputCls} />
+            </div>
+          </div>
+
+          {/* Education */}
+          <SectionLabel>Education Background</SectionLabel>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Highest Degree</label>
+            <select value={form.degree} onChange={e => set('degree', e.target.value)} title="Degree" className={selectCls}>
+              <option value="">Select…</option>
+              {COUNSELOR_DEGREES.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Institution</label>
+              <input value={form.institution} onChange={e => set('institution', e.target.value)} placeholder="University / College" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Graduation Year</label>
+              <select value={form.graduationYear} onChange={e => set('graduationYear', e.target.value)} title="Graduation Year" className={selectCls}>
+                <option value="">Select…</option>
+                {GRAD_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Languages */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Languages Known</label>
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGES.map(l => {
+                const sel = form.languages.includes(l);
+                return (
+                  <button key={l} type="button" onClick={() => toggleLang(l)}
+                    className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium transition-all duration-150 active:scale-95
+                      ${sel ? 'bg-green-600 text-white border-green-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-green-400 hover:text-green-600'}`}>
+                    {sel && <Check className="w-3 h-3" />}{l}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Certifications */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Certifications</label>
+            <input value={form.certifications} onChange={e => set('certifications', e.target.value)}
+              placeholder="e.g. IELTS Trainer, British Council Certified (comma-separated)" className={inputCls} />
+          </div>
+
+          {/* About & Links */}
+          <SectionLabel>About & Online Presence</SectionLabel>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">About / Bio</label>
+            <textarea value={form.bio} onChange={e => set('bio', e.target.value)} rows={3}
+              placeholder="Brief professional summary about the counselor…"
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400 resize-none" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">LinkedIn URL</label>
+              <input value={form.linkedIn} onChange={e => set('linkedIn', e.target.value)} placeholder="linkedin.com/in/…" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Website</label>
+              <input value={form.website} onChange={e => set('website', e.target.value)} placeholder="https://…" className={inputCls} />
+            </div>
+          </div>
+
           {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">{error}</div>}
           <div className="flex gap-3 pt-2">
             <BtnGhost onClick={onClose} className="flex-1">Cancel</BtnGhost>
@@ -582,6 +850,170 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
   );
 }
 
+// ── Assign counselor to a student ───────────────────────────────────────────
+
+function AssignCounselorModal({ student, counselors, onClose, onSaved }: {
+  student: any; counselors: any[]; onClose: () => void; onSaved: () => void;
+}) {
+  const currentId = student.counselorId || '';
+  const [selectedId, setSelectedId] = useState(currentId);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const unchanged = selectedId === currentId;
+  const currentCounselor = counselors.find(c => normalId(c) === currentId);
+
+  const handleSave = async () => {
+    setSaving(true); setError('');
+    try {
+      await api.admin.assignCounselor(normalId(student), selectedId || null);
+      onSaved();
+    } catch (err: any) { setError(err.message || 'Failed to assign.'); setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">Assign Counselor</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{student.name}</p>
+          </div>
+          <BtnClose onClick={onClose} />
+        </div>
+        <div className="p-5 space-y-4">
+          {currentCounselor && (
+            <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2.5">
+              <UserCog className="w-4 h-4 text-purple-500 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-purple-500 font-medium">Currently assigned to</p>
+                <p className="text-sm font-semibold text-purple-900">{currentCounselor.name}</p>
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              {currentCounselor ? 'Reassign to' : 'Select Counselor'}
+            </label>
+            <select value={selectedId} onChange={e => setSelectedId(e.target.value)} title="Counselor"
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-700">
+              <option value="">— Unassigned —</option>
+              {counselors.map(c => <option key={normalId(c)} value={normalId(c)}>{c.name}</option>)}
+            </select>
+          </div>
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{error}</p>}
+          <div className="flex gap-3">
+            <BtnGhost onClick={onClose} className="flex-1">Cancel</BtnGhost>
+            <BtnPrimary onClick={handleSave} disabled={saving || unchanged} className="flex-1">
+              {saving ? <><Spinner size={4} white />Saving…</> : unchanged ? 'No Change' : 'Save'}
+            </BtnPrimary>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Assign students to a counselor ───────────────────────────────────────────
+
+function AssignStudentsModal({ counselor, students, allCounselors, onClose, onSaved }: {
+  counselor: any; students: any[]; allCounselors: any[]; onClose: () => void; onSaved: () => void;
+}) {
+  const counselorId = normalId(counselor);
+  const initialSet = new Set<string>((counselor.assignedStudents || []).map((id: any) => id.toString()));
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialSet));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+
+  const filtered = students.filter(s =>
+    !search ||
+    s.name?.toLowerCase().includes(search.toLowerCase()) ||
+    s.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const toggle = (id: string) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const toAdd = [...selected].filter(id => !initialSet.has(id));
+  const toRemove = [...initialSet].filter(id => !selected.has(id));
+  const hasChanges = toAdd.length > 0 || toRemove.length > 0;
+
+  const handleSave = async () => {
+    setSaving(true); setError('');
+    try {
+      for (const sid of toAdd) await api.admin.assignCounselor(sid, counselorId);
+      for (const sid of toRemove) await api.admin.assignCounselor(sid, null);
+      onSaved();
+    } catch (err: any) { setError(err.message || 'Failed to save.'); setSaving(false); }
+  };
+
+  const otherCounselorName = (s: any) =>
+    allCounselors.find(c => normalId(c) === s.counselorId)?.name ?? 'another counselor';
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">Assign Students</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{counselor.name}</p>
+          </div>
+          <BtnClose onClick={onClose} />
+        </div>
+        <div className="p-4 border-b border-gray-100">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search students…"
+              className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-0">
+          {filtered.length === 0
+            ? <p className="text-sm text-gray-400 text-center py-8">No students found.</p>
+            : filtered.map(s => {
+              const sid = normalId(s);
+              const checked = selected.has(sid);
+              const elsewhere = s.counselorId && s.counselorId !== counselorId;
+              return (
+                <label key={sid}
+                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border transition-colors
+                    ${checked ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-transparent hover:bg-gray-100'}`}>
+                  <input type="checkbox" checked={checked} onChange={() => toggle(sid)}
+                    className="w-4 h-4 accent-purple-600 flex-shrink-0 cursor-pointer" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{s.name}</p>
+                    <p className="text-xs text-gray-400">{s.email}</p>
+                    {elsewhere && (
+                      <p className="text-xs text-amber-600 font-medium mt-0.5">
+                        Currently: {otherCounselorName(s)}
+                      </p>
+                    )}
+                  </div>
+                  <StatusBadge status={s.status} />
+                </label>
+              );
+            })}
+        </div>
+        {error && <p className="mx-4 mb-2 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{error}</p>}
+        <div className="p-4 border-t border-gray-100 flex gap-3 items-center">
+          <span className="flex-1 text-xs text-gray-400">
+            {hasChanges ? `+${toAdd.length} / −${toRemove.length}` : 'No changes'}
+          </span>
+          <BtnGhost onClick={onClose}>Cancel</BtnGhost>
+          <BtnPrimary onClick={handleSave} disabled={saving || !hasChanges}>
+            {saving ? <><Spinner size={4} white />Saving…</> : 'Save'}
+          </BtnPrimary>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main dashboard ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
@@ -598,6 +1030,8 @@ export default function AdminDashboard() {
   );
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [assigningStudent, setAssigningStudent] = useState<any>(null);
+  const [assigningCounselor, setAssigningCounselor] = useState<any>(null);
   const [studentSearch, setStudentSearch] = useState('');
   const [counselorSearch, setCounselorSearch] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -673,6 +1107,8 @@ export default function AdminDashboard() {
     setTogglingId(null);
   };
 
+  const counselorNameById = Object.fromEntries(counselors.map(c => [normalId(c), c.name]));
+
   const filteredStudents = students.filter(s =>
     s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
     s.email?.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -709,7 +1145,23 @@ export default function AdminDashboard() {
       )}
       {selectedStudent && <StudentDetailModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />}
       {selectedCounselor && <CounselorDetailModal counselor={selectedCounselor} students={students} onClose={() => setSelectedCounselor(null)} />}
-
+      {assigningStudent && (
+        <AssignCounselorModal
+          student={assigningStudent}
+          counselors={counselors}
+          onClose={() => setAssigningStudent(null)}
+          onSaved={() => { setAssigningStudent(null); loadData(); }}
+        />
+      )}
+      {assigningCounselor && (
+        <AssignStudentsModal
+          counselor={assigningCounselor}
+          students={students}
+          allCounselors={counselors}
+          onClose={() => setAssigningCounselor(null)}
+          onSaved={() => { setAssigningCounselor(null); loadData(); }}
+        />
+      )}
       <div className="space-y-6">
 
         {/* Header */}
@@ -836,6 +1288,12 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      <button type="button" onClick={() => setAssigningCounselor(c)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
+                          text-green-700 bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300
+                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-1">
+                        <UserCheck className="w-3.5 h-3.5" />Assign
+                      </button>
                       <BtnView onClick={() => setSelectedCounselor(c)} color="purple" />
                       <BtnDanger onClick={() => handleDeleteCounselor(id)} disabled={deletingId === id}>
                         {deletingId === id ? <><Spinner size={3} />Deleting…</> : <><Trash2 className="w-3.5 h-3.5" />Delete</>}
@@ -874,7 +1332,7 @@ export default function AdminDashboard() {
                 const isActive = s.status === 'active';
                 const isToggling = togglingId === id;
                 return (
-                  <div key={id} className="flex items-center gap-4 px-5 py-4 hover:bg-blue-50/30 transition-colors">
+                  <div key={id} className="flex items-center gap-4 px-5 py-4 hover:bg-sky-50/30 transition-colors">
                     <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm text-lg">
                       {s.name?.charAt(0)}
                     </div>
@@ -888,6 +1346,9 @@ export default function AdminDashboard() {
                         {s.englishScore?.score && (
                           <span className="text-xs text-indigo-600 font-semibold">{s.englishScore.type} {s.englishScore.score}</span>
                         )}
+                        {s.counselorId && counselorNameById[s.counselorId] && (
+                          <span className="text-xs text-purple-600 font-medium">{counselorNameById[s.counselorId]}</span>
+                        )}
                       </div>
                     </div>
                     <div className="hidden sm:block text-center flex-shrink-0">
@@ -896,6 +1357,12 @@ export default function AdminDashboard() {
                     </div>
                     <StatusBadge status={s.status} />
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      <button type="button" onClick={() => setAssigningStudent(s)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
+                          text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300
+                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1">
+                        <UserCheck className="w-3.5 h-3.5" />Assign
+                      </button>
                       <button type="button" onClick={() => handleToggleStudentStatus(s)} disabled={isToggling}
                         aria-label={isActive ? 'Deactivate student' : 'Activate student'}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
