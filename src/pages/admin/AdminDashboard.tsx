@@ -1,9 +1,9 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Users, UserCog, FileText, Activity, Plus, Trash2, X, Shield,
   Eye, EyeOff, Check, UserPlus, Search, ExternalLink,
-  ToggleLeft, ToggleRight, Info, GraduationCap, RefreshCw, AlertTriangle, UserCheck,
+  ToggleLeft, ToggleRight, Info, GraduationCap, RefreshCw, AlertTriangle, UserCheck, MessageSquare,
 } from 'lucide-react';
 import { api } from '../../api';
 import StatusBadge from '../../components/StatusBadge';
@@ -168,7 +168,7 @@ function counselorPerf(counselor: any, allStudents: any[]) {
 
 // ── Student detail modal ─────────────────────────────────────────────────────
 
-function StudentDetailModal({ student, onClose }: { student: any; onClose: () => void }) {
+function StudentDetailModal({ student, onClose, onChat }: { student: any; onClose: () => void; onChat?: () => void }) {
   const initials = student.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3"
@@ -326,8 +326,16 @@ function StudentDetailModal({ student, onClose }: { student: any; onClose: () =>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
-          <BtnGhost onClick={onClose} className="w-full">Close</BtnGhost>
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex-shrink-0 flex gap-3">
+          {onChat && (
+            <button type="button" onClick={onChat}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
+                text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md
+                active:scale-[0.98] transition-all">
+              <MessageSquare className="w-4 h-4" />Chat
+            </button>
+          )}
+          <BtnGhost onClick={onClose} className="flex-1">Close</BtnGhost>
         </div>
       </div>
     </div>
@@ -336,7 +344,7 @@ function StudentDetailModal({ student, onClose }: { student: any; onClose: () =>
 
 // ── Counselor detail modal ───────────────────────────────────────────────────
 
-function CounselorDetailModal({ counselor, students, onClose }: { counselor: any; students: any[]; onClose: () => void }) {
+function CounselorDetailModal({ counselor, students, onClose, onChat }: { counselor: any; students: any[]; onClose: () => void; onChat?: () => void }) {
   const initials = counselor.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
   const assignedIds: string[] = (counselor.assignedStudents ?? []).map((id: any) => id.toString());
   const assignedStudentDetails = students.filter(s => assignedIds.includes(normalId(s)));
@@ -544,8 +552,16 @@ function CounselorDetailModal({ counselor, students, onClose }: { counselor: any
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
-          <BtnGhost onClick={onClose} className="w-full">Close</BtnGhost>
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex-shrink-0 flex gap-3">
+          {onChat && (
+            <button type="button" onClick={onChat}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
+                text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md
+                active:scale-[0.98] transition-all">
+              <MessageSquare className="w-4 h-4" />Chat
+            </button>
+          )}
+          <BtnGhost onClick={onClose} className="flex-1">Close</BtnGhost>
         </div>
       </div>
     </div>
@@ -1156,6 +1172,7 @@ function AssignStudentsModal({ counselor, students, allCounselors, onClose, onSa
 
 export default function AdminDashboard() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [counselors, setCounselors] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
@@ -1281,8 +1298,27 @@ export default function AdminDashboard() {
           }}
         />
       )}
-      {selectedStudent && <StudentDetailModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />}
-      {selectedCounselor && <CounselorDetailModal counselor={selectedCounselor} students={students} onClose={() => setSelectedCounselor(null)} />}
+      {selectedStudent && (
+        <StudentDetailModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          onChat={() => {
+            navigate('/admin/chat', { state: { openChatWith: { _id: normalId(selectedStudent), name: selectedStudent.name } } });
+            setSelectedStudent(null);
+          }}
+        />
+      )}
+      {selectedCounselor && (
+        <CounselorDetailModal
+          counselor={selectedCounselor}
+          students={students}
+          onClose={() => setSelectedCounselor(null)}
+          onChat={() => {
+            navigate('/admin/chat', { state: { openChatWith: { _id: normalId(selectedCounselor), name: selectedCounselor.name } } });
+            setSelectedCounselor(null);
+          }}
+        />
+      )}
       {assigningStudent && (
         <AssignCounselorModal
           student={assigningStudent}
@@ -1431,6 +1467,13 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      <button type="button" title={`Chat with ${c.name}`}
+                        onClick={() => navigate('/admin/chat', { state: { openChatWith: { _id: id, name: c.name } } })}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
+                          text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300
+                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1">
+                        <MessageSquare className="w-3.5 h-3.5" />Chat
+                      </button>
                       <button type="button" onClick={() => setAssigningCounselor(c)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
                           text-green-700 bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300
@@ -1500,6 +1543,13 @@ export default function AdminDashboard() {
                     </div>
                     <StatusBadge status={s.status} />
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      <button type="button" title={`Chat with ${s.name}`}
+                        onClick={() => navigate('/admin/chat', { state: { openChatWith: { _id: id, name: s.name } } })}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
+                          text-sky-700 bg-sky-50 border-sky-200 hover:bg-sky-100 hover:border-sky-300
+                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-1">
+                        <MessageSquare className="w-3.5 h-3.5" />Chat
+                      </button>
                       <button type="button" onClick={() => setAssigningStudent(s)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
                           text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300

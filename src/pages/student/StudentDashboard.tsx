@@ -105,15 +105,74 @@ export default function StudentDashboard() {
   const { user, refreshUser } = useAuth();
   const student = user as Student;
   const [showUpload, setShowUpload] = useState(false);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<Array<{ uni: any; score: number; matchPct: number; matchedCourse: any; reasons: string[] }>>([]);
+  const [recsLoading, setRecsLoading] = useState(true);
 
   useEffect(() => {
+    const levelMap: Record<string, string> = {
+      undergraduate: 'Bachelor', bachelor: 'Bachelor',
+      postgraduate: 'Master', masters: 'Master', master: 'Master',
+      phd: 'PhD', doctorate: 'PhD',
+      diploma: 'Diploma', certificate: 'Certificate',
+    };
+    const targetLevel = levelMap[(student.educationLevel || '').toLowerCase()] || '';
+    const interestedLower = (student.interestedCourses || []).map((c: string) => c.toLowerCase());
+
     api.universities.list().then(unis => {
-      const recs = unis.filter(u =>
-        u.courses.some((c: any) => student.interestedCourses?.some((ic: string) => c.name.toLowerCase().includes(ic.toLowerCase())))
-      ).slice(0, 3);
-      setRecommendations(recs);
-    }).catch(() => {});
+      const scored = unis.map((uni: any) => {
+        let score = 0;
+        const reasons: string[] = [];
+        let matchedCourse: any = null;
+
+        if ((student.preferredCountries || []).includes(uni.country)) {
+          score += 30;
+          reasons.push('Preferred country');
+        }
+
+        const courseMatch = (uni.courses || []).find((c: any) =>
+          interestedLower.some((ic: string) => c.name.toLowerCase().includes(ic) || ic.includes(c.name.toLowerCase()))
+        );
+        if (courseMatch) {
+          score += 25;
+          matchedCourse = courseMatch;
+          reasons.push(`Offers ${courseMatch.name}`);
+        }
+
+        if (targetLevel && (uni.courses || []).some((c: any) => c.level === targetLevel)) {
+          score += 20;
+          reasons.push(`${targetLevel} programs`);
+        }
+
+        if (student.budget) {
+          const isPostgrad = ['Master', 'PhD'].includes(targetLevel);
+          const fee = isPostgrad ? uni.averageFees?.postgraduate : uni.averageFees?.undergraduate;
+          if (fee && fee <= student.budget) {
+            score += 15;
+            reasons.push('Within budget');
+          }
+        }
+
+        if (student.englishScore?.score && matchedCourse) {
+          const reqStr = (matchedCourse.requirements || []).join(' ').toLowerCase();
+          const ieltsMatch = reqStr.match(/ielts[\s]*(\d+\.?\d*)/);
+          const toeflMatch = reqStr.match(/toefl[\s]*(\d+)/);
+          const qualifies =
+            (student.englishScore.type === 'IELTS' && ieltsMatch && student.englishScore.score >= parseFloat(ieltsMatch[1])) ||
+            (student.englishScore.type === 'TOEFL' && toeflMatch && student.englishScore.score >= parseFloat(toeflMatch[1]));
+          if (qualifies) {
+            score += 10;
+            reasons.push('English score qualifies');
+          }
+        }
+
+        return { uni, score, matchPct: Math.min(100, score), matchedCourse, reasons };
+      });
+
+      setRecommendations(
+        scored.filter((r: any) => r.score > 0).sort((a: any, b: any) => b.score - a.score).slice(0, 4)
+      );
+      setRecsLoading(false);
+    }).catch(() => setRecsLoading(false));
   }, []);
 
   if (!student) return null;
@@ -330,34 +389,121 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {recommendations.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-5">
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between mb-5">
+          <div>
             <h2 className="text-lg font-bold text-gray-900">Recommended For You</h2>
-            <Link to="/student/universities" className="text-blue-600 text-sm font-medium hover:text-blue-700 flex items-center gap-1">
-              Explore all <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <p className="text-xs text-gray-400 mt-0.5">Matched to your profile, preferences & budget</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recommendations.map(uni => (
-              <Link key={uni.id} to={`/university/${uni.id}`}
-                className="flex gap-3 p-4 border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-sm transition-all group">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center font-bold text-blue-700 flex-shrink-0">
-                  {uni.name.charAt(0)}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm group-hover:text-blue-700 truncate">{uni.name}</p>
-                  <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5"><MapPin className="w-3 h-3" /> {uni.city}</div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                    <span className="text-xs text-gray-600">#{uni.ranking} World</span>
+          <Link to="/student/universities" className="text-blue-600 text-sm font-medium hover:text-blue-700 flex items-center gap-1">
+            Explore all <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {recsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="p-4 border border-gray-100 rounded-xl animate-pulse">
+                <div className="flex gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-xl flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-gray-200 rounded w-3/4" />
+                    <div className="h-2 bg-gray-100 rounded w-1/2" />
                   </div>
                 </div>
-              </Link>
+                <div className="h-1.5 bg-gray-100 rounded-full mb-3" />
+                <div className="flex gap-2">
+                  <div className="h-5 w-24 bg-gray-100 rounded-lg" />
+                  <div className="h-5 w-16 bg-gray-100 rounded-lg" />
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : recommendations.length === 0 ? (
+          <div className="text-center py-10">
+            <Star className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+            <p className="text-gray-500 text-sm font-medium mb-1">No recommendations yet</p>
+            <p className="text-gray-400 text-xs mb-4">
+              {completion < 50
+                ? 'Complete your profile to get personalized university matches'
+                : 'Try updating your preferred countries or interested courses'}
+            </p>
+            <Link to="/student/profile"
+              className="inline-flex items-center gap-1.5 text-sm text-white bg-sky-500 hover:bg-sky-600 px-4 py-2 rounded-xl font-medium transition-colors">
+              Complete Profile <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {recommendations.map(({ uni, matchPct, matchedCourse, reasons }) => {
+              const matchColor = matchPct >= 70
+                ? 'text-green-700 bg-green-50 border-green-200'
+                : matchPct >= 45
+                ? 'text-blue-700 bg-blue-50 border-blue-200'
+                : 'text-amber-700 bg-amber-50 border-amber-200';
+              const barColor = matchPct >= 70 ? 'bg-green-500' : matchPct >= 45 ? 'bg-blue-500' : 'bg-amber-500';
+              return (
+                <Link key={uni.id} to={`/university/${uni.id}`}
+                  className="flex flex-col gap-3 p-4 border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-md transition-all group">
+
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center font-bold text-blue-700 flex-shrink-0 text-sm">
+                        {uni.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm group-hover:text-blue-700 truncate">{uni.name}</p>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{uni.city}, {uni.country}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-lg border whitespace-nowrap flex-shrink-0 ${matchColor}`}>
+                      {matchPct}% match
+                    </span>
+                  </div>
+
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${barColor} match-fill-${Math.round(matchPct / 5) * 5}`} />
+                  </div>
+
+                  {matchedCourse && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded-lg px-2 py-0.5 font-medium">
+                        {matchedCourse.name}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {matchedCourse.level} · {matchedCourse.duration}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {reasons.map((r: string) => (
+                      <span key={r} className="text-xs bg-gray-50 text-gray-600 border border-gray-200 rounded-full px-2 py-0.5">
+                        ✓ {r}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1.5 border-t border-gray-50">
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      <span>#{uni.ranking} world · {uni.rating}/5</span>
+                    </div>
+                    {matchedCourse && (
+                      <span className="text-gray-500 font-medium">
+                        {matchedCourse.currency} {matchedCourse.tuitionFee?.toLocaleString()}/yr
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

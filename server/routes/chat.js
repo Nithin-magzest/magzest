@@ -229,6 +229,20 @@ router.post('/rooms/:roomId/meetings', authMiddleware, async (req, res) => {
   }
 });
 
+// Mark all messages from others as read
+router.put('/rooms/:roomId/read', authMiddleware, async (req, res) => {
+  try {
+    await ChatRoom.updateOne(
+      { _id: req.params.roomId },
+      { $set: { 'messages.$[elem].read': true } },
+      { arrayFilters: [{ 'elem.senderId': { $ne: req.user.id.toString() } }] }
+    );
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Create or get existing room
 router.post('/rooms', authMiddleware, async (req, res) => {
   const { participantIds, participantNames } = req.body;

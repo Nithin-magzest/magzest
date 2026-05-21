@@ -23,6 +23,28 @@
   .progress-bar {
     width: var(--progress-width, 0%);
   }
+  /* Recommendation match bar — 5% steps (0-100) */
+  .match-fill-0   { width: 0%; }
+  .match-fill-5   { width: 5%; }
+  .match-fill-10  { width: 10%; }
+  .match-fill-15  { width: 15%; }
+  .match-fill-20  { width: 20%; }
+  .match-fill-25  { width: 25%; }
+  .match-fill-30  { width: 30%; }
+  .match-fill-35  { width: 35%; }
+  .match-fill-40  { width: 40%; }
+  .match-fill-45  { width: 45%; }
+  .match-fill-50  { width: 50%; }
+  .match-fill-55  { width: 55%; }
+  .match-fill-60  { width: 60%; }
+  .match-fill-65  { width: 65%; }
+  .match-fill-70  { width: 70%; }
+  .match-fill-75  { width: 75%; }
+  .match-fill-80  { width: 80%; }
+  .match-fill-85  { width: 85%; }
+  .match-fill-90  { width: 90%; }
+  .match-fill-95  { width: 95%; }
+  .match-fill-100 { width: 100%; }
   /* Profile completion bar — 8 possible field steps */
   .progress-fill-0  { width: 0%; }
   .progress-fill-1  { width: 12.5%; }

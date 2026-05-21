@@ -1,6 +1,6 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import {
-  Send, Search, MessageSquare, Phone, PhoneMissed, PhoneOff,
+  Send, Search, MessageSquare, Phone, PhoneMissed, PhoneOff, Video,
   Paperclip, Camera, CalendarDays, X, FileText, Download,
   Calendar, Clock, CheckCircle,
 } from 'lucide-react';
@@ -125,7 +125,7 @@ function MeetingMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
 export default function CounselorChat() {
   const { user } = useAuth();
   const counselor = user as Counselor;
-  const { callState, startCall, lastMessageTime } = useCallContext();
+  const { callState, startCall, startVideoCall, lastMessageTime } = useCallContext();
   const [rooms, setRooms] = useState<any[]>([]);
   const [myStudents, setMyStudents] = useState<any[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
@@ -174,6 +174,10 @@ export default function CounselorChat() {
     }, 15000);
     return () => clearInterval(id);
   }, [user, selectedRoom?.id]);
+
+  useEffect(() => {
+    if (selectedRoom?.id) api.chat.markRead(selectedRoom.id).catch(() => {});
+  }, [selectedRoom?.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -325,6 +329,12 @@ export default function CounselorChat() {
                 disabled={callState !== 'idle' || !remoteId}
                 className="w-9 h-9 bg-green-100 hover:bg-green-200 disabled:opacity-40 text-green-700 rounded-full flex items-center justify-center transition-colors">
                 <Phone className="w-4 h-4" />
+              </button>
+              <button type="button" title="Video call" aria-label="Video call"
+                onClick={() => startVideoCall(remoteId, getStudentName(selectedRoom))}
+                disabled={callState !== 'idle' || !remoteId}
+                className="w-9 h-9 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-40 text-indigo-700 rounded-full flex items-center justify-center transition-colors">
+                <Video className="w-4 h-4" />
               </button>
             </div>
 

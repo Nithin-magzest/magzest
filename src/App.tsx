@@ -40,6 +40,7 @@ import AdminUniversities from './pages/admin/AdminUniversities';
 import AdminCourses from './pages/admin/AdminCourses';
 import AdminCountries from './pages/admin/AdminCountries';
 import AdminMeetings from './pages/admin/AdminMeetings';
+import AdminChat from './pages/admin/AdminChat';
 
 export default function App() {
   return (
@@ -92,6 +93,7 @@ export default function App() {
             <Route path="students" element={<AdminDashboard />} />
             <Route path="applications" element={<AdminApplications />} />
             <Route path="meetings" element={<AdminMeetings />} />
+            <Route path="chat" element={<AdminChat />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -1,7 +1,7 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Send, MessageSquare, Phone, PhoneMissed, PhoneOff,
+  Send, Search, MessageSquare, Phone, PhoneMissed, PhoneOff, Video,
   Paperclip, Camera, CalendarDays, X, FileText, Download,
   Calendar, Clock, CheckCircle,
 } from 'lucide-react';
@@ -131,8 +131,10 @@ function MeetingMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
 export default function StudentChat() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { callState, startCall, lastMessageTime } = useCallContext();
-  const [room, setRoom] = useState<any>(null);
+  const { callState, startCall, startVideoCall, lastMessageTime } = useCallContext();
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const [search, setSearch] = useState('');
   const [input, setInput] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showMeetingModal, setShowMeetingModal] = useState(false);
@@ -142,27 +144,41 @@ export default function StudentChat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  const loadRooms = async () => {
+    try {
+      const list = await api.chat.rooms();
+      setRooms(list);
+      setSelectedRoom((prev: any) => {
+        if (!prev && list.length > 0) return list[0];
+        if (prev) return list.find((r: any) => r.id === prev.id) ?? prev;
+        return prev;
+      });
+    } catch {}
+  };
+
   useEffect(() => {
     if (!user) return;
-    api.chat.rooms().then(r => { if (r.length > 0) setRoom(r[0]); }).catch(() => {});
+    loadRooms();
   }, [user]);
 
   useEffect(() => {
-    if (!lastMessageTime || !room) return;
-    api.chat.room(room.id).then(setRoom).catch(() => {});
+    if (!lastMessageTime) return;
+    loadRooms();
   }, [lastMessageTime]);
 
   useEffect(() => {
     if (!user) return;
-    const id = setInterval(() => {
-      api.chat.rooms().then(r => { if (r.length > 0) setRoom(r[0]); }).catch(() => {});
-    }, 15000);
+    const id = setInterval(loadRooms, 15000);
     return () => clearInterval(id);
   }, [user]);
 
   useEffect(() => {
+    if (selectedRoom?.id) api.chat.markRead(selectedRoom.id).catch(() => {});
+  }, [selectedRoom?.id]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [room?.messages]);
+  }, [selectedRoom?.messages]);
 
   const clearFileInputs = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -170,24 +186,28 @@ export default function StudentChat() {
   };
 
   const send = async () => {
-    if (!input.trim() || !user || !room) return;
+    if (!input.trim() || !user || !selectedRoom) return;
     const content = input.trim();
     setInput('');
     try {
-      const msg = await api.chat.send(room.id, content, user.name);
-      setRoom((prev: any) => prev ? { ...prev, messages: [...prev.messages, msg] } : prev);
+      const msg = await api.chat.send(selectedRoom.id, content, user.name);
+      const updated = { ...selectedRoom, messages: [...selectedRoom.messages, msg] };
+      setSelectedRoom(updated);
+      setRooms(prev => prev.map(r => r.id === updated.id ? updated : r));
     } catch {}
   };
 
   const sendFile = async () => {
-    if (!pendingFile || !user || !room) return;
+    if (!pendingFile || !user || !selectedRoom) return;
     setSending(true);
     try {
       const formData = new FormData();
       formData.append('file', pendingFile);
       formData.append('senderName', user.name);
-      const msg = await api.chat.sendFile(room.id, formData);
-      setRoom((prev: any) => prev ? { ...prev, messages: [...prev.messages, msg] } : prev);
+      const msg = await api.chat.sendFile(selectedRoom.id, formData);
+      const updated = { ...selectedRoom, messages: [...selectedRoom.messages, msg] };
+      setSelectedRoom(updated);
+      setRooms(prev => prev.map(r => r.id === updated.id ? updated : r));
       setPendingFile(null);
       setInput('');
       clearFileInputs();
@@ -197,7 +217,7 @@ export default function StudentChat() {
   };
 
   const scheduleMeeting = async () => {
-    if (!user || !room || !meetingForm.date || !meetingForm.time) return;
+    if (!user || !selectedRoom || !meetingForm.date || !meetingForm.time) return;
     const dateStr = new Date(meetingForm.date + 'T00:00:00').toLocaleDateString('en-US', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
@@ -206,10 +226,12 @@ export default function StudentChat() {
     });
     setSending(true);
     try {
-      const msg = await api.chat.scheduleMeeting(room.id, {
+      const msg = await api.chat.scheduleMeeting(selectedRoom.id, {
         senderName: user.name, meetingDate: dateStr, meetingTime: timeStr, meetingNotes: meetingForm.notes,
       });
-      setRoom((prev: any) => prev ? { ...prev, messages: [...prev.messages, msg] } : prev);
+      const updated = { ...selectedRoom, messages: [...selectedRoom.messages, msg] };
+      setSelectedRoom(updated);
+      setRooms(prev => prev.map(r => r.id === updated.id ? updated : r));
       setShowMeetingModal(false);
       setMeetingForm({ date: '', time: '', notes: '' });
     } catch {} finally {
@@ -222,7 +244,6 @@ export default function StudentChat() {
       navigate('/student/applications');
       return;
     }
-    // Save received document to student's own docs
     try {
       const formData = new FormData();
       formData.append('name', msg.fileName || 'Document');
@@ -232,120 +253,182 @@ export default function StudentChat() {
     } catch {}
   };
 
-  const counselorName = room?.participantNames?.find((n: string) => n !== user?.name) || 'Counselor';
-  const remoteId = room?.participants?.find((id: string) => id !== user?.id) ?? '';
-  const messages = room?.messages || [];
+  const remoteName = selectedRoom?.participantNames?.find((n: string) => n !== user?.name) || 'Counselor';
+  const remoteId = selectedRoom?.participants?.find((id: string) => id !== user?.id) ?? '';
+  const messages = selectedRoom?.messages || [];
+  const hasMultipleRooms = rooms.length > 1;
+  const filteredRooms = rooms.filter((r: any) => {
+    const other = r.participantNames?.find((n: string) => n !== user?.name) || '';
+    return other.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Chat with Counselor</h1>
-        <p className="text-gray-500 mt-1">Direct communication with your assigned counselor</p>
+        <h1 className="text-2xl font-bold text-gray-900">Chat</h1>
+        <p className="text-gray-500 mt-1">Direct communication with your counselor and advisors</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col chat-window">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-100 bg-sky-50 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-            {counselorName.charAt(0)}
-          </div>
-          <div className="flex-1">
-            <p className="font-semibold text-gray-900">{counselorName}</p>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full" />
-              <span className="text-xs text-gray-500">Online</span>
+      <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex ${hasMultipleRooms ? 'chat-window-wide' : 'flex-col chat-window'}`}>
+        {/* Sidebar — only shown when multiple rooms exist */}
+        {hasMultipleRooms && (
+          <div className="w-64 border-r border-gray-100 flex flex-col flex-shrink-0">
+            <div className="p-3 border-b border-gray-100">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Search…" aria-label="Search conversations"
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
             </div>
-          </div>
-          {room && (
-            <button type="button" title="Voice call" aria-label="Voice call"
-              onClick={() => startCall(remoteId, counselorName)}
-              disabled={callState !== 'idle' || !remoteId}
-              className="w-9 h-9 bg-blue-100 hover:bg-blue-200 disabled:opacity-40 text-blue-700 rounded-full flex items-center justify-center transition-colors">
-              <Phone className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
-              <p className="text-gray-500">No messages yet. Say hello to your counselor!</p>
-            </div>
-          ) : (
-            messages.map((msg: any) => {
-              const key = msg._id || msg.id;
-              if (msg.type === 'call') return <CallMessage key={key} msg={msg} isMe={msg.senderId === user?.id} />;
-              if (msg.type === 'file') return <FileMessage key={key} msg={msg} isMe={msg.senderId === user?.id} onAction={() => handleDocAction(msg)} />;
-              if (msg.type === 'meeting') return <MeetingMessage key={key} msg={msg} isMe={msg.senderId === user?.id} />;
-              const isMe = msg.senderId === user?.id;
-              return (
-                <div key={key} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] ${isMe ? 'order-2' : ''}`}>
-                    {!isMe && (
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
-                        <span className="text-xs text-gray-500">{msg.senderName}</span>
-                      </div>
-                    )}
-                    <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
-                      {msg.content}
+            <div className="flex-1 overflow-y-auto">
+              {filteredRooms.map((r: any) => {
+                const other = r.participantNames?.find((n: string) => n !== user?.name) || 'User';
+                const isActive = selectedRoom?.id === r.id;
+                const unread = r.messages?.filter((m: any) => !m.read && m.senderId !== user?.id).length || 0;
+                const lastMsg = r.messages?.[r.messages.length - 1];
+                const preview = lastMsg?.type === 'call' ? '📞 Voice call'
+                  : lastMsg?.type === 'file' ? `📎 ${lastMsg.fileName || 'Document'}`
+                  : lastMsg?.type === 'meeting' ? `📅 ${lastMsg.meetingDate}`
+                  : lastMsg?.content;
+                return (
+                  <button type="button" key={r.id} onClick={() => setSelectedRoom(r)}
+                    className={`w-full flex items-start gap-3 p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 ${isActive ? 'bg-sky-50' : ''}`}>
+                    <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700 text-sm flex-shrink-0">
+                      {other.charAt(0)}
                     </div>
-                    <p className={`text-xs text-gray-400 mt-1 ${isMe ? 'text-right' : ''}`}>{formatTime(msg.timestamp)}</p>
-                  </div>
-                </div>
-              );
-            })
-          )}
-          <div ref={bottomRef} />
-        </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={`text-sm font-semibold truncate ${isActive ? 'text-blue-700' : 'text-gray-900'}`}>{other}</span>
+                        {unread > 0 && (
+                          <span className="bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>
+                        )}
+                      </div>
+                      {preview
+                        ? <p className="text-xs text-gray-400 truncate mt-0.5">{preview}</p>
+                        : <p className="text-xs text-gray-300 mt-0.5">No messages yet</p>
+                      }
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-        {/* Input area */}
-        <div className="p-4 border-t border-gray-100">
-          {pendingFile && (
-            <div className="mb-3 flex items-center gap-3 p-3 bg-sky-50 border border-blue-200 rounded-xl">
-              <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FileText className="w-4 h-4 text-blue-600" />
+        {/* Main chat area */}
+        <div className={hasMultipleRooms ? 'flex-1 flex flex-col min-w-0' : 'flex flex-col flex-1'}>
+          {/* Header */}
+          <div className="p-4 border-b border-gray-100 bg-sky-50 flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+              {remoteName.charAt(0)}
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">{remoteName}</p>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <span className="text-xs text-gray-500">Online</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{pendingFile.name}</p>
-                <p className="text-xs text-gray-500">{(pendingFile.size / 1024).toFixed(0)} KB</p>
+            </div>
+            {selectedRoom && (
+              <>
+                <button type="button" title="Voice call" aria-label="Voice call"
+                  onClick={() => startCall(remoteId, remoteName)}
+                  disabled={callState !== 'idle' || !remoteId}
+                  className="w-9 h-9 bg-blue-100 hover:bg-blue-200 disabled:opacity-40 text-blue-700 rounded-full flex items-center justify-center transition-colors">
+                  <Phone className="w-4 h-4" />
+                </button>
+                <button type="button" title="Video call" aria-label="Video call"
+                  onClick={() => startVideoCall(remoteId, remoteName)}
+                  disabled={callState !== 'idle' || !remoteId}
+                  className="w-9 h-9 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-40 text-indigo-700 rounded-full flex items-center justify-center transition-colors">
+                  <Video className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
+                <p className="text-gray-500">No messages yet. Say hello!</p>
               </div>
-              <button type="button" aria-label="Remove attachment" onClick={() => { setPendingFile(null); clearFileInputs(); }} className="text-gray-400 hover:text-gray-600 p-1">
-                <X className="w-4 h-4" />
+            ) : (
+              messages.map((msg: any) => {
+                const key = msg._id || msg.id;
+                if (msg.type === 'call') return <CallMessage key={key} msg={msg} isMe={msg.senderId === user?.id} />;
+                if (msg.type === 'file') return <FileMessage key={key} msg={msg} isMe={msg.senderId === user?.id} onAction={() => handleDocAction(msg)} />;
+                if (msg.type === 'meeting') return <MeetingMessage key={key} msg={msg} isMe={msg.senderId === user?.id} />;
+                const isMe = msg.senderId === user?.id;
+                return (
+                  <div key={key} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[70%] ${isMe ? 'order-2' : ''}`}>
+                      {!isMe && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
+                          <span className="text-xs text-gray-500">{msg.senderName}</span>
+                        </div>
+                      )}
+                      <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
+                        {msg.content}
+                      </div>
+                      <p className={`text-xs text-gray-400 mt-1 ${isMe ? 'text-right' : ''}`}>{formatTime(msg.timestamp)}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Input area */}
+          <div className="p-4 border-t border-gray-100">
+            {pendingFile && (
+              <div className="mb-3 flex items-center gap-3 p-3 bg-sky-50 border border-blue-200 rounded-xl">
+                <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{pendingFile.name}</p>
+                  <p className="text-xs text-gray-500">{(pendingFile.size / 1024).toFixed(0)} KB</p>
+                </div>
+                <button type="button" aria-label="Remove attachment" onClick={() => { setPendingFile(null); clearFileInputs(); }} className="text-gray-400 hover:text-gray-600 p-1">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" aria-label="Attach document" className="hidden"
+              onChange={e => { if (e.target.files?.[0]) setPendingFile(e.target.files[0]); }} />
+            <input ref={cameraInputRef} type="file" accept="image/*" aria-label="Capture photo" className="hidden"
+              onChange={e => { if (e.target.files?.[0]) setPendingFile(e.target.files[0]); }} />
+
+            <div className="flex items-center gap-1.5">
+              <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach document"
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-sky-50 hover:text-blue-600 transition-colors flex-shrink-0">
+                <Paperclip className="w-4 h-4" />
+              </button>
+              <button type="button" onClick={() => cameraInputRef.current?.click()} title="Camera / Photo"
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-sky-50 hover:text-blue-600 transition-colors flex-shrink-0">
+                <Camera className="w-4 h-4" />
+              </button>
+              <button type="button" onClick={() => setShowMeetingModal(true)} title="Schedule meeting"
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-sky-50 hover:text-blue-600 transition-colors flex-shrink-0">
+                <CalendarDays className="w-4 h-4" />
+              </button>
+              <div className="w-px h-6 bg-gray-200 mx-0.5 flex-shrink-0" />
+              <input type="text" value={input} onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { pendingFile ? sendFile() : send(); } }}
+                placeholder={pendingFile ? 'Add a caption (optional)…' : 'Type a message…'}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button type="button" aria-label="Send" onClick={() => pendingFile ? sendFile() : send()}
+                disabled={(!input.trim() && !pendingFile) || sending}
+                className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-sky-600 disabled:opacity-50 transition-colors flex-shrink-0">
+                <Send className="w-5 h-5" />
               </button>
             </div>
-          )}
-
-          <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" aria-label="Attach document" className="hidden"
-            onChange={e => { if (e.target.files?.[0]) setPendingFile(e.target.files[0]); }} />
-          <input ref={cameraInputRef} type="file" accept="image/*" aria-label="Capture photo" className="hidden"
-            onChange={e => { if (e.target.files?.[0]) setPendingFile(e.target.files[0]); }} />
-
-          <div className="flex items-center gap-1.5">
-            <button type="button" onClick={() => fileInputRef.current?.click()} title="Attach document"
-              className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-sky-50 hover:text-blue-600 transition-colors flex-shrink-0">
-              <Paperclip className="w-4 h-4" />
-            </button>
-            <button type="button" onClick={() => cameraInputRef.current?.click()} title="Camera / Photo"
-              className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-sky-50 hover:text-blue-600 transition-colors flex-shrink-0">
-              <Camera className="w-4 h-4" />
-            </button>
-            <button type="button" onClick={() => setShowMeetingModal(true)} title="Schedule meeting"
-              className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-sky-50 hover:text-blue-600 transition-colors flex-shrink-0">
-              <CalendarDays className="w-4 h-4" />
-            </button>
-            <div className="w-px h-6 bg-gray-200 mx-0.5 flex-shrink-0" />
-            <input type="text" value={input} onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { pendingFile ? sendFile() : send(); } }}
-              placeholder={pendingFile ? 'Add a caption (optional)…' : 'Type a message…'}
-              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <button type="button" aria-label="Send" onClick={() => pendingFile ? sendFile() : send()}
-              disabled={(!input.trim() && !pendingFile) || sending}
-              className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-sky-600 disabled:opacity-50 transition-colors flex-shrink-0">
-              <Send className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </div>

@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
     if (sid) io.to(sid).emit(event, payload);
   };
 
-  socket.on('call:invite',  ({ to, from, fromName }) => relay('call:incoming', to, { from, fromName }));
+  socket.on('call:invite',  ({ to, from, fromName, callType }) => relay('call:incoming', to, { from, fromName, callType }));
   socket.on('call:accept',  ({ to, from })           => relay('call:accepted', to, { from }));
   socket.on('call:reject',  ({ to })                 => relay('call:rejected', to, {}));
   socket.on('call:end',     ({ to })                 => relay('call:ended',    to, {}));
@@ -61,13 +61,17 @@ io.on('connection', (socket) => {
   });
 });
 
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
+const PORT = process.env.PORT || 5000;
+httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+async function connectWithRetry() {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
-    const PORT = process.env.PORT || 5000;
-    httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('MongoDB connection failed:', err.message);
-    process.exit(1);
-  });
+  } catch (err) {
+    console.error(`MongoDB connection failed (${err.message}) — retrying in 5s...`);
+    setTimeout(connectWithRetry, 5000);
+  }
+}
+
+connectWithRetry();

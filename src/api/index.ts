@@ -106,6 +106,8 @@ export const api = {
       req<any>(`/chat/rooms/${roomId}/meetings`, {
         method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
       }),
+    markRead: (roomId: string) =>
+      req<any>(`/chat/rooms/${roomId}/read`, { method: 'PUT', headers: authHeaders() }),
   },
 
   counselors: {

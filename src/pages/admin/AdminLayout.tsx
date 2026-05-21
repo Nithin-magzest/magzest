@@ -1,7 +1,8 @@
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCog, Shield, FileText, GraduationCap, BookOpen, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, Shield, FileText, GraduationCap, BookOpen, CalendarDays, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
+import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 
 type NavIcon = React.ComponentType<{ className?: string }> | string;
 
@@ -14,6 +15,7 @@ const navItems: { to: string; label: string; icon: NavIcon; end?: boolean }[] = 
   { to: '/admin/students', label: 'Students', icon: Users },
   { to: '/admin/applications', label: 'Applications', icon: FileText },
   { to: '/admin/meetings', label: 'Meetings', icon: CalendarDays },
+  { to: '/admin/chat', label: 'Chat', icon: MessageSquare },
 ];
 
 function NavIcon({ icon, size }: { icon: NavIcon; size: 'sm' | 'md' }) {
@@ -26,6 +28,7 @@ function NavIcon({ icon, size }: { icon: NavIcon; size: 'sm' | 'md' }) {
 
 export default function AdminLayout() {
   const { user, isAuthenticated, loading } = useAuth();
+  const unreadCount = useUnreadMessages();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div></div>;
   if (!isAuthenticated) return <Navigate to="/login" />;
   if (user?.role !== 'admin') return <Navigate to="/login" />;
@@ -57,7 +60,12 @@ export default function AdminLayout() {
                 }`
               }
             >
-              <NavIcon icon={item.icon} size="sm" />
+              <div className="relative flex-shrink-0">
+                <NavIcon icon={item.icon} size="sm" />
+                {item.label === 'Chat' && unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />
+                )}
+              </div>
               {item.label}
             </NavLink>
           ))}
@@ -66,7 +74,12 @@ export default function AdminLayout() {
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-40">
           {navItems.map(item => (
             <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `flex-1 flex flex-col items-center py-3 text-xs gap-1 ${isActive ? 'text-purple-600' : 'text-gray-500'}`}>
-              <NavIcon icon={item.icon} size="md" />
+              <div className="relative">
+                <NavIcon icon={item.icon} size="md" />
+                {item.label === 'Chat' && unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />
+                )}
+              </div>
               <span>{item.label}</span>
             </NavLink>
           ))}
