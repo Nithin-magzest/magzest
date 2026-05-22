@@ -903,12 +903,35 @@ export default function Home() {
       {/* ── SCROLLING TICKER ── */}
       <section className="py-10 bg-white border-y border-gray-100 overflow-hidden">
         <div className="text-center mb-7">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Explore our network of universities, countries &amp; courses</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Explore our network of countries, universities &amp; courses</p>
         </div>
 
-        {/* Row 1 — Universities scrolling left */}
+        {/* Row 1 — Countries scrolling left */}
         <div className="marquee-wrap overflow-hidden mb-4">
           <div className="flex animate-marquee-left w-max">
+            {[...MARQUEE_COUNTRIES, ...MARQUEE_COUNTRIES].map((c, i) => (
+              <button key={i} type="button" onClick={() => setDetailModal({ type: 'country', name: c.name, flag: c.flag })}
+                className="inline-flex items-center gap-3 mx-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-gray-200 transition-all shrink-0 cursor-pointer group">
+                <div className="w-10 h-7 rounded-lg overflow-hidden flex-shrink-0 shadow-sm border border-gray-100">
+                  <img
+                    src={`https://flagcdn.com/w80/${c.code}.png`}
+                    alt={c.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-gray-800 whitespace-nowrap group-hover:text-[#0d1b4b] transition-colors">{c.name}</p>
+                  <p className="text-xs text-gray-400">{c.programs} programs</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Row 2 — Universities scrolling right */}
+        <div className="marquee-wrap overflow-hidden mb-4">
+          <div className="flex animate-marquee-right w-max">
             {[...MARQUEE_UNIS, ...MARQUEE_UNIS].map((uni, i) => (
               <button key={i} type="button" onClick={() => setDetailModal({ type: 'university', name: uni.name })}
                 className="inline-flex items-center gap-3 mx-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-gray-200 transition-all shrink-0 cursor-pointer group">
@@ -928,29 +951,6 @@ export default function Home() {
                   </span>
                 </div>
                 <span className="text-sm font-semibold text-gray-800 whitespace-nowrap group-hover:text-[#0d1b4b] transition-colors">{uni.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Row 2 — Countries scrolling right */}
-        <div className="marquee-wrap overflow-hidden mb-4">
-          <div className="flex animate-marquee-right w-max">
-            {[...MARQUEE_COUNTRIES, ...MARQUEE_COUNTRIES].map((c, i) => (
-              <button key={i} type="button" onClick={() => setDetailModal({ type: 'country', name: c.name, flag: c.flag })}
-                className="inline-flex items-center gap-3 mx-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-gray-200 transition-all shrink-0 cursor-pointer group">
-                <div className="w-10 h-7 rounded-lg overflow-hidden flex-shrink-0 shadow-sm border border-gray-100">
-                  <img
-                    src={`https://flagcdn.com/w80/${c.code}.png`}
-                    alt={c.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-800 whitespace-nowrap group-hover:text-[#0d1b4b] transition-colors">{c.name}</p>
-                  <p className="text-xs text-gray-400">{c.programs} programs</p>
-                </div>
               </button>
             ))}
           </div>
