@@ -84,7 +84,7 @@ function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onU
           {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors disabled:opacity-60">
+            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors disabled:opacity-60">
               {saving ? 'Uploading…' : 'Upload'}
             </button>
           </div>
@@ -153,7 +153,7 @@ export default function StudentProfile() {
           <p className="text-gray-500 mt-1">Manage your personal and academic information</p>
         </div>
         <button type="button" onClick={editing ? save : () => setEditing(true)} disabled={saving}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-60 ${editing ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}`}>
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-60 ${editing ? 'bg-green-600 text-white' : 'bg-[#0d1b4b] text-white'}`}>
           {editing ? <><Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Changes'}</> : <><Edit3 className="w-4 h-4" /> Edit Profile</>}
         </button>
       </div>

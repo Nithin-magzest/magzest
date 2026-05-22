@@ -129,7 +129,7 @@ function NewStudentModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <div className="flex flex-wrap gap-2">
               {COUNTRIES.map(c => (
                 <button key={c} type="button" onClick={() => toggleCountry(c)}
-                  className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${form.preferredCountries.includes(c) ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-900'}`}>
+                  className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${form.preferredCountries.includes(c) ? 'bg-[#0d1b4b] text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-900'}`}>
                   {c}
                 </button>
               ))}
@@ -146,7 +146,7 @@ function NewStudentModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-sky-500 text-white rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors disabled:opacity-60">
+            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors disabled:opacity-60">
               {saving ? 'Adding…' : 'Add Student'}
             </button>
           </div>
@@ -201,7 +201,7 @@ export default function CounselorDashboard() {
 
   const appBreakdown = [
     { label: 'Draft', count: allApplications.filter((a: any) => a.status === 'draft').length, color: 'bg-gray-400' },
-    { label: 'Submitted', count: allApplications.filter((a: any) => a.status === 'submitted').length, color: 'bg-sky-500' },
+    { label: 'Submitted', count: allApplications.filter((a: any) => a.status === 'submitted').length, color: 'bg-[#0d1b4b]' },
     { label: 'Under Review', count: allApplications.filter((a: any) => a.status === 'under_review').length, color: 'bg-yellow-500' },
     { label: 'Offer Received', count: allApplications.filter((a: any) => a.status === 'offer_received').length, color: 'bg-green-500' },
     { label: 'Accepted', count: allApplications.filter((a: any) => a.status === 'accepted').length, color: 'bg-emerald-600' },
@@ -223,14 +223,14 @@ export default function CounselorDashboard() {
   const perfTier = performanceScore >= 80
     ? { label: 'Excellent', color: 'text-green-600', bg: 'bg-green-50 border-green-200', bar: 'bg-green-500', ring: 'text-green-600' }
     : performanceScore >= 60
-    ? { label: 'Good', color: 'text-sky-600', bg: 'bg-sky-50 border-sky-200', bar: 'bg-sky-500', ring: 'text-sky-600' }
+    ? { label: 'Good', color: 'text-[#0d1b4b]', bg: 'bg-[#f0f4ff] border-[#0d1b4b]/20', bar: 'bg-[#0d1b4b]', ring: 'text-[#0d1b4b]' }
     : performanceScore >= 40
     ? { label: 'Average', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200', bar: 'bg-yellow-500', ring: 'text-yellow-600' }
     : { label: 'Getting Started', color: 'text-gray-500', bg: 'bg-gray-50 border-gray-200', bar: 'bg-gray-400', ring: 'text-gray-500' };
 
   const perfMetrics = [
     { label: 'Offer & Acceptance Rate', value: Math.round(offerRate * 100), bar: 'bg-green-500' },
-    { label: 'Document Review Rate', value: Math.round(docRate * 100), bar: 'bg-sky-500' },
+    { label: 'Document Review Rate', value: Math.round(docRate * 100), bar: 'bg-[#0d1b4b]' },
     { label: 'Student Portfolio', value: Math.round(portfolioRate * 100), bar: 'bg-purple-500' },
   ];
 
@@ -278,7 +278,7 @@ export default function CounselorDashboard() {
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-gray-900">Application Pipeline</h2>
           <Link to="/counselor/universities"
-            className="flex items-center gap-1.5 bg-sky-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-sky-600 transition-colors">
+            className="flex items-center gap-1.5 bg-[#0d1b4b] text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-[#152258] transition-colors">
             <Plus className="w-4 h-4" /> New Application
           </Link>
         </div>
@@ -296,7 +296,7 @@ export default function CounselorDashboard() {
       {/* Performance Score + Contributions */}
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
         <div className="flex items-center gap-2 mb-5">
-          <Award className="w-5 h-5 text-sky-600" />
+          <Award className="w-5 h-5 text-[#0d1b4b]" />
           <h2 className="text-lg font-bold text-gray-900">My Performance</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -344,14 +344,14 @@ export default function CounselorDashboard() {
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Edit3 className="w-4 h-4 text-sky-600" />
+            <Edit3 className="w-4 h-4 text-[#0d1b4b]" />
             <h2 className="text-base font-bold text-gray-900">My Work Update</h2>
           </div>
           {!editingNote ? (
             <button
               type="button"
               onClick={() => { setNoteInput(workNote); setEditingNote(true); }}
-              className="text-xs text-sky-600 font-medium hover:text-sky-700 border border-sky-200 px-3 py-1 rounded-lg hover:bg-sky-50 transition-colors"
+              className="text-xs text-[#0d1b4b] font-medium hover:text-sky-700 border border-[#0d1b4b]/20 px-3 py-1 rounded-lg hover:bg-[#f0f4ff] transition-colors"
             >
               {workNote ? 'Edit' : 'Add Update'}
             </button>
@@ -368,7 +368,7 @@ export default function CounselorDashboard() {
                 type="button"
                 disabled={savingNote}
                 onClick={handleSaveNote}
-                className="text-xs text-white font-medium bg-sky-500 px-3 py-1 rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-60"
+                className="text-xs text-white font-medium bg-[#0d1b4b] px-3 py-1 rounded-lg hover:bg-[#152258] transition-colors disabled:opacity-60"
               >
                 {savingNote ? 'Saving…' : 'Save'}
               </button>
@@ -396,7 +396,7 @@ export default function CounselorDashboard() {
             <h2 className="text-lg font-bold text-gray-900">My Students</h2>
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => setShowNewStudent(true)}
-                className="flex items-center gap-1.5 bg-sky-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-sky-600 transition-colors">
+                className="flex items-center gap-1.5 bg-[#0d1b4b] text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-[#152258] transition-colors">
                 <Plus className="w-4 h-4" /> New Student
               </button>
               <Link to="/counselor/students" className="text-blue-600 text-sm font-medium hover:text-blue-700 flex items-center gap-1">Manage <ArrowRight className="w-3.5 h-3.5" /></Link>
@@ -416,7 +416,7 @@ export default function CounselorDashboard() {
                   <StatusBadge status={s.status} />
                   {(s.documents || []).some((d: any) => d.status === 'pending') && <span className="text-xs text-yellow-600">Docs pending</span>}
                   <Link to="/counselor/universities"
-                    className="flex items-center gap-1 text-xs text-sky-600 font-medium hover:text-sky-700 border border-sky-200 px-2 py-0.5 rounded-md hover:bg-sky-50 transition-colors">
+                    className="flex items-center gap-1 text-xs text-[#0d1b4b] font-medium hover:text-sky-700 border border-sky-200 px-2 py-0.5 rounded-md hover:bg-sky-50 transition-colors">
                     <Plus className="w-3 h-3" /> Apply
                   </Link>
                 </div>
@@ -430,7 +430,7 @@ export default function CounselorDashboard() {
           <div className="space-y-3">
             {recentActivity.map((a, i) => (
               <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
-                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${a.status === 'offer_received' ? 'bg-green-500' : a.status === 'accepted' ? 'bg-emerald-600' : a.status === 'rejected' ? 'bg-red-500' : 'bg-sky-500'}`}></div>
+                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${a.status === 'offer_received' ? 'bg-green-500' : a.status === 'accepted' ? 'bg-emerald-600' : a.status === 'rejected' ? 'bg-red-500' : 'bg-[#0d1b4b]'}`}></div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{a.title}</p>
                   <p className="text-xs text-gray-500 truncate">{a.sub}</p>

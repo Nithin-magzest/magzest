@@ -163,7 +163,7 @@ function ScheduleModal({ onClose, onCreated, students }: {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-sky-100 rounded-xl flex items-center justify-center">
-              <CalendarDays className="w-4 h-4 text-sky-600" />
+              <CalendarDays className="w-4 h-4 text-[#0d1b4b]" />
             </div>
             <h2 className="text-base font-bold text-gray-900">Schedule Meeting</h2>
           </div>
@@ -184,7 +184,7 @@ function ScheduleModal({ onClose, onCreated, students }: {
               value={form.title}
               onChange={e => set('title', e.target.value)}
               placeholder="e.g. Admission Guidance Session"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b]"
             />
           </div>
 
@@ -199,7 +199,7 @@ function ScheduleModal({ onClose, onCreated, students }: {
                 min={new Date().toISOString().split('T')[0]}
                 aria-label="Meeting date"
                 title="Meeting date"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b]"
               />
             </div>
             <div>
@@ -210,7 +210,7 @@ function ScheduleModal({ onClose, onCreated, students }: {
                 onChange={e => set('scheduledTime', e.target.value)}
                 aria-label="Meeting time"
                 title="Meeting time"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b]"
               />
             </div>
           </div>
@@ -226,7 +226,7 @@ function ScheduleModal({ onClose, onCreated, students }: {
                 min={15} max={480} step={15}
                 aria-label="Duration in minutes"
                 title="Duration in minutes"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b]"
               />
             </div>
             <div>
@@ -236,7 +236,7 @@ function ScheduleModal({ onClose, onCreated, students }: {
                 onChange={e => set('platform', e.target.value)}
                 aria-label="Meeting platform"
                 title="Meeting platform"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] bg-white">
                 <option value="teams">Microsoft Teams</option>
                 <option value="zoom">Zoom</option>
                 <option value="meet">Google Meet</option>
@@ -254,7 +254,7 @@ function ScheduleModal({ onClose, onCreated, students }: {
                 value={form.meetingLink}
                 onChange={e => set('meetingLink', e.target.value)}
                 placeholder="https://teams.microsoft.com/..."
-                className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b]"
               />
             </div>
           </div>
@@ -281,7 +281,7 @@ function ScheduleModal({ onClose, onCreated, students }: {
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleStudent(id)}
-                        className="w-4 h-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                        className="w-4 h-4 rounded border-gray-300 text-[#0d1b4b] focus:ring-[#0d1b4b]"
                       />
                       <div className="w-7 h-7 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold text-xs flex-shrink-0">
                         {name.charAt(0).toUpperCase()}
@@ -302,7 +302,7 @@ function ScheduleModal({ onClose, onCreated, students }: {
               onChange={e => set('notes', e.target.value)}
               rows={3}
               placeholder="Agenda, documents to bring, etc."
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] resize-none"
             />
           </div>
 
@@ -394,7 +394,7 @@ export default function CounselorMeetings() {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
             <button type="button" onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2 bg-white text-sky-600 hover:bg-sky-50 font-semibold px-4 py-2 rounded-xl text-sm transition-colors shadow-md active:scale-95">
+              className="inline-flex items-center gap-2 bg-white text-[#0d1b4b] hover:bg-[#f0f4ff] font-semibold px-4 py-2 rounded-xl text-sm transition-colors shadow-md active:scale-95">
               <Plus className="w-4 h-4" />
               Schedule
             </button>
@@ -429,7 +429,7 @@ export default function CounselorMeetings() {
           ] as const).map(t => (
             <button key={t.key} type="button" onClick={() => setTab(t.key)}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all
-                ${tab === t.key ? 'bg-white text-sky-600 shadow-sm ring-1 ring-gray-200/80' : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'}`}>
+                ${tab === t.key ? 'bg-white text-[#0d1b4b] shadow-sm ring-1 ring-gray-200/80' : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'}`}>
               {t.label}
               <span className={`text-xs px-2 py-0.5 rounded-full font-bold
                 ${tab === t.key ? 'bg-sky-100 text-sky-700' : 'bg-gray-200 text-gray-500'}`}>
@@ -443,7 +443,7 @@ export default function CounselorMeetings() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search meetings…"
-            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white" />
+            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] bg-white" />
         </div>
       </div>
 
@@ -461,7 +461,7 @@ export default function CounselorMeetings() {
           </p>
           {tab === 'upcoming' && !search && (
             <button type="button" onClick={() => setShowModal(true)}
-              className="mt-4 inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-md">
+              className="mt-4 inline-flex items-center gap-2 bg-[#0d1b4b] hover:bg-[#152258] text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-md">
               <Plus className="w-4 h-4" /> Schedule your first meeting
             </button>
           )}

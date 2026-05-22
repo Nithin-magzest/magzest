@@ -52,7 +52,7 @@ function FileMessage({ msg, isMe, onAction }: { msg: any; isMe: boolean; onActio
       <div className="max-w-[75%]">
         {!isMe && (
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
+            <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
             <span className="text-xs text-gray-500">{msg.senderName}</span>
           </div>
         )}
@@ -62,9 +62,9 @@ function FileMessage({ msg, isMe, onAction }: { msg: any; isMe: boolean; onActio
               <CheckCircle className="w-3.5 h-3.5" /> Offer Letter — Saved to your Applications!
             </div>
           )}
-          <div className={`px-4 py-3 ${isMe ? 'bg-blue-600' : 'bg-white'}`}>
+          <div className={`px-4 py-3 ${isMe ? 'bg-[#0d1b4b]' : 'bg-white'}`}>
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isMe ? 'bg-sky-500' : isOffer ? 'bg-emerald-100' : 'bg-sky-50'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isMe ? 'bg-white/20' : isOffer ? 'bg-emerald-100' : 'bg-[#f0f4ff]'}`}>
                 <FileText className={`w-5 h-5 ${isMe ? 'text-white' : isOffer ? 'text-emerald-600' : 'text-blue-500'}`} />
               </div>
               <div className="min-w-0 flex-1">
@@ -75,12 +75,12 @@ function FileMessage({ msg, isMe, onAction }: { msg: any; isMe: boolean; onActio
             {msg.fileUrl && (
               <div className="mt-2.5 flex gap-2">
                 <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer"
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${isMe ? 'bg-sky-500 hover:bg-blue-400 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}>
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${isMe ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}>
                   <Download className="w-3.5 h-3.5" /> Download
                 </a>
                 {!isMe && onAction && (
                   <button type="button" onClick={onAction}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${isOffer ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-sky-500 hover:bg-blue-600 text-white'}`}>
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${isOffer ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-[#0d1b4b] hover:bg-[#152258] text-white'}`}>
                     {isOffer ? '📋 View Applications' : '💾 Save to Docs'}
                   </button>
                 )}
@@ -100,7 +100,7 @@ function MeetingMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
       <div className="max-w-[75%]">
         {!isMe && (
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
+            <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
             <span className="text-xs text-gray-500">{msg.senderName}</span>
           </div>
         )}
@@ -320,7 +320,7 @@ export default function StudentChat() {
         <div className={hasMultipleRooms ? 'flex-1 flex flex-col min-w-0' : 'flex flex-col flex-1'}>
           {/* Header */}
           <div className="p-4 border-b border-gray-100 bg-sky-50 flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+            <div className="w-10 h-10 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white font-bold">
               {remoteName.charAt(0)}
             </div>
             <div className="flex-1">
@@ -367,11 +367,11 @@ export default function StudentChat() {
                     <div className={`max-w-[70%] ${isMe ? 'order-2' : ''}`}>
                       {!isMe && (
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
+                          <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
                           <span className="text-xs text-gray-500">{msg.senderName}</span>
                         </div>
                       )}
-                      <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
+                      <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe ? 'bg-[#0d1b4b] text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
                         {msg.content}
                       </div>
                       <p className={`text-xs text-gray-400 mt-1 ${isMe ? 'text-right' : ''}`}>{formatTime(msg.timestamp)}</p>
@@ -425,7 +425,7 @@ export default function StudentChat() {
                 className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <button type="button" aria-label="Send" onClick={() => pendingFile ? sendFile() : send()}
                 disabled={(!input.trim() && !pendingFile) || sending}
-                className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-sky-600 disabled:opacity-50 transition-colors flex-shrink-0">
+                className="bg-[#0d1b4b] text-white p-2.5 rounded-xl hover:bg-[#152258] disabled:opacity-50 transition-colors flex-shrink-0">
                 <Send className="w-5 h-5" />
               </button>
             </div>
@@ -466,7 +466,7 @@ export default function StudentChat() {
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
               </div>
               <button type="button" onClick={scheduleMeeting} disabled={!meetingForm.date || !meetingForm.time || sending}
-                className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-sky-600 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+                className="w-full bg-[#0d1b4b] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#152258] disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
                 <CalendarDays className="w-4 h-4" /> Schedule Meeting
               </button>
             </div>

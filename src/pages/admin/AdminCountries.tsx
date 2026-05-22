@@ -297,7 +297,7 @@ function CountryModal({ country, onClose, onSaved }: {
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-sky-600 disabled:opacity-60 flex items-center justify-center gap-2 transition-colors">
+              className="flex-1 px-4 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-semibold hover:bg-[#152258] disabled:opacity-60 flex items-center justify-center gap-2 transition-colors">
               {saving ? <><Spinner white />Saving…</> : <><Check className="w-4 h-4" />{editing ? 'Update Country' : 'Add Country'}</>}
             </button>
           </div>

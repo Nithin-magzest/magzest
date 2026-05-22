@@ -125,7 +125,7 @@ export default function SearchPage() {
             <Globe className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No universities found</h3>
             <p className="text-gray-400 mb-6">Try adjusting your search or filters</p>
-            <button type="button" onClick={clearFilters} className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-sky-600 transition-colors">Clear Filters</button>
+            <button type="button" onClick={clearFilters} className="bg-[#0d1b4b] text-white px-6 py-2.5 rounded-lg hover:bg-[#152258] transition-colors">Clear Filters</button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

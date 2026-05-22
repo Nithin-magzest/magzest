@@ -68,7 +68,7 @@ const COURSE_ICON_MAP: Array<[RegExp, React.ElementType]> = [
 ];
 
 const COURSE_PILL_STYLES: Record<string, { pill: string; icon: string }> = {
-  'Computer Science':  { pill: 'bg-sky-50 border border-blue-100 text-blue-700 hover:bg-blue-100 hover:border-blue-300',     icon: 'bg-sky-500' },
+  'Computer Science':  { pill: 'bg-sky-50 border border-blue-100 text-blue-700 hover:bg-blue-100 hover:border-blue-300',     icon: 'bg-blue-500' },
   'Data Science & AI': { pill: 'bg-violet-50 border border-violet-100 text-violet-700 hover:bg-violet-100 hover:border-violet-300', icon: 'bg-violet-600' },
   'Business & MBA':    { pill: 'bg-amber-50 border border-amber-100 text-amber-700 hover:bg-amber-100 hover:border-amber-300',   icon: 'bg-amber-600' },
   'Engineering':       { pill: 'bg-orange-50 border border-orange-100 text-orange-700 hover:bg-orange-100 hover:border-orange-300', icon: 'bg-orange-600' },
@@ -93,7 +93,7 @@ function UniLogo({ name, website, size = 'sm', className = '' }: { name: string;
   if (size === 'sm') {
     if (!url || imgErr) {
       return (
-        <span className={`w-7 h-7 rounded-full bg-sky-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 ${className}`}>
+        <span className={`w-7 h-7 rounded-full bg-[#0d1b4b] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 ${className}`}>
           {name.charAt(0)}
         </span>
       );
@@ -109,7 +109,7 @@ function UniLogo({ name, website, size = 'sm', className = '' }: { name: string;
   const textSize = size === 'md' ? 'text-lg' : 'text-xl';
   if (!url || imgErr) {
     return (
-      <div className={`${dim} bg-sky-500 rounded-xl flex items-center justify-center text-white font-bold ${textSize} flex-shrink-0 ${className}`}>
+      <div className={`${dim} bg-[#0d1b4b] rounded-xl flex items-center justify-center text-white font-bold ${textSize} flex-shrink-0 ${className}`}>
         {name.charAt(0)}
       </div>
     );
@@ -352,13 +352,13 @@ function DetailModal({
             <div className="p-5 space-y-4">
               {uni.description && <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">{uni.description}</p>}
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-sky-50 rounded-xl p-3"><p className="font-bold text-blue-700 text-lg">{(uni.courses || []).length}</p><p className="text-xs text-gray-500">Programs</p></div>
-                <div className="bg-sky-50 rounded-xl p-3"><p className="font-bold text-blue-700 text-lg">{uni.totalStudents ? `${(uni.totalStudents / 1000).toFixed(0)}k` : 'N/A'}</p><p className="text-xs text-gray-500">Students</p></div>
-                <div className="bg-sky-50 rounded-xl p-3"><p className="font-bold text-blue-700 text-sm">{uni.averageFees?.postgraduate > 0 ? `${uni.averageFees.currency} ${(uni.averageFees.postgraduate / 1000).toFixed(0)}k` : 'Free/Varies'}</p><p className="text-xs text-gray-500">PG/year</p></div>
+                <div className="bg-[#f0f4ff] rounded-xl p-3"><p className="font-bold text-[#0d1b4b] text-lg">{(uni.courses || []).length}</p><p className="text-xs text-gray-500">Programs</p></div>
+                <div className="bg-[#f0f4ff] rounded-xl p-3"><p className="font-bold text-[#0d1b4b] text-lg">{uni.totalStudents ? `${(uni.totalStudents / 1000).toFixed(0)}k` : 'N/A'}</p><p className="text-xs text-gray-500">Students</p></div>
+                <div className="bg-[#f0f4ff] rounded-xl p-3"><p className="font-bold text-[#0d1b4b] text-sm">{uni.averageFees?.postgraduate > 0 ? `${uni.averageFees.currency} ${(uni.averageFees.postgraduate / 1000).toFixed(0)}k` : 'Free/Varies'}</p><p className="text-xs text-gray-500">PG/year</p></div>
               </div>
               {uni.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {uni.tags.slice(0, 5).map((t: string) => <span key={t} className="text-xs bg-sky-50 text-blue-700 px-2 py-0.5 rounded-full">{t}</span>)}
+                  {uni.tags.slice(0, 5).map((t: string) => <span key={t} className="text-xs bg-[#f0f4ff] text-[#0d1b4b] px-2 py-0.5 rounded-full">{t}</span>)}
                 </div>
               )}
               {uni.facilities?.length > 0 && (
@@ -371,7 +371,7 @@ function DetailModal({
                   </div>
                 </div>
               )}
-              <button type="button" onClick={() => { onClose(); navigate(`/university/${uni.id}`); }} className="w-full bg-sky-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-sky-600 transition-colors flex items-center justify-center gap-2">
+              <button type="button" onClick={() => { onClose(); navigate(`/university/${uni.id}`); }} className="w-full bg-[#0d1b4b] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#152258] transition-colors flex items-center justify-center gap-2">
                 View Full Profile <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -388,7 +388,7 @@ function DetailModal({
           </div>
           <div className="p-5">
             <p className="text-sm text-gray-600 mb-5 leading-relaxed">{modal.name} is one of the world's leading research universities, known for academic excellence and global impact. Contact a Magzest counselor to explore admission pathways.</p>
-            <button type="button" onClick={() => { onClose(); navigate('/universities'); }} className="w-full bg-sky-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-sky-600 transition-colors flex items-center justify-center gap-2">
+            <button type="button" onClick={() => { onClose(); navigate('/universities'); }} className="w-full bg-[#0d1b4b] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#152258] transition-colors flex items-center justify-center gap-2">
               Browse Partner Universities <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -421,9 +421,9 @@ function DetailModal({
                     <p className="font-bold text-gray-900 text-sm">{info.intake}</p>
                   </div>
                 </div>
-                <div className="bg-sky-50 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-blue-600" /><p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Min. Funds Required</p></div>
-                  <p className="font-bold text-blue-700 text-sm">{info.minFunds}</p>
+                <div className="bg-[#f0f4ff] rounded-xl p-3">
+                  <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-[#0d1b4b]" /><p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Min. Funds Required</p></div>
+                  <p className="font-bold text-[#0d1b4b] text-sm">{info.minFunds}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Required Documents</p>
@@ -674,11 +674,11 @@ export default function Home() {
     <div className="min-h-screen bg-sky-50">
 
       {/* ── HERO ── */}
-      <section className="relative bg-gradient-to-br from-sky-700 via-sky-600 to-sky-800 pt-16 pb-20 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-[#0d1b4b] via-[#1a2d6e] to-[#060e26] pt-16 pb-20 overflow-hidden">
         {/* Decorative glows */}
-        <div className="absolute -top-40 -right-32 w-[500px] h-[500px] bg-sky-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-64 bg-blue-700/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-40 -right-32 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-400/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="animate-fade-in-up animate-float-y inline-flex items-center gap-2 bg-white/10 text-sky-100 border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6 backdrop-blur-sm">
             ⭐ Trusted by students across India & beyond — by GradZest
@@ -702,7 +702,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => open('register')}
-                className="bg-white text-sky-600 font-semibold px-7 py-3 rounded-xl hover:bg-sky-50 active:scale-95 transition-all shadow-lg shadow-black/20 flex items-center gap-2"
+                className="bg-white text-[#0d1b4b] font-semibold px-7 py-3 rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-lg shadow-black/20 flex items-center gap-2"
               >
                 <UserPlus className="w-4 h-4" /> Register Free <ChevronRight className="w-4 h-4" />
               </button>
@@ -763,7 +763,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleSearch}
-                className="bg-sky-500 text-white px-8 py-3 rounded-xl font-semibold hover:bg-sky-600 active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                className="bg-[#0d1b4b] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#152258] active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Search className="w-4 h-4" /> Search
               </button>
@@ -804,7 +804,7 @@ export default function Home() {
               { value: '10+', label: 'Expert Counselors' },
             ].map((s, i) => (
               <FadeIn key={s.label} delayClass={STAGGER[i * 100]}>
-                <div className="text-3xl font-extrabold text-sky-600">
+                <div className="text-3xl font-extrabold text-[#0d1b4b]">
                   <StatCounter raw={s.value} active={statsActive} />
                 </div>
                 <div className="text-sm text-gray-500 mt-1">{s.label}</div>
@@ -823,7 +823,7 @@ export default function Home() {
           <div className="flex animate-marquee-left whitespace-nowrap w-max">
             {[...MARQUEE_UNIS, ...MARQUEE_UNIS].map((uni, i) => (
               <button key={i} type="button" onClick={() => setDetailModal({ type: 'university', name: uni })}
-                className="inline-flex items-center gap-2 mx-3 px-3 py-1.5 bg-sky-50 border border-blue-100 rounded-full text-sm font-semibold text-blue-700 shrink-0 hover:bg-blue-100 hover:border-blue-300 transition-colors cursor-pointer">
+                className="inline-flex items-center gap-2 mx-3 px-3 py-1.5 bg-[#f0f4ff] border border-[#0d1b4b]/10 rounded-full text-sm font-semibold text-[#0d1b4b] shrink-0 hover:bg-[#e8edff] hover:border-[#0d1b4b]/30 transition-colors cursor-pointer">
                 <UniLogo name={uni} />
                 {uni}
               </button>
@@ -862,7 +862,7 @@ export default function Home() {
       </section>
 
       {/* ── ABOUT US ── */}
-      <section ref={aboutRef} className="py-16 bg-sky-500 text-white">
+      <section ref={aboutRef} className="py-16 bg-[#0d1b4b] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <FadeIn direction="left">
@@ -877,7 +877,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-3">
                 <Link
                   to="/universities"
-                  className="inline-flex items-center gap-2 bg-white text-sky-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-sky-50 active:scale-95 transition-all shadow-md text-sm"
+                  className="inline-flex items-center gap-2 bg-white text-[#0d1b4b] font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-md text-sm"
                 >
                   <BookOpen className="w-4 h-4" /> Browse Programs <ChevronRight className="w-4 h-4" />
                 </Link>
@@ -927,7 +927,7 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-gray-900">Featured Programs</h2>
               <p className="text-gray-500 mt-2">Handpicked programs from top-ranked universities</p>
             </div>
-            <Link to="/universities" className="hidden md:flex items-center gap-1 text-sky-600 font-medium hover:text-sky-700 text-sm">
+            <Link to="/universities" className="hidden md:flex items-center gap-1 text-[#0d1b4b] font-medium hover:text-[#1a2d6e] text-sm">
               View all <ArrowRight className="w-4 h-4" />
             </Link>
           </FadeIn>
@@ -941,7 +941,7 @@ export default function Home() {
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`whitespace-nowrap inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all active:scale-95 ${activeTab === tab ? 'bg-sky-500 text-white shadow-sm scale-105' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`whitespace-nowrap inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all active:scale-95 ${activeTab === tab ? 'bg-[#0d1b4b] text-white shadow-sm scale-105' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
                 >
                   <Icon className="w-3.5 h-3.5" />{tab}
                 </button>
@@ -986,7 +986,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleApply}
-                      className="bg-sky-500 text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-sky-600 active:scale-95 transition-all inline-flex items-center gap-1.5"
+                      className="bg-[#0d1b4b] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#152258] active:scale-95 transition-all inline-flex items-center gap-1.5"
                     >
                       <Zap className="w-3.5 h-3.5" /> Apply Now
                     </button>
@@ -997,7 +997,7 @@ export default function Home() {
           </div>
 
           <FadeIn className="text-center mt-10" delayClass="delay-200">
-            <Link to="/universities" className="inline-flex items-center gap-2 border-2 border-sky-500 text-sky-600 font-semibold px-8 py-3 rounded-xl hover:bg-sky-600 hover:text-white active:scale-95 transition-all">
+            <Link to="/universities" className="inline-flex items-center gap-2 border-2 border-[#0d1b4b] text-[#0d1b4b] font-semibold px-8 py-3 rounded-xl hover:bg-[#0d1b4b] hover:text-white active:scale-95 transition-all">
               Browse All Programs <ArrowRight className="w-4 h-4" />
             </Link>
           </FadeIn>
@@ -1012,18 +1012,18 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-gray-900">Partner Universities</h2>
               <p className="text-gray-500 mt-2">Top-ranked institutions from around the world</p>
             </div>
-            <Link to="/universities" className="hidden md:flex items-center gap-1 text-sky-600 font-medium hover:text-sky-700 text-sm">
+            <Link to="/universities" className="hidden md:flex items-center gap-1 text-[#0d1b4b] font-medium hover:text-[#1a2d6e] text-sm">
               View all <ArrowRight className="w-4 h-4" />
             </Link>
           </FadeIn>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {universities.map((u: any, i: number) => (
               <FadeIn key={u.id} delayClass={STAGGER[i * 60]}>
-                <Link to={`/university/${u.id}`} className="block bg-white rounded-2xl p-5 border border-blue-100 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group text-center">
+                <Link to={`/university/${u.id}`} className="block bg-white rounded-2xl p-5 border border-[#0d1b4b]/10 hover:border-[#0d1b4b]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group text-center">
                   <UniLogo name={u.name} website={u.website} size="lg" className="mx-auto mb-3 group-hover:scale-110 transition-all duration-300" />
-                  <p className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-sky-600 transition-colors line-clamp-2">{u.name}</p>
+                  <p className="font-semibold text-gray-900 text-sm leading-snug group-hover:text-[#0d1b4b] transition-colors line-clamp-2">{u.name}</p>
                   <p className="text-xs text-gray-400 mt-1">{FLAGS[u.country] || ''} {u.city}, {u.country}</p>
-                  <p className="text-xs text-sky-600 font-medium mt-2">#{u.ranking} World</p>
+                  <p className="text-xs text-[#0d1b4b] font-medium mt-2">#{u.ranking} World</p>
                   <p className="text-xs text-gray-400"><BookOpen className="w-3 h-3 inline mr-0.5" />{(u.courses || []).length} programs</p>
                 </Link>
               </FadeIn>
@@ -1044,7 +1044,7 @@ export default function Home() {
               <FadeIn key={d.country} delayClass={STAGGER[i * 60]}>
                 <Link
                   to={`/search?country=${encodeURIComponent(d.country)}`}
-                  className="block bg-white rounded-2xl p-5 text-center border border-white hover:border-blue-200 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative"
+                  className="block bg-white rounded-2xl p-5 text-center border border-white hover:border-[#0d1b4b]/20 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative"
                 >
                   {'badge' in d && (
                     <span className="absolute top-3 right-3 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{d.badge}</span>
@@ -1052,7 +1052,7 @@ export default function Home() {
                   <div className="mb-3 flex justify-center group-hover:scale-110 transition-transform duration-300">
                     <CountryFlagImg name={d.country} flag={d.flag} sizeCls="w-20 h-14" rounded="rounded-xl" className="shadow-md" quality="w80" />
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm group-hover:text-sky-600 transition-colors">{d.country}</p>
+                  <p className="font-semibold text-gray-900 text-sm group-hover:text-[#0d1b4b] transition-colors">{d.country}</p>
                   <p className="text-xs text-gray-400 mt-1">{d.count}</p>
                 </Link>
               </FadeIn>
@@ -1071,7 +1071,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {STEPS.map((s, i) => (
               <FadeIn key={s.num} delayClass={STAGGER[i * 90]} className="flex gap-4 group">
-                <div className="flex-shrink-0 w-11 h-11 bg-sky-500 text-white rounded-xl flex items-center justify-center font-bold shadow-sm shadow-blue-200 group-hover:scale-110 group-hover:bg-sky-600 transition-all duration-300">
+                <div className="flex-shrink-0 w-11 h-11 bg-[#0d1b4b] text-white rounded-xl flex items-center justify-center font-bold shadow-sm shadow-[#0d1b4b]/30 group-hover:scale-110 group-hover:bg-[#152258] transition-all duration-300">
                   {s.num}
                 </div>
                 <div>
@@ -1082,7 +1082,7 @@ export default function Home() {
             ))}
           </div>
           <FadeIn className="text-center mt-12" delayClass="delay-300">
-            <button type="button" onClick={() => open('register')} className="bg-sky-500 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-sky-600 active:scale-95 transition-all inline-flex items-center gap-2">
+            <button type="button" onClick={() => open('register')} className="bg-[#0d1b4b] text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-[#152258] active:scale-95 transition-all inline-flex items-center gap-2">
               <Rocket className="w-4 h-4" /> Register Free <ChevronRight className="w-4 h-4" />
             </button>
           </FadeIn>
@@ -1107,7 +1107,7 @@ export default function Home() {
                   if (isAuthenticated && user?.role === 'student') navigate('/student/applications');
                   else open('register');
                 }}
-                className="inline-flex items-center gap-2 bg-sky-500 text-white font-semibold px-6 py-3 rounded-xl hover:bg-sky-600 active:scale-95 transition-all"
+                className="inline-flex items-center gap-2 bg-[#0d1b4b] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#152258] active:scale-95 transition-all"
               >
                 <Activity className="w-4 h-4" /> Start Tracking Free <ArrowRight className="w-4 h-4" />
               </button>
@@ -1130,7 +1130,7 @@ export default function Home() {
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-2 ${item.statusCls}`}>{item.status}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                      <div className={`bg-sky-500 h-1.5 rounded-full transition-all duration-1000 ${progressWidth(item.progress)}`} />
+                      <div className={`bg-[#0d1b4b] h-1.5 rounded-full transition-all duration-1000 ${progressWidth(item.progress)}`} />
                     </div>
                     <p className="text-xs text-gray-400 mt-1">{item.progress}% complete</p>
                   </div>
@@ -1151,7 +1151,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {TESTIMONIALS.map((t, i) => (
               <FadeIn key={t.name} delayClass={STAGGER[i * 80]} className="flex flex-col">
-                <div className="bg-white rounded-2xl p-6 border border-blue-100 flex flex-col h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                <div className="bg-white rounded-2xl p-6 border border-[#0d1b4b]/10 flex flex-col h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
                   <div className="flex gap-0.5 mb-3">
                     {[...Array(5)].map((_, j) => (
                       <Star key={j} className={`w-4 h-4 ${j < t.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
@@ -1159,13 +1159,13 @@ export default function Home() {
                   </div>
                   <p className="text-gray-700 leading-relaxed mb-5 italic flex-1">"{t.text}"</p>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                    <div className="w-10 h-10 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                       {t.name.charAt(0)}
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
                       <p className="text-xs text-gray-500">{t.from}</p>
-                      <p className="text-xs text-sky-600 font-medium mt-0.5">→ {t.uni}</p>
+                      <p className="text-xs text-[#0d1b4b] font-medium mt-0.5">→ {t.uni}</p>
                     </div>
                   </div>
                 </div>
@@ -1188,7 +1188,7 @@ export default function Home() {
               <FadeIn key={r.label} delayClass={STAGGER[i * 80]}>
                 <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300 h-full">
                   <div className="text-4xl mb-3">{r.icon}</div>
-                  <div className="text-4xl font-extrabold text-sky-600 mb-2">
+                  <div className="text-4xl font-extrabold text-[#0d1b4b] mb-2">
                     <StatCounter raw={r.value} active={successActive} />
                   </div>
                   <div className="font-semibold text-gray-900 mb-2">{r.label}</div>
@@ -1211,14 +1211,14 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {TEAM.map((member, i) => (
               <FadeIn key={member.name} delayClass={STAGGER[i * 80]}>
-                <div className="bg-white rounded-2xl p-6 border border-blue-100 text-center hover:border-blue-300 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
+                <div className="bg-white rounded-2xl p-6 border border-[#0d1b4b]/10 text-center hover:border-[#0d1b4b]/40 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
                   <div className="w-28 h-28 rounded-2xl overflow-hidden mx-auto mb-4 border-4 border-white shadow-md group-hover:scale-105 transition-transform duration-300">
                     <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
                   </div>
                   <h3 className="font-bold text-gray-900">{member.name}</h3>
-                  <p className="text-blue-600 text-sm font-medium mt-0.5">{member.role}</p>
+                  <p className="text-[#0d1b4b] text-sm font-medium mt-0.5">{member.role}</p>
                   <p className="text-xs text-gray-500 mt-1">{member.exp} experience</p>
-                  <span className="inline-block mt-3 bg-sky-50 text-blue-700 text-xs px-3 py-1 rounded-full font-medium border border-blue-100">{member.specialization}</span>
+                  <span className="inline-block mt-3 bg-[#f0f4ff] text-[#0d1b4b] text-xs px-3 py-1 rounded-full font-medium border border-[#0d1b4b]/10">{member.specialization}</span>
                 </div>
               </FadeIn>
             ))}
@@ -1237,17 +1237,17 @@ export default function Home() {
           <div className="space-y-3">
             {FAQS.map((faq, i) => (
               <FadeIn key={i} delayClass={STAGGER[Math.min(i * 60, 450)]}>
-                <div className={`border rounded-2xl overflow-hidden transition-all duration-300 ${openFaq === i ? 'border-blue-300 shadow-md' : 'border-gray-200 hover:border-blue-200 hover:shadow-sm'}`}>
+                <div className={`border rounded-2xl overflow-hidden transition-all duration-300 ${openFaq === i ? 'border-[#0d1b4b]/40 shadow-md' : 'border-gray-200 hover:border-[#0d1b4b]/20 hover:shadow-sm'}`}>
                   <button
                     type="button"
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left bg-white hover:bg-sky-50 active:bg-blue-100 transition-colors"
+                    className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left bg-white hover:bg-[#f0f4ff] active:bg-[#f0f4ff] transition-colors"
                   >
-                    <span className={`font-semibold transition-colors ${openFaq === i ? 'text-blue-700' : 'text-gray-900'}`}>{faq.q}</span>
-                    <ChevronDown className={`w-5 h-5 text-blue-600 flex-shrink-0 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
+                    <span className={`font-semibold transition-colors ${openFaq === i ? 'text-[#0d1b4b]' : 'text-gray-900'}`}>{faq.q}</span>
+                    <ChevronDown className={`w-5 h-5 text-[#0d1b4b] flex-shrink-0 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
                   </button>
                   <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === i ? 'max-h-48' : 'max-h-0'}`}>
-                    <p className="px-6 pb-5 pt-1 text-gray-600 leading-relaxed border-t border-blue-100">{faq.a}</p>
+                    <p className="px-6 pb-5 pt-1 text-gray-600 leading-relaxed border-t border-[#0d1b4b]/10">{faq.a}</p>
                   </div>
                 </div>
               </FadeIn>
@@ -1255,7 +1255,7 @@ export default function Home() {
           </div>
           <FadeIn className="text-center mt-10" delayClass="delay-200">
             <p className="text-gray-500 text-sm">Still have questions?{' '}
-              <button type="button" onClick={() => open('register')} className="text-blue-600 font-semibold hover:underline">
+              <button type="button" onClick={() => open('register')} className="text-[#0d1b4b] font-semibold hover:underline">
                 Talk to a counselor for free →
               </button>
             </p>
@@ -1264,14 +1264,14 @@ export default function Home() {
       </section>
 
       {/* ── FOOTER CTA ── */}
-      <section className="bg-gradient-to-br from-sky-700 via-sky-600 to-indigo-900 py-20 text-white">
+      <section className="bg-gradient-to-br from-[#0d1b4b] via-[#1a2d6e] to-[#060e26] py-20 text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <FadeIn>
             <h2 className="text-4xl font-bold mb-4">Your Dream University Starts with Magzest</h2>
             <p className="text-sky-100 text-lg mb-8">Join students across India who found their perfect program with Magzest</p>
           </FadeIn>
           <FadeIn delayClass="delay-120" className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-            <button type="button" onClick={() => open('register')} className="bg-white text-sky-600 font-bold px-8 py-4 rounded-xl hover:bg-sky-50 active:scale-95 transition-all inline-flex items-center justify-center gap-2">
+            <button type="button" onClick={() => open('register')} className="bg-white text-[#0d1b4b] font-bold px-8 py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all inline-flex items-center justify-center gap-2">
               <Rocket className="w-4 h-4" /> Register for Free
             </button>
             <Link to="/universities" className="border-2 border-white/40 text-white font-semibold px-8 py-4 rounded-xl hover:bg-white/10 active:scale-95 transition-all inline-flex items-center justify-center gap-2">
@@ -1295,7 +1295,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleSubscribe}
-                  className="bg-white text-sky-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-sky-50 active:scale-95 transition-all whitespace-nowrap text-sm inline-flex items-center gap-1.5"
+                  className="bg-white text-[#0d1b4b] font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap text-sm inline-flex items-center gap-1.5"
                 >
                   <Mail className="w-3.5 h-3.5" /> Subscribe Free
                 </button>
@@ -1311,9 +1311,9 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             <div>
               <div className="flex items-center mb-4">
-                <div className="flex items-center gap-1.5 bg-sky-500 rounded-xl px-3 py-1.5">
+                <div className="flex flex-col items-center justify-center bg-[#0d1b4b] rounded-xl px-3 py-1.5 min-w-[72px]">
                   <GraduationCap className="w-5 h-5 text-white" />
-                  <span className="font-bold text-white text-lg tracking-tight">GradZest</span>
+                  <span className="font-bold text-white text-xs tracking-tight leading-tight">GradZest</span>
                 </div>
               </div>
               <p className="text-sm leading-relaxed mb-4">Empowering Indian students to discover, apply, and thrive at top universities worldwide with expert counseling.</p>

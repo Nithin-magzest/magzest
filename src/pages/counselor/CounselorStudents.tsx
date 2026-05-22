@@ -52,7 +52,7 @@ function RequestDocumentModal({ studentId, onClose, onRequested }: { studentId: 
           {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors disabled:opacity-60">
+            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors disabled:opacity-60">
               {saving ? 'Requesting…' : 'Request Document'}
             </button>
           </div>
@@ -225,7 +225,7 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
                 const sel = form.preferredCountries.includes(c);
                 return (
                   <button key={c} type="button" onClick={() => toggleCountry(c)}
-                    className={`text-xs px-2.5 py-1 rounded-full font-medium border transition-colors ${sel ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400'}`}>
+                    className={`text-xs px-2.5 py-1 rounded-full font-medium border transition-colors ${sel ? 'bg-[#0d1b4b] text-white border-[#0d1b4b]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#0d1b4b]/40'}`}>
                     {c}
                   </button>
                 );
@@ -239,7 +239,7 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 py-2.5 bg-blue-600 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold shadow-md disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-md disabled:opacity-60 transition-all flex items-center justify-center gap-2">
               {saving
                 ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Creating…</>
                 : <><UserPlus className="w-4 h-4" /> Create Student</>}
@@ -298,7 +298,7 @@ function StudentsList() {
           <p className="text-gray-500 mt-1">Manage students and their application journey</p>
         </div>
         <button type="button" onClick={() => setShowCreate(true)}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors">
+          className="inline-flex items-center gap-2 bg-[#0d1b4b] hover:bg-[#152258] text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors">
           <UserPlus className="w-4 h-4" /> Add Student
         </button>
       </div>
@@ -344,7 +344,7 @@ function StudentsList() {
                           type="button"
                           onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${student.phone.replace(/\s/g, '')}`; }}
                           title={`Call ${student.phone}`}
-                          className="w-8 h-8 bg-sky-500 hover:bg-blue-600 active:scale-95 text-white rounded-full flex items-center justify-center shadow-sm transition-all flex-shrink-0"
+                          className="w-8 h-8 bg-[#0d1b4b] hover:bg-[#152258] active:scale-95 text-white rounded-full flex items-center justify-center shadow-sm transition-all flex-shrink-0"
                         >
                           <Phone className="w-3.5 h-3.5" />
                         </button>
@@ -453,10 +453,10 @@ function StudentDetail() {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Link to="/counselor/chat" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors">
+            <Link to="/counselor/chat" className="flex items-center gap-2 bg-[#0d1b4b] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors">
               <MessageSquare className="w-4 h-4" /> Chat
             </Link>
-            <Link to="/counselor/universities" className="flex items-center gap-2 bg-sky-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors">
+            <Link to="/counselor/universities" className="flex items-center gap-2 bg-[#0d1b4b] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors">
               <Plus className="w-4 h-4" /> New Application
             </Link>
           </div>
@@ -503,7 +503,7 @@ function StudentDetail() {
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">{apps.length} application{apps.length !== 1 ? 's' : ''}</p>
             <Link to="/counselor/universities"
-              className="flex items-center gap-1.5 bg-sky-500 text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-sky-600 transition-colors shadow-sm">
+              className="flex items-center gap-1.5 bg-[#0d1b4b] text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-[#152258] transition-colors shadow-sm">
               <Plus className="w-4 h-4" /> New Application
             </Link>
           </div>

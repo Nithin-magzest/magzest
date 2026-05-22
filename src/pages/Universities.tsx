@@ -75,7 +75,7 @@ export default function Universities() {
               <div className="px-5 pb-5 mt-auto">
                 <Link
                   to={`/university/${uni.id}`}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-600 hover:bg-sky-600 text-white text-sm font-semibold rounded-xl transition-colors group/btn"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white text-sm font-semibold rounded-xl transition-colors group/btn"
                 >
                   View Details
                   <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />

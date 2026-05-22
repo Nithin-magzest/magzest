@@ -116,7 +116,7 @@ function ApplyModal({ course, universityName, universityId, students, onClose, o
               Cancel
             </button>
             <button type="button" onClick={handleApply} disabled={saving || success}
-              className="flex-1 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
               {saving
                 ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
                 : <><Plus className="w-4 h-4" />Apply</>}
@@ -153,7 +153,7 @@ function CourseRow({ course, universityName, universityId, onApply }: {
             </div>
           )}
           <button type="button" onClick={() => onApply(course, universityName, universityId)}
-            className="flex items-center gap-1 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+            className="flex items-center gap-1 bg-[#0d1b4b] hover:bg-[#152258] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
             <Plus className="w-3.5 h-3.5" />Apply
           </button>
         </div>
@@ -252,7 +252,7 @@ function UniversityCard({ uni, onApply }: {
       {/* Actions */}
       <div className="px-5 pb-4 flex gap-2">
         <button type="button" onClick={() => { setExpanded(!expanded); if (!expanded) setTab('courses'); }}
-          className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-sky-600 transition-colors">
+          className="flex-1 flex items-center justify-center gap-2 bg-[#0d1b4b] text-white py-2 rounded-xl text-sm font-semibold hover:bg-[#152258] transition-colors">
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           {expanded ? 'Collapse' : 'View Courses & Info'}
         </button>

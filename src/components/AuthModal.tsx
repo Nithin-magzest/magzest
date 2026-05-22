@@ -174,7 +174,7 @@ export default function AuthModal() {
               </div>
               <button
                 type="submit" disabled={loginLoading}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-sky-600 transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-[#0d1b4b] text-white py-3 rounded-xl font-semibold hover:bg-[#152258] transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loginLoading ? 'Signing in...' : 'Sign In'}
               </button>
@@ -236,7 +236,7 @@ export default function AuthModal() {
               </div>
               <button
                 type="submit" disabled={regLoading}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-sky-600 transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-[#0d1b4b] text-white py-3 rounded-xl font-semibold hover:bg-[#152258] transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {regLoading ? 'Creating account...' : 'Create Free Account'}
               </button>

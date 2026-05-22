@@ -257,7 +257,7 @@ export default function StudentApplications() {
           <h1 className="text-2xl font-bold text-gray-900">My Applications</h1>
           <p className="text-gray-500 mt-1">Track the status of all your university applications</p>
         </div>
-        <Link to="/student/universities" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors">
+        <Link to="/student/universities" className="flex items-center gap-2 bg-[#0d1b4b] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors">
           <Plus className="w-4 h-4" /> New Application
         </Link>
       </div>
@@ -277,7 +277,7 @@ export default function StudentApplications() {
           <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700 mb-2">No applications yet</h3>
           <p className="text-gray-400 mb-6">Start exploring universities and apply to your dream programs.</p>
-          <Link to="/student/universities" className="bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-sky-600 transition-colors font-medium">Browse Universities</Link>
+          <Link to="/student/universities" className="bg-[#0d1b4b] text-white px-6 py-2.5 rounded-xl hover:bg-[#152258] transition-colors font-medium">Browse Universities</Link>
         </div>
       ) : (
         <div className="space-y-4">

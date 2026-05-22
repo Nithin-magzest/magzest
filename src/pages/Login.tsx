@@ -65,10 +65,11 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-sky-500 rounded-2xl shadow-lg mb-4">
-              <GraduationCap className="w-8 h-8 text-white" />
+            <div className="inline-flex flex-col items-center justify-center bg-[#0d1b4b] rounded-2xl shadow-lg px-8 py-5 mb-4">
+              <GraduationCap className="w-10 h-10 text-white mb-1.5" />
+              <span className="font-bold text-white text-xl tracking-tight">GradZest</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome to GradZest</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
             <p className="text-gray-500 mt-2 text-sm">Sign in to access your dashboard</p>
           </div>
 
@@ -84,7 +85,7 @@ export default function Login() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
               <input
                 type="email" value={email} onChange={e => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] text-sm"
                 placeholder="your@email.com" required autoComplete="email"
               />
             </div>
@@ -93,7 +94,7 @@ export default function Login() {
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm pr-12"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] text-sm pr-12"
                   placeholder="••••••••" required autoComplete="current-password"
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -101,7 +102,7 @@ export default function Login() {
                 </button>
               </div>
             </div>
-            <button type="submit" disabled={submitting} className="w-full bg-sky-500 text-white py-3 rounded-xl font-semibold hover:bg-sky-600 transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed">
+            <button type="submit" disabled={submitting} className="w-full bg-[#0d1b4b] text-white py-3 rounded-xl font-semibold hover:bg-[#152258] transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed">
               {submitting ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
@@ -142,17 +143,17 @@ export default function Login() {
                 </div>
               </div>
               <div>
-                <p className="text-xs font-semibold text-sky-600 mb-2">Students</p>
+                <p className="text-xs font-semibold text-[#0d1b4b] mb-2">Students</p>
                 <div className="grid grid-cols-1 gap-2">
                   {demoAccounts.students.map(a => (
                     <button key={a.email} type="button" onClick={() => loginAs(a.email, a.password)} disabled={submitting}
                       className="flex items-center gap-3 p-3 border border-blue-200 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sky-600 font-bold text-xs flex-shrink-0">{a.initials}</div>
+                      <div className="w-8 h-8 bg-[#f0f4ff] rounded-full flex items-center justify-center text-[#0d1b4b] font-bold text-xs flex-shrink-0">{a.initials}</div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-gray-800">{a.name}</p>
                         <p className="text-xs text-gray-400 truncate">{a.email}</p>
                       </div>
-                      <span className="text-xs text-sky-600 font-medium whitespace-nowrap">Click to login →</span>
+                      <span className="text-xs text-[#0d1b4b] font-medium whitespace-nowrap">Click to login →</span>
                     </button>
                   ))}
                 </div>
@@ -162,7 +163,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Don't have an account?{' '}
-            <Link to="/" className="text-sky-600 font-medium hover:underline">Contact us</Link>
+            <Link to="/" className="text-[#0d1b4b] font-medium hover:underline">Contact us</Link>
           </p>
         </div>
       </div>

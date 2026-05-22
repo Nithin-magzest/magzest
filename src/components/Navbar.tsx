@@ -35,21 +35,21 @@ export default function Navbar() {
           {/* Logo + nav */}
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center">
-              <div className="flex items-center gap-1.5 bg-sky-500 rounded-xl px-3 py-1.5">
+              <div className="flex flex-col items-center justify-center bg-[#0d1b4b] rounded-xl px-3 py-1.5 min-w-[72px]">
                 <GraduationCap className="w-5 h-5 text-white" />
-                <span className="font-bold text-white text-lg tracking-tight">GradZest</span>
+                <span className="font-bold text-white text-xs tracking-tight leading-tight">GradZest</span>
               </div>
             </Link>
             <div className="hidden md:flex items-center gap-1">
               <Link
                 to="/"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === '/' ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === '/' ? 'text-[#0d1b4b]' : 'text-gray-600 hover:text-gray-900'}`}
               >
                 Home
               </Link>
               <Link
                 to="/universities"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === '/universities' ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === '/universities' ? 'text-[#0d1b4b]' : 'text-gray-600 hover:text-gray-900'}`}
               >
                 Browse Programs
               </Link>
@@ -63,7 +63,7 @@ export default function Navbar() {
               {isAuthenticated && (
                 <Link
                   to={dashboardPath}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname.startsWith(dashboardPath) ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname.startsWith(dashboardPath) ? 'text-[#0d1b4b]' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                   Dashboard
                 </Link>
@@ -80,7 +80,7 @@ export default function Navbar() {
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <div className="w-8 h-8 bg-sky-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                  <div className="w-8 h-8 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-sm font-semibold">
                     {user?.name.charAt(0)}
                   </div>
                   <span className="hidden md:block text-sm font-medium text-gray-700">{user?.name.split(' ')[0]}</span>
@@ -122,7 +122,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => open('register')}
-                  className="hidden md:block bg-sky-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-sky-600 transition-colors"
+                  className="hidden md:block bg-[#0d1b4b] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#152258] transition-colors"
                 >
                   Get Started
                 </button>
@@ -148,7 +148,7 @@ export default function Navbar() {
             ) : (
               <>
                 <button type="button" onClick={() => { setMenuOpen(false); open('login'); }} className="block w-full text-left px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">Log In</button>
-                <button type="button" onClick={() => { setMenuOpen(false); open('register'); }} className="block w-full text-left px-3 py-2 text-sm font-semibold text-sky-600 hover:bg-sky-50 rounded-md">Get Started</button>
+                <button type="button" onClick={() => { setMenuOpen(false); open('register'); }} className="block w-full text-left px-3 py-2 text-sm font-semibold text-[#0d1b4b] hover:bg-[#f0f4ff] rounded-md">Get Started</button>
               </>
             )}
           </div>

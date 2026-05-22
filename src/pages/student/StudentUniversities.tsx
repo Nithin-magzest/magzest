@@ -91,7 +91,7 @@ function CourseCard({ course, uni, student }: { course: any; uni: any; student: 
             </span>
           ) : (
             <button type="button" onClick={() => setApplyModal(true)}
-              className="mt-1 bg-blue-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors font-semibold">
+              className="mt-1 bg-[#0d1b4b] text-white text-xs px-4 py-2 rounded-lg hover:bg-[#152258] transition-colors font-semibold">
               Apply to this Course
             </button>
           )
@@ -163,7 +163,7 @@ function UniversityCard({ uni, student }: { uni: any; student: any }) {
         {/* Action buttons */}
         <div className="flex gap-2">
           <button type="button" onClick={() => { setExpanded(!expanded); if (!expanded) setTab('courses'); }}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-sky-600 transition-colors">
+            className="flex-1 flex items-center justify-center gap-2 bg-[#0d1b4b] text-white py-2 rounded-xl text-sm font-semibold hover:bg-[#152258] transition-colors">
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             {expanded ? 'Collapse' : 'View Courses & Info'}
           </button>

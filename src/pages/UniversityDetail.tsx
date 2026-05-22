@@ -157,7 +157,7 @@ export default function UniversityDetail() {
                         </span>
                       ) : (
                         <button type="button" onClick={() => setApplyModal(course)}
-                          className="mt-4 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors font-medium">
+                          className="mt-4 bg-[#0d1b4b] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#152258] transition-colors font-medium">
                           Apply to this Course
                         </button>
                       )

@@ -91,7 +91,7 @@ function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onU
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-sky-500 text-white rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors disabled:opacity-60">
+              className="flex-1 px-4 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors disabled:opacity-60">
               {saving ? 'Uploading…' : 'Upload'}
             </button>
           </div>
@@ -203,7 +203,7 @@ export default function StudentDashboard() {
   const completion = Math.round((profileFields.filter(f => f.filled).length / profileFields.length) * 100);
   const filledCount = profileFields.filter(f => f.filled).length;
   const scoreColor = completion === 100 ? 'text-green-600' : completion >= 67 ? 'text-blue-600' : completion >= 34 ? 'text-amber-600' : 'text-red-500';
-  const barColor = completion === 100 ? 'bg-green-500' : completion >= 67 ? 'bg-sky-500' : completion >= 34 ? 'bg-amber-500' : 'bg-red-500';
+  const barColor = completion === 100 ? 'bg-green-500' : completion >= 67 ? 'bg-[#0d1b4b]' : completion >= 34 ? 'bg-amber-500' : 'bg-red-500';
   const progressFillClass = `progress-fill-${filledCount}`;
 
   return (
@@ -284,7 +284,7 @@ export default function StudentDashboard() {
           </div>
           {completion < 100 && (
             <Link to="/student/profile"
-              className="mt-4 w-full flex items-center justify-center gap-2 bg-sky-500 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-sky-600 transition-colors">
+              className="mt-4 w-full flex items-center justify-center gap-2 bg-[#0d1b4b] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#152258] transition-colors">
               Complete Your Profile <ArrowRight className="w-4 h-4" />
             </Link>
           )}
@@ -324,7 +324,7 @@ export default function StudentDashboard() {
           <button
             type="button"
             onClick={() => setShowUpload(true)}
-            className="w-full flex items-center justify-center gap-2 bg-sky-500 text-white py-3 rounded-xl text-sm font-semibold hover:bg-sky-600 active:scale-[0.98] transition-all shadow-sm">
+            className="w-full flex items-center justify-center gap-2 bg-[#0d1b4b] text-white py-3 rounded-xl text-sm font-semibold hover:bg-[#152258] active:scale-[0.98] transition-all shadow-sm">
             <Upload className="w-4 h-4" /> Upload Document
           </button>
           {docs.length > 0 && (
@@ -429,7 +429,7 @@ export default function StudentDashboard() {
                 : 'Try updating your preferred countries or interested courses'}
             </p>
             <Link to="/student/profile"
-              className="inline-flex items-center gap-1.5 text-sm text-white bg-sky-500 hover:bg-sky-600 px-4 py-2 rounded-xl font-medium transition-colors">
+              className="inline-flex items-center gap-1.5 text-sm text-white bg-[#0d1b4b] hover:bg-[#152258] px-4 py-2 rounded-xl font-medium transition-colors">
               Complete Profile <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

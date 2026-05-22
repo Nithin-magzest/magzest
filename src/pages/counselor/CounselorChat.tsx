@@ -52,7 +52,7 @@ function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
       <div className="max-w-[75%]">
         {!isMe && (
           <div className="flex items-center gap-1.5 mb-1">
-            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
+            <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
             <span className="text-xs text-gray-500">{msg.senderName}</span>
           </div>
         )}
@@ -94,7 +94,7 @@ function MeetingMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
       <div className="max-w-[75%]">
         {!isMe && (
           <div className="flex items-center gap-1.5 mb-1">
-            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
+            <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
             <span className="text-xs text-gray-500">{msg.senderName}</span>
           </div>
         )}
@@ -314,7 +314,7 @@ export default function CounselorChat() {
         {selectedRoom ? (
           <div className="flex-1 flex flex-col min-w-0">
             <div className="p-4 border-b border-gray-100 bg-green-50 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+              <div className="w-10 h-10 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                 {getStudentName(selectedRoom).charAt(0)}
               </div>
               <div className="flex-1">
@@ -350,7 +350,7 @@ export default function CounselorChat() {
                     <div className="max-w-[70%]">
                       {!isMe && (
                         <div className="flex items-center gap-1.5 mb-1">
-                          <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
+                          <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
                           <span className="text-xs text-gray-500">{msg.senderName}</span>
                         </div>
                       )}

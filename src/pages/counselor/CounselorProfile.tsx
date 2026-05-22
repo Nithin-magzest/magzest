@@ -92,7 +92,7 @@ function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onU
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors disabled:opacity-60">
+              className="flex-1 px-4 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors disabled:opacity-60">
               {saving ? 'Uploading…' : 'Upload'}
             </button>
           </div>

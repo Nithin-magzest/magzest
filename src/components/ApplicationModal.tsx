@@ -184,7 +184,7 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
           <div className="flex items-center">
             {STEPS.map((s, i) => (
               <div key={i} className="flex items-center flex-1 min-w-0">
-                <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold flex-shrink-0 transition-colors ${i < step ? 'bg-green-500 text-white' : i === step ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold flex-shrink-0 transition-colors ${i < step ? 'bg-green-500 text-white' : i === step ? 'bg-[#0d1b4b] text-white' : 'bg-gray-100 text-gray-400'}`}>
                   {i < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
                 </div>
                 <span className={`ml-1.5 text-xs font-medium hidden sm:block truncate ${i === step ? 'text-blue-700' : i < step ? 'text-green-600' : 'text-gray-400'}`}>{s.title}</span>
@@ -467,7 +467,7 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
           </button>
           <div className="flex-1" />
           {step < STEPS.length - 1 ? (
-            <button type="button" onClick={next} className="flex items-center gap-1.5 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-sky-600 transition-colors">
+            <button type="button" onClick={next} className="flex items-center gap-1.5 px-6 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-semibold hover:bg-[#152258] transition-colors">
               Next <ChevronRight className="w-4 h-4" />
             </button>
           ) : (

@@ -150,9 +150,9 @@ function counselorPerf(counselor: any, allStudents: any[]) {
 
   const score = Math.min(100, Math.round(offerRate * 45 + docRate * 30 + portfolioRate * 25));
   const tier = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Average' : 'Getting Started';
-  const color = score >= 80 ? 'text-green-600' : score >= 60 ? 'text-sky-600' : score >= 40 ? 'text-yellow-600' : 'text-gray-500';
-  const bg = score >= 80 ? 'bg-green-50 border-green-200' : score >= 60 ? 'bg-sky-50 border-sky-200' : score >= 40 ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200';
-  const bar = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-sky-500' : score >= 40 ? 'bg-yellow-500' : 'bg-gray-400';
+  const color = score >= 80 ? 'text-green-600' : score >= 60 ? 'text-[#0d1b4b]' : score >= 40 ? 'text-yellow-600' : 'text-gray-500';
+  const bg = score >= 80 ? 'bg-green-50 border-green-200' : score >= 60 ? 'bg-[#f0f4ff] border-[#0d1b4b]/20' : score >= 40 ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200';
+  const bar = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-[#0d1b4b]' : score >= 40 ? 'bg-yellow-500' : 'bg-gray-400';
 
   return {
     score, tier, color, bg, bar,
@@ -161,7 +161,7 @@ function counselorPerf(counselor: any, allStudents: any[]) {
     studentCount: myStudents.length,
     metrics: [
       { label: 'Offer & Acceptance Rate', value: Math.round(offerRate * 100), bar: 'bg-green-500' },
-      { label: 'Document Review Rate', value: Math.round(docRate * 100), bar: 'bg-sky-500' },
+      { label: 'Document Review Rate', value: Math.round(docRate * 100), bar: 'bg-[#0d1b4b]' },
       { label: 'Student Portfolio', value: Math.round(portfolioRate * 100), bar: 'bg-purple-500' },
     ],
   };
@@ -964,7 +964,7 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
                 return (
                   <button key={c} type="button" onClick={() => toggleArr('preferredCountries', c)}
                     className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium transition-all duration-150 active:scale-95
-                      ${sel ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'}`}>
+                      ${sel ? 'bg-[#0d1b4b] text-white border-[#0d1b4b] shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-[#0d1b4b]/40 hover:text-[#0d1b4b]'}`}>
                     {sel && <Check className="w-3 h-3" />}{c}
                   </button>
                 );
@@ -1349,7 +1349,7 @@ function NewApplicationModal({ student, onClose, onCreated }: {
                             className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all active:scale-95
                               ${isApplied
                                 ? 'bg-green-50 text-green-700 border-green-200 cursor-default'
-                                : 'bg-sky-500 text-white border-sky-500 hover:bg-sky-600 hover:border-sky-600 shadow-sm disabled:opacity-60'}`}>
+                                : 'bg-[#0d1b4b] text-white border-[#0d1b4b] hover:bg-[#152258] hover:border-[#152258] shadow-sm disabled:opacity-60'}`}>
                             {isApplying ? (
                               <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
                             ) : isApplied ? (
