@@ -23,36 +23,88 @@ const FLAG_CODES: Record<string, string> = {
   'Japan': 'jp', 'South Korea': 'kr', 'Austria': 'at', 'Denmark': 'dk',
 };
 
-const MARQUEE_UNIS = [
-  'MIT', 'Harvard University', 'University of Oxford', 'Stanford University',
-  'University of Cambridge', 'ETH Zurich', 'Imperial College London',
-  'University of Toronto', 'University of Melbourne', 'TU Munich',
-  'University of Edinburgh', 'University of British Columbia', 'McGill University',
-  'University of Sydney', 'National University of Singapore', 'Yale University',
-  'Princeton University', 'Columbia University', 'University of Chicago',
-  'University of Amsterdam', 'Monash University', 'King\'s College London',
-  'University of Auckland', 'Delft University of Technology', 'University of Waterloo',
+const G = (d: string) => `https://www.google.com/s2/favicons?domain=${d}&sz=256`;
+const W = (f: string) => `https://en.wikipedia.org/wiki/Special:FilePath/${encodeURIComponent(f)}?width=200`;
+
+interface MarqueeUni {
+  name: string; logo: string; country: string; city: string;
+  ranking: number; website: string; description: string;
+  acceptanceRate: number; rating: number; type: string;
+}
+
+const MARQUEE_UNIS: MarqueeUni[] = [
+  { name: 'University of Toronto',            logo: W('Utoronto_coa.svg'),                  country: 'Canada',         city: 'Toronto',        ranking: 21,  website: 'utoronto.ca',    description: "Canada's leading research university, ranked among the world's top 25. Renowned for innovation, diverse programs, and strong industry connections across sciences, engineering, business, and the arts.",                                                                          acceptanceRate: 43, rating: 4.8, type: 'Public Research University' },
+  { name: 'TU Munich',                        logo: W('TU_Muenchen_Logo.svg'),               country: 'Germany',        city: 'Munich',         ranking: 37,  website: 'tum.de',         description: "Germany's top technical university, offering tuition-free education and world-class research. Famous for engineering, computer science, and natural sciences.",                                                                                                                      acceptanceRate: 8,  rating: 4.8, type: 'Public Technical University' },
+  { name: 'National University of Singapore', logo: W('NUS_coat_of_arms.svg'),               country: 'Singapore',      city: 'Singapore',      ranking: 8,   website: 'nus.edu.sg',     description: "Asia's top-ranked university, offering a global approach to education and research with a strong focus on entrepreneurship and interdisciplinary studies.",                                                                                                                         acceptanceRate: 16, rating: 4.9, type: 'Public Research University' },
+  { name: 'Monash University',                logo: W('Monash_University_logo.svg'),          country: 'Australia',      city: 'Melbourne',      ranking: 58,  website: 'monash.edu',     description: 'A leading Australian research university known for innovation, sustainability, and global partnerships across medicine, engineering, arts, and business.',                                                                                                                             acceptanceRate: 70, rating: 4.7, type: 'Public Research University' },
+  { name: 'Harvard University',               logo: W('Harvard_University_logo.svg'),         country: 'United States',  city: 'Cambridge, MA',  ranking: 4,   website: 'harvard.edu',    description: "The world's most prestigious university with an endowment exceeding $50 billion. Home to 161 Nobel laureates and leaders in law, medicine, business, and the arts.",                                                                                                             acceptanceRate: 4,  rating: 4.9, type: 'Private Ivy League University' },
+  { name: "King's College London",            logo: W("King's_College_London_logo.svg"),      country: 'United Kingdom', city: 'London',         ranking: 40,  website: 'kcl.ac.uk',      description: 'A leading research university in the heart of London, renowned for health sciences, law, social science, humanities, and the arts.',                                                                                                                                                 acceptanceRate: 17, rating: 4.7, type: 'Public Research University' },
+  { name: 'McGill University',                logo: W('McGill_University_CoA.svg'),           country: 'Canada',         city: 'Montreal',       ranking: 46,  website: 'mcgill.ca',      description: "Canada's top-ranked university, celebrated for research excellence, a diverse student body, and alumni including Nobel Prize winners and world leaders.",                                                                                                                          acceptanceRate: 46, rating: 4.8, type: 'Public Research University' },
+  { name: 'ETH Zurich',                       logo: W('ETH_Zürich_Logo_black.svg'),           country: 'Switzerland',    city: 'Zurich',         ranking: 7,   website: 'ethz.ch',        description: "Europe's leading science and technology university, home to 21 Nobel Prize winners. Exceptional research in engineering, natural sciences, architecture, and mathematics.",                                                                                                         acceptanceRate: 27, rating: 4.9, type: 'Public Technical University' },
+  { name: 'University of Cambridge',          logo: 'https://www.cam.ac.uk/sites/www.cam.ac.uk/files/inner-images/logo.jpg', country: 'United Kingdom', city: 'Cambridge', ranking: 2, website: 'cam.ac.uk', description: "One of the world's oldest and most prestigious universities, with 121 Nobel Prize winners. Excellence across sciences, engineering, law, humanities, and medicine.", acceptanceRate: 21, rating: 4.9, type: 'Public Collegiate Research University' },
+  { name: 'University of Oxford',             logo: G('ox.ac.uk'),                           country: 'United Kingdom', city: 'Oxford',         ranking: 3,   website: 'ox.ac.uk',       description: 'The oldest university in the English-speaking world, consistently ranked in the top 3 globally. Famous for its tutorial system, research excellence, and distinguished alumni.',                                                                                                  acceptanceRate: 18, rating: 4.9, type: 'Public Collegiate Research University' },
+  { name: 'Stanford University',              logo: G('stanford.edu'),                        country: 'United States',  city: 'Stanford, CA',   ranking: 5,   website: 'stanford.edu',   description: "Silicon Valley's top research university, birthplace of Google and HP. World-leading in computer science, engineering, medicine, and business (GSB).",                                                                                                                            acceptanceRate: 4,  rating: 4.9, type: 'Private Research University' },
+  { name: 'MIT',                              logo: G('mit.edu'),                             country: 'United States',  city: 'Cambridge, MA',  ranking: 1,   website: 'mit.edu',        description: "The world's #1 university for 12 consecutive years (QS). A global leader in science, technology, engineering, and math, with 97 Nobel laureates and groundbreaking innovation.",                                                                                              acceptanceRate: 4,  rating: 4.9, type: 'Private Research University' },
+  { name: 'Princeton University',             logo: G('princeton.edu'),                       country: 'United States',  city: 'Princeton, NJ',  ranking: 17,  website: 'princeton.edu',  description: 'An Ivy League university known for its commitment to undergraduate teaching and pioneering research. Strong programs in mathematics, economics, public policy, and the humanities.',                                                                                             acceptanceRate: 5,  rating: 4.9, type: 'Private Ivy League University' },
+  { name: 'University of Melbourne',          logo: G('unimelb.edu.au'),                      country: 'Australia',      city: 'Melbourne',      ranking: 33,  website: 'unimelb.edu.au', description: "Australia's #1 university, internationally recognized for research quality, cultural diversity, and graduate employability across medicine, engineering, and arts.",                                                                                                              acceptanceRate: 70, rating: 4.8, type: 'Public Research University' },
+  { name: 'University of Sydney',             logo: G('sydney.edu.au'),                       country: 'Australia',      city: 'Sydney',         ranking: 41,  website: 'sydney.edu.au',  description: "Australia's first university, founded in 1850. A research-intensive institution in the heart of Sydney with global impact across 17 professional schools.",                                                                                                                     acceptanceRate: 30, rating: 4.7, type: 'Public Research University' },
+  { name: 'UNSW Sydney',                      logo: G('unsw.edu.au'),                         country: 'Australia',      city: 'Sydney',         ranking: 45,  website: 'unsw.edu.au',    description: "One of Australia's leading research universities with strength in engineering, computing, business, and sciences. Known for industry-connected education.",                                                                                                                       acceptanceRate: 35, rating: 4.7, type: 'Public Research University' },
+  { name: 'University of Queensland',         logo: G('uq.edu.au'),                           country: 'Australia',      city: 'Brisbane',       ranking: 47,  website: 'uq.edu.au',      description: "A world-top-50 research university known for pioneering discoveries including the HPV vaccine. Strong in health sciences, mining, and engineering.",                                                                                                                              acceptanceRate: 46, rating: 4.7, type: 'Public Research University' },
+  { name: 'University of Warwick',            logo: G('warwick.ac.uk'),                       country: 'United Kingdom', city: 'Coventry',       ranking: 67,  website: 'warwick.ac.uk',  description: 'A dynamic campus university ranked in the UK top 10. Renowned for business, economics, mathematics, engineering, and computer science.',                                                                                                                                         acceptanceRate: 14, rating: 4.6, type: 'Public Research University' },
+  { name: 'University of Waterloo',           logo: G('uwaterloo.ca'),                        country: 'Canada',         city: 'Waterloo, ON',   ranking: 112, website: 'uwaterloo.ca',   description: "Canada's top engineering and computer science university with the world's largest co-op program. A major tech hub connecting students with global employers.",                                                                                                                    acceptanceRate: 53, rating: 4.7, type: 'Public Research University' },
+  { name: 'University of Chicago',            logo: G('uchicago.edu'),                        country: 'United States',  city: 'Chicago, IL',    ranking: 11,  website: 'uchicago.edu',   description: 'Home to the Chicago School of Economics and 100+ Nobel laureates. Renowned for rigorous academics, innovative research, and the Booth School of Business.',                                                                                                                       acceptanceRate: 6,  rating: 4.9, type: 'Private Research University' },
+  { name: 'Yale University',                  logo: G('yale.edu'),                            country: 'United States',  city: 'New Haven, CT',  ranking: 16,  website: 'yale.edu',       description: "An Ivy League powerhouse renowned for law, medicine, drama, and music. Yale's law school and drama school are consistently ranked #1 in the United States.",                                                                                                                     acceptanceRate: 5,  rating: 4.9, type: 'Private Ivy League University' },
+  { name: 'University of Amsterdam',          logo: G('uva.nl'),                              country: 'Netherlands',    city: 'Amsterdam',      ranking: 53,  website: 'uva.nl',         description: "One of Europe's most prestigious research universities, located in one of the world's most livable cities. Strong in social sciences, law, and humanities with English-taught programs.",                                                                                        acceptanceRate: 50, rating: 4.7, type: 'Public Research University' },
+  { name: 'University of Auckland',           logo: G('auckland.ac.nz'),                      country: 'New Zealand',    city: 'Auckland',       ranking: 65,  website: 'auckland.ac.nz', description: "New Zealand's top-ranked university and member of the Universitas 21 network. Strong in engineering, business, health sciences, and creative arts.",                                                                                                                             acceptanceRate: 65, rating: 4.6, type: 'Public Research University' },
+  { name: 'Delft University of Technology',   logo: G('tudelft.nl'),                          country: 'Netherlands',    city: 'Delft',          ranking: 54,  website: 'tudelft.nl',     description: "Europe's top technical university and the Netherlands' largest. A global leader in engineering, architecture, and applied sciences with strong real-world impact.",                                                                                                              acceptanceRate: 20, rating: 4.7, type: 'Public Technical University' },
+  { name: 'University of Glasgow',            logo: G('gla.ac.uk'),                           country: 'United Kingdom', city: 'Glasgow',        ranking: 78,  website: 'gla.ac.uk',      description: "One of the world's oldest universities, founded in 1451. Strong research across medicine, engineering, law, arts, and social sciences in Scotland's vibrant cultural capital.",                                                                                                acceptanceRate: 22, rating: 4.6, type: 'Public Research University' },
+  { name: 'University of British Columbia',   logo: G('ubc.ca'),                              country: 'Canada',         city: 'Vancouver, BC',  ranking: 34,  website: 'ubc.ca',         description: "Canada's #3 university on a stunning campus in Vancouver. A global leader in sustainability, forestry, medicine, and technology with a vibrant international student community.",                                                                                                 acceptanceRate: 52, rating: 4.8, type: 'Public Research University' },
+  { name: 'Columbia University',              logo: G('columbia.edu'),                        country: 'United States',  city: 'New York, NY',   ranking: 22,  website: 'columbia.edu',   description: "An Ivy League institution in New York City, home to the Pulitzer Prize and renowned programs in journalism, business, law, and international affairs.",                                                                                                                          acceptanceRate: 4,  rating: 4.9, type: 'Private Ivy League University' },
+  { name: 'Imperial College London',          logo: G('imperial.ac.uk'),                      country: 'United Kingdom', city: 'London',         ranking: 6,   website: 'imperial.ac.uk', description: 'One of the world\'s top science and technology universities, focused on science, engineering, medicine, and business. Alumni include Nobel Prize winners and industry leaders.',                                                                                                   acceptanceRate: 14, rating: 4.9, type: 'Public Research University' },
+  { name: 'University of Manchester',         logo: G('manchester.ac.uk'),                    country: 'United Kingdom', city: 'Manchester',     ranking: 32,  website: 'manchester.ac.uk', description: 'A powerhouse of research with 25 Nobel Prize winners, home to graphene discovery. Strong in medicine, engineering, business, and social sciences.',                                                                                                                            acceptanceRate: 20, rating: 4.7, type: 'Public Research University' },
+  { name: 'University of Edinburgh',          logo: G('ed.ac.uk'),                            country: 'United Kingdom', city: 'Edinburgh',      ranking: 27,  website: 'ed.ac.uk',       description: "Scotland's flagship university, founded in 1583. Ranked in the world's top 30, with exceptional strength in AI, medicine, informatics, law, and the humanities.",                                                                                                              acceptanceRate: 43, rating: 4.8, type: 'Public Research University' },
 ];
 
 const MARQUEE_COUNTRIES = [
-  { flag: '🇺🇸', name: 'United States' }, { flag: '🇬🇧', name: 'United Kingdom' },
-  { flag: '🇨🇦', name: 'Canada' }, { flag: '🇦🇺', name: 'Australia' },
-  { flag: '🇩🇪', name: 'Germany' }, { flag: '🇸🇬', name: 'Singapore' },
-  { flag: '🇳🇱', name: 'Netherlands' }, { flag: '🇳🇿', name: 'New Zealand' },
-  { flag: '🇮🇪', name: 'Ireland' }, { flag: '🇫🇷', name: 'France' },
-  { flag: '🇸🇪', name: 'Sweden' }, { flag: '🇨🇭', name: 'Switzerland' },
-  { flag: '🇯🇵', name: 'Japan' }, { flag: '🇰🇷', name: 'South Korea' },
-  { flag: '🇦🇹', name: 'Austria' }, { flag: '🇩🇰', name: 'Denmark' },
+  { flag: '🇺🇸', name: 'United States', code: 'us', programs: '4,200+' },
+  { flag: '🇬🇧', name: 'United Kingdom', code: 'gb', programs: '3,800+' },
+  { flag: '🇨🇦', name: 'Canada', code: 'ca', programs: '2,100+' },
+  { flag: '🇦🇺', name: 'Australia', code: 'au', programs: '1,900+' },
+  { flag: '🇩🇪', name: 'Germany', code: 'de', programs: '1,200+' },
+  { flag: '🇸🇬', name: 'Singapore', code: 'sg', programs: '450+' },
+  { flag: '🇳🇱', name: 'Netherlands', code: 'nl', programs: '890+' },
+  { flag: '🇳🇿', name: 'New Zealand', code: 'nz', programs: '340+' },
+  { flag: '🇮🇪', name: 'Ireland', code: 'ie', programs: '600+' },
+  { flag: '🇫🇷', name: 'France', code: 'fr', programs: '750+' },
+  { flag: '🇸🇪', name: 'Sweden', code: 'se', programs: '420+' },
+  { flag: '🇨🇭', name: 'Switzerland', code: 'ch', programs: '310+' },
+  { flag: '🇯🇵', name: 'Japan', code: 'jp', programs: '280+' },
+  { flag: '🇰🇷', name: 'South Korea', code: 'kr', programs: '260+' },
+  { flag: '🇦🇹', name: 'Austria', code: 'at', programs: '200+' },
+  { flag: '🇩🇰', name: 'Denmark', code: 'dk', programs: '180+' },
 ];
 
-const MARQUEE_COURSES = [
-  'MSc Computer Science', 'MBA Business Administration', 'MSc Data Science & AI',
-  'BEng Mechanical Engineering', 'MSc Electrical Engineering', 'MSc Cybersecurity',
-  'MSc Finance & Investment', 'PhD Machine Learning', 'MSc Public Health',
-  'LLM International Law', 'MSc Biotechnology', 'MA International Relations',
-  'MSc Software Engineering', 'MSc Cloud Computing', 'BBA Marketing Management',
-  'MSc Environmental Science', 'MSc Robotics', 'PhD Artificial Intelligence',
-  'MSc Architecture & Design', 'MSc Supply Chain Management',
+const MARQUEE_COURSES: { name: string; emoji: string; color: string; bg: string }[] = [
+  { name: 'MSc Computer Science', emoji: '💻', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-100' },
+  { name: 'MBA Business Administration', emoji: '📊', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-100' },
+  { name: 'MSc Data Science & AI', emoji: '🤖', color: 'text-violet-700', bg: 'bg-violet-50 border-violet-100' },
+  { name: 'BEng Mechanical Engineering', emoji: '⚙️', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-100' },
+  { name: 'MSc Electrical Engineering', emoji: '⚡', color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-100' },
+  { name: 'MSc Cybersecurity', emoji: '🔐', color: 'text-red-700', bg: 'bg-red-50 border-red-100' },
+  { name: 'MSc Finance & Investment', emoji: '💰', color: 'text-green-700', bg: 'bg-green-50 border-green-100' },
+  { name: 'PhD Machine Learning', emoji: '🧠', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-100' },
+  { name: 'MSc Public Health', emoji: '🏥', color: 'text-pink-700', bg: 'bg-pink-50 border-pink-100' },
+  { name: 'LLM International Law', emoji: '⚖️', color: 'text-slate-700', bg: 'bg-slate-50 border-slate-100' },
+  { name: 'MSc Biotechnology', emoji: '🧬', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-100' },
+  { name: 'MA International Relations', emoji: '🌐', color: 'text-cyan-700', bg: 'bg-cyan-50 border-cyan-100' },
+  { name: 'MSc Software Engineering', emoji: '🖥️', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-100' },
+  { name: 'MSc Cloud Computing', emoji: '☁️', color: 'text-sky-700', bg: 'bg-sky-50 border-sky-100' },
+  { name: 'BBA Marketing Management', emoji: '📣', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-100' },
+  { name: 'MSc Environmental Science', emoji: '🌿', color: 'text-lime-700', bg: 'bg-lime-50 border-lime-100' },
+  { name: 'MSc Robotics', emoji: '🦾', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-100' },
+  { name: 'PhD Artificial Intelligence', emoji: '🤖', color: 'text-violet-700', bg: 'bg-violet-50 border-violet-100' },
+  { name: 'MSc Architecture & Design', emoji: '🏛️', color: 'text-stone-700', bg: 'bg-stone-50 border-stone-100' },
+  { name: 'MSc Supply Chain Management', emoji: '🚚', color: 'text-teal-700', bg: 'bg-teal-50 border-teal-100' },
 ];
 
 
@@ -327,9 +379,7 @@ function DetailModal({
     if (modal.type === 'university') {
       const uni = universities.find(u =>
         u.name === modal.name ||
-        u.name?.toLowerCase() === modal.name.toLowerCase() ||
-        u.name?.toLowerCase().includes(modal.name.toLowerCase()) ||
-        modal.name.toLowerCase().includes((u.name || '').toLowerCase().split(' ')[0])
+        u.name?.toLowerCase() === modal.name.toLowerCase()
       );
       if (uni) {
         return (
@@ -373,6 +423,42 @@ function DetailModal({
               )}
               <button type="button" onClick={() => { onClose(); navigate(`/university/${uni.id}`); }} className="w-full bg-[#0d1b4b] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#152258] transition-colors flex items-center justify-center gap-2">
                 View Full Profile <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        );
+      }
+      const mu = MARQUEE_UNIS.find(m => m.name === modal.name || m.name.toLowerCase() === modal.name.toLowerCase());
+      if (mu) {
+        return (
+          <>
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 text-white relative rounded-t-2xl">
+              <button type="button" aria-label="Close" onClick={onClose} className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-colors"><X className="w-4 h-4" /></button>
+              <div className="w-16 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden p-1.5 mb-3">
+                <img src={mu.logo} alt={mu.name} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              </div>
+              <h2 className="text-xl font-bold pr-10">{mu.name}</h2>
+              <p className="text-sky-100 text-sm mt-1 flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{mu.city}, {mu.country} <span className="opacity-70 ml-1">• {mu.type}</span></p>
+              <div className="flex gap-2 mt-3 flex-wrap">
+                <span className="bg-white/20 text-xs px-2.5 py-1 rounded-full font-medium">#{mu.ranking} World Rank</span>
+                <span className="flex items-center gap-1 bg-white/20 text-xs px-2.5 py-1 rounded-full"><Star className="w-3 h-3 fill-yellow-300 text-yellow-300" />{mu.rating}</span>
+                <span className="bg-white/20 text-xs px-2.5 py-1 rounded-full">{mu.acceptanceRate}% acceptance</span>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-gray-600 leading-relaxed">{mu.description}</p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-[#f0f4ff] rounded-xl p-3"><p className="font-bold text-[#0d1b4b] text-lg">#{mu.ranking}</p><p className="text-xs text-gray-500">World Rank</p></div>
+                <div className="bg-[#f0f4ff] rounded-xl p-3"><p className="font-bold text-[#0d1b4b] text-lg">{mu.acceptanceRate}%</p><p className="text-xs text-gray-500">Acceptance</p></div>
+                <div className="bg-[#f0f4ff] rounded-xl p-3"><p className="font-bold text-[#0d1b4b] text-lg">{mu.rating}⭐</p><p className="text-xs text-gray-500">Rating</p></div>
+              </div>
+              <a href={`https://${mu.website}`} target="_blank" rel="noopener noreferrer"
+                className="w-full bg-[#0d1b4b] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#152258] transition-colors flex items-center justify-center gap-2">
+                <Globe className="w-4 h-4" /> Visit Official Website
+              </a>
+              <button type="button" onClick={() => { onClose(); navigate(`/search?country=${encodeURIComponent(mu.country)}`); }}
+                className="w-full bg-sky-50 text-[#0d1b4b] border border-sky-200 py-2.5 rounded-xl font-semibold text-sm hover:bg-sky-100 transition-colors flex items-center justify-center gap-2">
+                Explore Programs in {mu.country} <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </>
@@ -815,48 +901,71 @@ export default function Home() {
       </section>
 
       {/* ── SCROLLING TICKER ── */}
-      <section className="py-10 bg-sky-50 border-y border-sky-100 overflow-hidden">
-        <div className="text-center mb-6">
+      <section className="py-10 bg-white border-y border-gray-100 overflow-hidden">
+        <div className="text-center mb-7">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Explore our network of universities, countries &amp; courses</p>
         </div>
-        <div className="marquee-wrap overflow-hidden mb-3">
-          <div className="flex animate-marquee-left whitespace-nowrap w-max">
+
+        {/* Row 1 — Universities scrolling left */}
+        <div className="marquee-wrap overflow-hidden mb-4">
+          <div className="flex animate-marquee-left w-max">
             {[...MARQUEE_UNIS, ...MARQUEE_UNIS].map((uni, i) => (
-              <button key={i} type="button" onClick={() => setDetailModal({ type: 'university', name: uni })}
-                className="inline-flex items-center gap-2 mx-3 px-3 py-1.5 bg-[#f0f4ff] border border-[#0d1b4b]/10 rounded-full text-sm font-semibold text-[#0d1b4b] shrink-0 hover:bg-[#e8edff] hover:border-[#0d1b4b]/30 transition-colors cursor-pointer">
-                <UniLogo name={uni} />
-                {uni}
+              <button key={i} type="button" onClick={() => setDetailModal({ type: 'university', name: uni.name })}
+                className="inline-flex items-center gap-3 mx-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-gray-200 transition-all shrink-0 cursor-pointer group">
+                <div className="w-14 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 p-1">
+                  <img
+                    src={uni.logo} alt={uni.name}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      const t = e.currentTarget;
+                      t.style.display = 'none';
+                      const fb = t.nextElementSibling as HTMLElement | null;
+                      if (fb) fb.style.display = 'flex';
+                    }}
+                  />
+                  <span className="w-full h-full bg-[#0d1b4b] rounded-lg text-white text-[10px] font-bold items-center justify-center hidden leading-tight text-center px-0.5">
+                    {uni.name.split(' ').map(w => w[0]).join('').slice(0, 3)}
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-gray-800 whitespace-nowrap group-hover:text-[#0d1b4b] transition-colors">{uni.name}</span>
               </button>
             ))}
           </div>
         </div>
-        <div className="marquee-wrap overflow-hidden mb-3">
-          <div className="flex animate-marquee-right whitespace-nowrap w-max">
+
+        {/* Row 2 — Countries scrolling right */}
+        <div className="marquee-wrap overflow-hidden mb-4">
+          <div className="flex animate-marquee-right w-max">
             {[...MARQUEE_COUNTRIES, ...MARQUEE_COUNTRIES].map((c, i) => (
               <button key={i} type="button" onClick={() => setDetailModal({ type: 'country', name: c.name, flag: c.flag })}
-                className="inline-flex items-center gap-2 mx-3 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full text-sm font-semibold text-emerald-700 shrink-0 hover:bg-emerald-100 hover:border-emerald-300 transition-colors cursor-pointer">
-                <CountryFlagImg name={c.name} flag={c.flag} />
-                {c.name}
+                className="inline-flex items-center gap-3 mx-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-gray-200 transition-all shrink-0 cursor-pointer group">
+                <div className="w-10 h-7 rounded-lg overflow-hidden flex-shrink-0 shadow-sm border border-gray-100">
+                  <img
+                    src={`https://flagcdn.com/w80/${c.code}.png`}
+                    alt={c.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-gray-800 whitespace-nowrap group-hover:text-[#0d1b4b] transition-colors">{c.name}</p>
+                  <p className="text-xs text-gray-400">{c.programs} programs</p>
+                </div>
               </button>
             ))}
           </div>
         </div>
+
+        {/* Row 3 — Courses scrolling left */}
         <div className="marquee-wrap overflow-hidden">
-          <div className="flex animate-marquee-left2 whitespace-nowrap w-max">
-            {[...MARQUEE_COURSES, ...MARQUEE_COURSES].map((course, i) => {
-              const CourseIcon = getCourseIcon(course);
-              const field = getField(course);
-              const styles = COURSE_PILL_STYLES[field] || COURSE_PILL_STYLES['Other'];
-              return (
-                <button key={i} type="button" onClick={() => setDetailModal({ type: 'course', name: course })}
-                  className={`inline-flex items-center gap-2 mx-3 px-3 py-1.5 rounded-full text-sm font-semibold shrink-0 transition-colors cursor-pointer ${styles.pill}`}>
-                  <span className={`w-5 h-5 rounded-lg ${styles.icon} flex items-center justify-center flex-shrink-0`}>
-                    <CourseIcon className="w-3 h-3 text-white" />
-                  </span>
-                  {course}
-                </button>
-              );
-            })}
+          <div className="flex animate-marquee-left2 w-max">
+            {[...MARQUEE_COURSES, ...MARQUEE_COURSES].map((course, i) => (
+              <button key={i} type="button" onClick={() => setDetailModal({ type: 'course', name: course.name })}
+                className={`inline-flex items-center gap-3 mx-2 px-4 py-3 bg-white border rounded-2xl shadow-sm hover:shadow-md transition-all shrink-0 cursor-pointer group ${course.bg}`}>
+                <span className="text-xl leading-none flex-shrink-0">{course.emoji}</span>
+                <span className={`text-sm font-semibold whitespace-nowrap ${course.color}`}>{course.name}</span>
+              </button>
+            ))}
           </div>
         </div>
       </section>
