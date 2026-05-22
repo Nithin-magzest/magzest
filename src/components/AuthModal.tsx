@@ -88,7 +88,7 @@ export default function AuthModal() {
             <div className="bg-blue-600 p-1.5 rounded-lg">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900">Magzest</span>
+            <span className="text-lg font-bold text-gray-900">GradZest</span>
           </div>
           <button
             type="button"

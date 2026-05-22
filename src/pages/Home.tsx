@@ -209,20 +209,20 @@ const TEAM = [
 ];
 
 const TESTIMONIALS = [
-  { name: 'Priya Sharma', from: '🇮🇳 Bengaluru, India', uni: 'University of Melbourne', rating: 5, text: 'Magzest helped me secure a scholarship for my Master\'s in Data Science at Melbourne. Their counselors guided me on every SOP, LOR, and visa step. Life-changing experience!' },
-  { name: 'Arjun Reddy', from: '🇮🇳 Hyderabad, India', uni: 'University of Toronto', rating: 5, text: 'I applied to 5 universities in Canada and got into my top choice MBA program. Magzest made the whole process stress-free and incredibly smooth from start to finish.' },
-  { name: 'Divya Krishnan', from: '🇮🇳 Chennai, India', uni: 'TU Munich', rating: 5, text: 'Got into TU Munich\'s free tuition Engineering program! The scholarship and financial guidance from Magzest saved my family lakhs. 100% recommend to every student.' },
-  { name: 'Rohit Nair', from: '🇮🇳 Kochi, India', uni: 'University of Edinburgh', rating: 5, text: 'My UK student visa was approved in just 3 weeks. Magzest\'s end-to-end support — from shortlisting to pre-departure briefing — was absolutely outstanding.' },
+  { name: 'Priya Sharma', from: '🇮🇳 Bengaluru, India', uni: 'University of Melbourne', rating: 5, text: 'GradZest helped me secure a scholarship for my Master\'s in Data Science at Melbourne. Their counselors guided me on every SOP, LOR, and visa step. Life-changing experience!' },
+  { name: 'Arjun Reddy', from: '🇮🇳 Hyderabad, India', uni: 'University of Toronto', rating: 5, text: 'I applied to 5 universities in Canada and got into my top choice MBA program. GradZest made the whole process stress-free and incredibly smooth from start to finish.' },
+  { name: 'Divya Krishnan', from: '🇮🇳 Chennai, India', uni: 'TU Munich', rating: 5, text: 'Got into TU Munich\'s free tuition Engineering program! The scholarship and financial guidance from GradZest saved my family lakhs. 100% recommend to every student.' },
+  { name: 'Rohit Nair', from: '🇮🇳 Kochi, India', uni: 'University of Edinburgh', rating: 5, text: 'My UK student visa was approved in just 3 weeks. GradZest\'s end-to-end support — from shortlisting to pre-departure briefing — was absolutely outstanding.' },
 ];
 
 const FAQS = [
   {
-    q: 'How does Magzest help me study abroad?',
-    a: 'Magzest provides end-to-end support — from shortlisting universities and programs that match your profile, to assisting with application documents, SOPs, LORs, scholarships, and visa applications. Our counselors guide you at every step until you land at your dream university.',
+    q: 'How does GradZest help me study abroad?',
+    a: 'GradZest provides end-to-end support — from shortlisting universities and programs that match your profile, to assisting with application documents, SOPs, LORs, scholarships, and visa applications. Our counselors guide you at every step until you land at your dream university.',
   },
   {
     q: 'Is the counseling service free for students?',
-    a: 'Yes! Registering and getting initial counseling on Magzest is completely free. Our platform connects you with expert advisors who help you find the right programs without any upfront cost.',
+    a: 'Yes! Registering and getting initial counseling on GradZest is completely free. Our platform connects you with expert advisors who help you find the right programs without any upfront cost.',
   },
   {
     q: 'What documents do I need to apply for a university abroad?',
@@ -233,20 +233,20 @@ const FAQS = [
     a: 'The timeline varies by destination and intake. Generally, we recommend starting 12–18 months before your intended intake. Some countries like Canada and Australia have rolling intakes, while the UK and US have fixed deadlines. Our counselors help you plan your timeline carefully.',
   },
   {
-    q: 'Can Magzest help me find scholarships?',
+    q: 'Can GradZest help me find scholarships?',
     a: 'Absolutely. We have a dedicated scholarship team that identifies merit-based, need-based, and country-specific scholarships you may be eligible for. Over 88% of students we counsel receive at least one scholarship offer.',
   },
   {
-    q: 'What is the visa approval rate for Magzest students?',
+    q: 'What is the visa approval rate for GradZest students?',
     a: 'Our students enjoy a 96% visa approval rate across all major study destinations including Canada, UK, Australia, Germany, and the US. Our visa specialists prepare your application thoroughly to maximize approval chances.',
   },
   {
-    q: 'Which countries does Magzest cover?',
+    q: 'Which countries does GradZest cover?',
     a: 'We help students apply to universities in 20+ countries including the United States, United Kingdom, Canada, Australia, Germany, Singapore, Netherlands, Ireland, New Zealand, and more. Our counselors specialize in their respective regions.',
   },
   {
     q: 'How do I track my application status?',
-    a: 'Once registered on Magzest, you get access to a real-time application tracker in your student dashboard. You can see the status of every application — from document submission to university decision — in one place.',
+    a: 'Once registered on GradZest, you get access to a real-time application tracker in your student dashboard. You can see the status of every application — from document submission to university decision — in one place.',
   },
 ];
 
@@ -387,7 +387,7 @@ function DetailModal({
             <p className="text-sky-100 text-sm mt-1">World-renowned research university</p>
           </div>
           <div className="p-5">
-            <p className="text-sm text-gray-600 mb-5 leading-relaxed">{modal.name} is one of the world's leading research universities, known for academic excellence and global impact. Contact a Magzest counselor to explore admission pathways.</p>
+            <p className="text-sm text-gray-600 mb-5 leading-relaxed">{modal.name} is one of the world's leading research universities, known for academic excellence and global impact. Contact a GradZest counselor to explore admission pathways.</p>
             <button type="button" onClick={() => { onClose(); navigate('/universities'); }} className="w-full bg-[#0d1b4b] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#152258] transition-colors flex items-center justify-center gap-2">
               Browse Partner Universities <ArrowRight className="w-4 h-4" />
             </button>
@@ -866,10 +866,10 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <FadeIn direction="left">
-              <span className="inline-block bg-white/20 text-white text-sm font-medium px-3 py-1 rounded-full mb-4">About Magzest</span>
+              <span className="inline-block bg-white/20 text-white text-sm font-medium px-3 py-1 rounded-full mb-4">About GradZest</span>
               <h2 className="text-3xl font-bold mb-4">Your Trusted Partner for Studying Abroad</h2>
               <p className="text-sky-100 leading-relaxed mb-4">
-                Magzest Consultancy Services was founded with a single mission: to help every Indian student access world-class education without the confusion and stress of applying abroad alone.
+                GradZest Consultancy Services was founded with a single mission: to help every Indian student access world-class education without the confusion and stress of applying abroad alone.
               </p>
               <p className="text-sky-100 leading-relaxed mb-6">
                 With a team of experienced counselors, visa specialists, and university relationship managers, we guide students from shortlisting the right program to landing at their dream university — handling every document, deadline, and detail along the way.
@@ -1146,7 +1146,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900">What Our Students Say</h2>
-            <p className="text-gray-500 mt-3">Real stories from Indian students who achieved their dream abroad with Magzest</p>
+            <p className="text-gray-500 mt-3">Real stories from Indian students who achieved their dream abroad with GradZest</p>
           </FadeIn>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {TESTIMONIALS.map((t, i) => (
@@ -1267,8 +1267,8 @@ export default function Home() {
       <section className="bg-gradient-to-br from-[#0d1b4b] via-[#1a2d6e] to-[#060e26] py-20 text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <FadeIn>
-            <h2 className="text-4xl font-bold mb-4">Your Dream University Starts with Magzest</h2>
-            <p className="text-sky-100 text-lg mb-8">Join students across India who found their perfect program with Magzest</p>
+            <h2 className="text-4xl font-bold mb-4">Your Dream University Starts with GradZest</h2>
+            <p className="text-sky-100 text-lg mb-8">Join students across India who found their perfect program with GradZest</p>
           </FadeIn>
           <FadeIn delayClass="delay-120" className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
             <button type="button" onClick={() => open('register')} className="bg-white text-[#0d1b4b] font-bold px-8 py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all inline-flex items-center justify-center gap-2">
@@ -1347,7 +1347,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-sm">
-            <p>© 2026 Magzest. All rights reserved.</p>
+            <p>© 2026 GradZest. All rights reserved.</p>
             <p className="flex items-center gap-4">
               <span>🔒 SSL Secured</span>
               <span>GDPR Compliant</span>
