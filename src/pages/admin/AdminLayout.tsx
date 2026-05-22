@@ -8,12 +8,12 @@ type NavIcon = React.ComponentType<{ className?: string }> | string;
 
 const navItems: { to: string; label: string; icon: NavIcon; end?: boolean }[] = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/admin/universities', label: 'Universities', icon: GraduationCap },
-  { to: '/admin/courses', label: 'Courses', icon: BookOpen },
-  { to: '/admin/countries', label: 'Countries & Visa', icon: '🌍' },
   { to: '/admin/counselors', label: 'Counselors', icon: UserCog },
   { to: '/admin/students', label: 'Students', icon: Users },
   { to: '/admin/applications', label: 'Applications', icon: FileText },
+  { to: '/admin/countries', label: 'Countries & Visa', icon: '🌍' },
+  { to: '/admin/universities', label: 'Universities', icon: GraduationCap },
+  { to: '/admin/courses', label: 'Courses', icon: BookOpen },
   { to: '/admin/meetings', label: 'Meetings', icon: CalendarDays },
   { to: '/admin/chat', label: 'Chat', icon: MessageSquare },
 ];

@@ -9,12 +9,12 @@ type NavIcon = React.ComponentType<{ className?: string }> | string;
 const navItems: { to: string; label: string; icon: NavIcon; end?: boolean; mobileHide?: boolean }[] = [
   { to: '/counselor', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/counselor/students', label: 'Students', icon: Users },
-  { to: '/counselor/chat', label: 'Chat', icon: MessageSquare },
-  { to: '/counselor/universities', label: 'Universities', icon: GraduationCap },
-  { to: '/counselor/profile', label: 'My Profile', icon: User },
-  { to: '/counselor/courses', label: 'Courses', icon: BookOpen, mobileHide: true },
   { to: '/counselor/countries', label: 'Countries', icon: '🌍' },
+  { to: '/counselor/universities', label: 'Universities', icon: GraduationCap },
+  { to: '/counselor/courses', label: 'Courses', icon: BookOpen, mobileHide: true },
   { to: '/counselor/meetings', label: 'Meetings', icon: CalendarDays },
+  { to: '/counselor/chat', label: 'Chat', icon: MessageSquare },
+  { to: '/counselor/profile', label: 'My Profile', icon: User },
 ];
 
 function NavIcon({ icon, size }: { icon: NavIcon; size: 'sm' | 'md' }) {

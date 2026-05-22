@@ -1,5 +1,5 @@
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
-import { LayoutDashboard, GraduationCap, FileText, User, MessageSquare, BookOpen, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, GraduationCap, User, MessageSquare, BookOpen, CalendarDays } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
 import { useUnreadMessages } from '../../hooks/useUnreadMessages';
@@ -8,13 +8,12 @@ type NavIcon = React.ComponentType<{ className?: string }> | string;
 
 const navItems: { to: string; label: string; icon: NavIcon; end?: boolean; mobileHide?: boolean }[] = [
   { to: '/student', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/student/countries', label: 'Countries', icon: '🌍' },
   { to: '/student/universities', label: 'Universities', icon: GraduationCap },
-  { to: '/student/applications', label: 'Applications', icon: FileText },
+  { to: '/student/courses', label: 'Courses', icon: BookOpen, mobileHide: true },
+  { to: '/student/meetings', label: 'Meetings', icon: CalendarDays },
   { to: '/student/chat', label: 'Chat', icon: MessageSquare },
   { to: '/student/profile', label: 'My Profile', icon: User },
-  { to: '/student/courses', label: 'Courses', icon: BookOpen, mobileHide: true },
-  { to: '/student/countries', label: 'Countries', icon: '🌍' },
-  { to: '/student/meetings', label: 'Meetings', icon: CalendarDays },
 ];
 
 function NavIcon({ icon, size }: { icon: NavIcon; size: 'sm' | 'md' }) {
