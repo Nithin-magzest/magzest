@@ -78,11 +78,11 @@
     will-change: transform;
   }
   .animate-marquee-right {
-    animation: marquee-right 38s linear infinite;
+    animation: marquee-right 40s linear infinite;
     will-change: transform;
   }
   .animate-marquee-left2 {
-    animation: marquee-left 44s linear infinite;
+    animation: marquee-left 40s linear infinite;
     will-change: transform;
   }
   .marquee-wrap:hover .animate-marquee-left,
