@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, Routes, Route, useParams, useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus } from 'lucide-react';
+import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -340,14 +340,14 @@ function StudentsList() {
                     <div className="flex items-center gap-2">
                       <StatusBadge status={student.status} />
                       {student.phone && (
-                        <a
-                          href={`tel:${student.phone.replace(/\s/g, '')}`}
-                          onClick={e => e.stopPropagation()}
+                        <button
+                          type="button"
+                          onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${student.phone.replace(/\s/g, '')}`; }}
                           title={`Call ${student.phone}`}
                           className="w-8 h-8 bg-sky-500 hover:bg-blue-600 active:scale-95 text-white rounded-full flex items-center justify-center shadow-sm transition-all flex-shrink-0"
                         >
                           <Phone className="w-3.5 h-3.5" />
-                        </a>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -452,9 +452,14 @@ function StudentDetail() {
               {(student.preferredCountries || []).map((c: string) => <span key={c} className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full">{c}</span>)}
             </div>
           </div>
-          <Link to="/counselor/chat" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors">
-            <MessageSquare className="w-4 h-4" /> Chat
-          </Link>
+          <div className="flex flex-col gap-2">
+            <Link to="/counselor/chat" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors">
+              <MessageSquare className="w-4 h-4" /> Chat
+            </Link>
+            <Link to="/counselor/universities" className="flex items-center gap-2 bg-sky-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-sky-600 transition-colors">
+              <Plus className="w-4 h-4" /> New Application
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -495,6 +500,13 @@ function StudentDetail() {
 
       {activeTab === 'applications' && (
         <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">{apps.length} application{apps.length !== 1 ? 's' : ''}</p>
+            <Link to="/counselor/universities"
+              className="flex items-center gap-1.5 bg-sky-500 text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-sky-600 transition-colors shadow-sm">
+              <Plus className="w-4 h-4" /> New Application
+            </Link>
+          </div>
           {apps.length === 0 ? (
             <div className="bg-white rounded-2xl p-10 text-center border border-gray-100 shadow-sm">
               <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />

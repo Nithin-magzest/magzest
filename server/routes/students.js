@@ -85,9 +85,9 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-// Get student by ID (counselor only)
+// Get student by ID (counselor or admin)
 router.get('/:id', authMiddleware, async (req, res) => {
-  if (req.user.role !== 'counselor') return res.status(403).json({ message: 'Forbidden' });
+  if (!['counselor', 'admin'].includes(req.user.role)) return res.status(403).json({ message: 'Forbidden' });
   try {
     const student = await User.findById(req.params.id).select('-password');
     if (!student) return res.status(404).json({ message: 'Student not found' });

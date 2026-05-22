@@ -275,7 +275,13 @@ export default function CounselorDashboard() {
       </div>
 
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900 mb-5">Application Pipeline</h2>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold text-gray-900">Application Pipeline</h2>
+          <Link to="/counselor/universities"
+            className="flex items-center gap-1.5 bg-sky-500 text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-sky-600 transition-colors">
+            <Plus className="w-4 h-4" /> New Application
+          </Link>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {appBreakdown.map(b => (
             <div key={b.label} className="text-center p-4 bg-gray-50 rounded-xl">
@@ -398,17 +404,23 @@ export default function CounselorDashboard() {
           </div>
           <div className="space-y-3">
             {myStudents.map((s: any) => (
-              <Link key={s._id || s.id} to={`/counselor/students/${s._id || s.id}`} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold flex-shrink-0">{s.name.charAt(0)}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm">{s.name}</p>
-                  <p className="text-xs text-gray-500">{s.nationality} • {(s.applications || []).length} application(s)</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
+              <div key={s._id || s.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                <Link to={`/counselor/students/${s._id || s.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold flex-shrink-0">{s.name.charAt(0)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm">{s.name}</p>
+                    <p className="text-xs text-gray-500">{s.nationality} • {(s.applications || []).length} application(s)</p>
+                  </div>
+                </Link>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <StatusBadge status={s.status} />
                   {(s.documents || []).some((d: any) => d.status === 'pending') && <span className="text-xs text-yellow-600">Docs pending</span>}
+                  <Link to="/counselor/universities"
+                    className="flex items-center gap-1 text-xs text-sky-600 font-medium hover:text-sky-700 border border-sky-200 px-2 py-0.5 rounded-md hover:bg-sky-50 transition-colors">
+                    <Plus className="w-3 h-3" /> Apply
+                  </Link>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>

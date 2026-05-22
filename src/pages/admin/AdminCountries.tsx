@@ -1,134 +1,9 @@
-﻿import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, X, Search, Edit2, ChevronDown, ChevronUp,
   Check, DollarSign, Clock, FileCheck2, CreditCard, RefreshCw,
 } from 'lucide-react';
-
-/* ── Local persistence ─────────────────────────────────────────────────────── */
-
-const LS_KEY = 'mgz_admin_countries_v1';
-
-function lsLoad(): any[] {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : [...SEED];
-  } catch { return [...SEED]; }
-}
-
-function lsSave(list: any[]): void {
-  localStorage.setItem(LS_KEY, JSON.stringify(list));
-}
-
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-
-/* ── Seed data ─────────────────────────────────────────────────────────────── */
-
-const SEED: any[] = [
-  {
-    id: 'us', name: 'United States', flag: '🇺🇸', code: 'US',
-    capital: 'Washington D.C.', region: 'North America', currency: 'USD', language: 'English',
-    visa: {
-      type: 'F-1 Student Visa', processingTime: '3–8 weeks', cost: 'USD 160',
-      validity: 'Duration of course + 60 days',
-      documents: ['DS-160 Form', 'SEVIS I-20 Form', 'Bank statements (3 months)', 'Academic transcripts', 'TOEFL/IELTS scores', 'Passport (6 months validity)', 'Visa photos'],
-      notes: 'OPT (Optional Practical Training) work authorization available for 12–36 months post-graduation. CPT allowed during studies.',
-    },
-    passport: { minValidity: '6 months beyond intended stay', notes: 'Indian passport holders must obtain F-1 visa before travel. No visa-on-arrival.' },
-    costs: { monthlyLivingMin: 800, monthlyLivingMax: 2500, currency: 'USD', applicationFee: 'USD 50–100 per university', tuitionRange: 'USD 15,000–60,000 / year' },
-    popular: ['Computer Science', 'MBA', 'Engineering', 'Data Science', 'Medicine'],
-  },
-  {
-    id: 'uk', name: 'United Kingdom', flag: '🇬🇧', code: 'GB',
-    capital: 'London', region: 'Europe', currency: 'GBP', language: 'English',
-    visa: {
-      type: 'Student Visa (formerly Tier 4)', processingTime: '3 weeks', cost: 'GBP 363',
-      validity: 'Duration of course + 4 months',
-      documents: ['CAS (Confirmation of Acceptance for Studies)', 'Bank statements (28 days)', 'Academic transcripts', 'IELTS scores (6.0+)', 'TB test results (Indian nationals)', 'Passport', 'Visa photos'],
-      notes: 'Graduate Route visa allows 2 years post-study work (3 for PhD). IHS payment of GBP 776/year is mandatory.',
-    },
-    passport: { minValidity: '6 months from travel date', notes: 'TB test mandatory for Indian nationals. IHS (Immigration Health Surcharge) must be paid upfront.' },
-    costs: { monthlyLivingMin: 900, monthlyLivingMax: 2000, currency: 'GBP', applicationFee: 'GBP 20–100 (via UCAS)', tuitionRange: 'GBP 10,000–38,000 / year' },
-    popular: ['Business & MBA', 'Law', 'Engineering', 'Computer Science', 'Medicine'],
-  },
-  {
-    id: 'ca', name: 'Canada', flag: '🇨🇦', code: 'CA',
-    capital: 'Ottawa', region: 'North America', currency: 'CAD', language: 'English / French',
-    visa: {
-      type: 'Study Permit', processingTime: '4–12 weeks', cost: 'CAD 150',
-      validity: 'Duration of program + 90 days',
-      documents: ['Acceptance letter from DLI', 'Proof of funds (CAD 10,000+)', 'Passport', 'Statement of purpose', 'Biometrics enrollment', 'IELTS/TOEFL scores'],
-      notes: 'PGWP (Post-Graduate Work Permit) up to 3 years available. Express Entry immigration pathway after graduation.',
-    },
-    passport: { minValidity: 'Valid for entire stay', notes: 'Biometrics enrollment required at a VAC. Medical exam may be required based on country of residence.' },
-    costs: { monthlyLivingMin: 700, monthlyLivingMax: 2000, currency: 'CAD', applicationFee: 'CAD 50–200 per university', tuitionRange: 'CAD 15,000–40,000 / year' },
-    popular: ['Computer Science', 'Engineering', 'Business', 'Data Science', 'Nursing'],
-  },
-  {
-    id: 'au', name: 'Australia', flag: '🇦🇺', code: 'AU',
-    capital: 'Canberra', region: 'Oceania', currency: 'AUD', language: 'English',
-    visa: {
-      type: 'Student Visa (Subclass 500)', processingTime: '1–4 months', cost: 'AUD 650',
-      validity: 'Duration of course + 1 month',
-      documents: ['CoE (Confirmation of Enrolment)', 'OSHC (health cover)', 'Proof of funds', 'IELTS 6.0+ scores', 'GTE statement', 'Passport', 'Police clearance'],
-      notes: 'Temporary Graduate visa (subclass 485) available post-graduation. Can work 48 hours per fortnight during studies.',
-    },
-    passport: { minValidity: '6 months beyond intended stay', notes: 'Health exam may be required. Overseas Student Health Cover (OSHC) is mandatory for duration of stay.' },
-    costs: { monthlyLivingMin: 1000, monthlyLivingMax: 2500, currency: 'AUD', applicationFee: 'AUD 0–100 per university', tuitionRange: 'AUD 20,000–45,000 / year' },
-    popular: ['Engineering', 'Business', 'Medicine', 'IT', 'Hospitality'],
-  },
-  {
-    id: 'de', name: 'Germany', flag: '🇩🇪', code: 'DE',
-    capital: 'Berlin', region: 'Europe', currency: 'EUR', language: 'German / English',
-    visa: {
-      type: 'National Visa (D) – Student', processingTime: '6–12 weeks', cost: 'EUR 75',
-      validity: 'Up to 90 days (converted to residence permit on arrival)',
-      documents: ['University admission letter', 'Blocked account (EUR 11,208/year)', 'Academic transcripts', 'German/English proficiency', 'Health insurance', 'Passport', 'Motivationsschreiben (SOP)'],
-      notes: 'Most public universities charge NO tuition (only semester fees ~EUR 150–350). 18-month job-seeker visa available after graduation.',
-    },
-    passport: { minValidity: '3 months beyond stay', notes: 'Blocked account (Sperrkonto) is mandatory. Apply at German embassy/consulate in India.' },
-    costs: { monthlyLivingMin: 700, monthlyLivingMax: 1200, currency: 'EUR', applicationFee: 'EUR 0–75 per university', tuitionRange: 'EUR 0 (public) – 20,000 (private) / year' },
-    popular: ['Engineering', 'Computer Science', 'Automotive', 'Physics', 'MBA'],
-  },
-  {
-    id: 'sg', name: 'Singapore', flag: '🇸🇬', code: 'SG',
-    capital: 'Singapore', region: 'Southeast Asia', currency: 'SGD', language: 'English',
-    visa: {
-      type: "Student's Pass (STP)", processingTime: '4–8 weeks', cost: 'SGD 30 (IPA) + SGD 60 (card)',
-      validity: 'Duration of course',
-      documents: ['IPA (In-Principle Approval) letter', 'SOLAR online registration', 'Passport', 'Academic transcripts', 'Medical examination', 'Passport photos'],
-      notes: 'Administered through ICA SOLAR system. Government scholarships (MOE Tuition Grant) available for eligible students.',
-    },
-    passport: { minValidity: '6 months from date of STP application', notes: 'Medical examination required. Must register with ICA within 30 days of arrival.' },
-    costs: { monthlyLivingMin: 1200, monthlyLivingMax: 3000, currency: 'SGD', applicationFee: 'SGD 0–100 per university', tuitionRange: 'SGD 17,000–45,000 / year' },
-    popular: ['Business', 'Finance', 'Engineering', 'Computing', 'Science'],
-  },
-  {
-    id: 'nl', name: 'Netherlands', flag: '🇳🇱', code: 'NL',
-    capital: 'Amsterdam', region: 'Europe', currency: 'EUR', language: 'Dutch / English',
-    visa: {
-      type: 'MVV + Residence Permit (for non-EU)', processingTime: '2–4 weeks (MVV)', cost: 'EUR 207',
-      validity: 'Duration of study',
-      documents: ['Admission letter', 'Proof of funds (EUR 863/month)', 'Health insurance', 'Passport', 'Apostilled documents', 'Notarized diploma'],
-      notes: 'Orientation Year (Zoekjaar) permit — 1 year after graduation to find work. Many programs fully in English.',
-    },
-    passport: { minValidity: '6 months beyond duration of stay', notes: 'University often arranges MVV application on behalf of student.' },
-    costs: { monthlyLivingMin: 900, monthlyLivingMax: 1500, currency: 'EUR', applicationFee: 'EUR 0–75 per university', tuitionRange: 'EUR 8,000–20,000 / year' },
-    popular: ['Engineering', 'Business', 'Design', 'Agriculture', 'Psychology'],
-  },
-  {
-    id: 'nz', name: 'New Zealand', flag: '🇳🇿', code: 'NZ',
-    capital: 'Wellington', region: 'Oceania', currency: 'NZD', language: 'English',
-    visa: {
-      type: 'Student Visa', processingTime: '1–3 months', cost: 'NZD 375',
-      validity: 'Duration of course',
-      documents: ['Offer of place from NZ institution', 'Proof of funds (NZD 15,000/year)', 'Return ticket', 'Health certificate', 'IELTS 5.5+ scores', 'Passport'],
-      notes: 'Post-study work visa available for 1–3 years. Can work 20 hours/week during studies. Police clearance from India required.',
-    },
-    passport: { minValidity: '3 months beyond intended stay', notes: 'Medical and chest X-ray required if staying 12+ months.' },
-    costs: { monthlyLivingMin: 900, monthlyLivingMax: 2000, currency: 'NZD', applicationFee: 'NZD 0–100 per university', tuitionRange: 'NZD 22,000–35,000 / year' },
-    popular: ['Agriculture', 'Engineering', 'Business', 'IT', 'Healthcare'],
-  },
-];
+import { api } from '../../api';
 
 /* ── Shared UI primitives ──────────────────────────────────────────────────── */
 
@@ -136,7 +11,7 @@ function TagChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <span className="inline-flex items-center gap-1 bg-sky-50 text-blue-700 text-xs px-2.5 py-1 rounded-full border border-blue-100">
       {label}
-      <button type="button" onClick={onRemove} className="text-blue-400 hover:text-blue-700 ml-0.5">
+      <button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="text-blue-400 hover:text-blue-700 ml-0.5">
         <X className="w-3 h-3" />
       </button>
     </span>
@@ -184,7 +59,7 @@ function toForm(c: any) {
 /* ── Country modal ─────────────────────────────────────────────────────────── */
 
 function CountryModal({ country, onClose, onSaved }: {
-  country?: any; onClose: () => void; onSaved: (c: any) => void;
+  country?: any; onClose: () => void; onSaved: () => void;
 }) {
   const editing = !!country;
   const [form, setForm] = useState(editing ? toForm(country) : { ...DEFAULT_FORM });
@@ -202,12 +77,12 @@ function CountryModal({ country, onClose, onSaved }: {
     if (popularInput.trim()) { set('popular', [...form.popular, popularInput.trim()]); setPopularInput(''); }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { setError('Country name is required.'); return; }
     setSaving(true);
+    setError('');
     const data = {
-      ...(editing ? { id: country.id || country._id } : { id: uid() }),
       name: form.name.trim(), flag: form.flag.trim() || '🌍',
       code: form.code.toUpperCase().trim().slice(0, 3),
       capital: form.capital.trim(), region: form.region,
@@ -227,8 +102,18 @@ function CountryModal({ country, onClose, onSaved }: {
       },
       popular: form.popular,
     };
-    onSaved(data);
-    setSaving(false);
+    try {
+      if (editing && country._id) {
+        await api.admin.updateCountry(country._id, data);
+      } else {
+        await api.admin.createCountry(data);
+      }
+      setSaving(false);
+      onSaved();
+    } catch (err: any) {
+      setError(err.message || 'Failed to save country.');
+      setSaving(false);
+    }
   };
 
   const inp = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400';
@@ -248,7 +133,7 @@ function CountryModal({ country, onClose, onSaved }: {
             </div>
             <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit Country' : 'Add Country'}</h2>
           </div>
-          <button type="button" onClick={onClose}
+          <button type="button" aria-label="Close" onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all">
             <X className="w-4 h-4" />
           </button>
@@ -279,7 +164,7 @@ function CountryModal({ country, onClose, onSaved }: {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Region</label>
-              <select value={form.region} onChange={e => set('region', e.target.value)} className={sel}>
+              <select aria-label="Region" value={form.region} onChange={e => set('region', e.target.value)} className={sel}>
                 <option value="">Select…</option>
                 {REGIONS.map(r => <option key={r}>{r}</option>)}
               </select>
@@ -288,7 +173,7 @@ function CountryModal({ country, onClose, onSaved }: {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
-              <select value={form.currency} onChange={e => set('currency', e.target.value)} className={sel}>
+              <select aria-label="Currency" value={form.currency} onChange={e => set('currency', e.target.value)} className={sel}>
                 {CURRENCIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
@@ -370,7 +255,7 @@ function CountryModal({ country, onClose, onSaved }: {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
-              <select value={form.livingCurrency} onChange={e => set('livingCurrency', e.target.value)} className={sel}>
+              <select aria-label="Living cost currency" value={form.livingCurrency} onChange={e => set('livingCurrency', e.target.value)} className={sel}>
                 {CURRENCIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
@@ -428,7 +313,7 @@ function CountryRow({ country, onEdit, onDelete }: {
   country: any; onEdit: (c: any) => void; onDelete: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const id = (country.id || country._id)?.toString() ?? '';
+  const mongoId = country._id?.toString() ?? '';
 
   return (
     <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -466,7 +351,7 @@ function CountryRow({ country, onEdit, onDelete }: {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 bg-sky-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all">
             <Edit2 className="w-3.5 h-3.5" /> Edit
           </button>
-          <button type="button" onClick={() => onDelete(id)}
+          <button type="button" onClick={() => onDelete(mongoId)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 active:scale-95 transition-all">
             <Trash2 className="w-3.5 h-3.5" /> Delete
           </button>
@@ -580,35 +465,42 @@ function CountryRow({ country, onEdit, onDelete }: {
 /* ── Main page ─────────────────────────────────────────────────────────────── */
 
 export default function AdminCountries() {
-  const [countries, setCountries] = useState<any[]>(() => lsLoad());
+  const [countries, setCountries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editingCountry, setEditingCountry] = useState<any>(null);
 
-  const handleSaved = (saved: any) => {
-    const id = (saved.id || saved._id)?.toString();
-    setCountries(prev => {
-      const idx = prev.findIndex(c => (c.id || c._id)?.toString() === id);
-      const next = idx >= 0 ? prev.map((c, i) => i === idx ? saved : c) : [...prev, saved];
-      lsSave(next);
-      return next;
-    });
+  const loadCountries = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await api.admin.countries();
+      setCountries(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load countries.');
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadCountries(); }, [loadCountries]);
+
+  const handleSaved = useCallback(() => {
+    loadCountries();
     setShowAdd(false);
     setEditingCountry(null);
-  };
+  }, [loadCountries]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this country? This cannot be undone.')) return;
-    setCountries(prev => {
-      const next = prev.filter(c => (c.id || c._id)?.toString() !== id);
-      lsSave(next);
-      return next;
-    });
-  };
-
-  const handleRefresh = () => {
-    setCountries(lsLoad());
+    try {
+      await api.admin.deleteCountry(id);
+      setCountries(prev => prev.filter(c => c._id?.toString() !== id));
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete country.');
+    }
   };
 
   const regions = [...new Set(countries.map(c => c.region).filter(Boolean))].sort();
@@ -647,10 +539,9 @@ export default function AdminCountries() {
               </div>
             </div>
             <div className="flex gap-2">
-              <button type="button" onClick={handleRefresh}
-                className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors"
-                title="Refresh country list">
-                <RefreshCw className="w-4 h-4" /> Refresh
+              <button type="button" onClick={loadCountries} title="Refresh country list"
+                className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors">
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
               </button>
               <button type="button" onClick={() => setShowAdd(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-white text-blue-700 rounded-xl text-sm font-bold hover:bg-sky-50 transition-colors shadow-sm">
@@ -672,6 +563,10 @@ export default function AdminCountries() {
           </div>
         </div>
 
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>
+        )}
+
         {/* Filters */}
         <div className="flex gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
@@ -688,7 +583,11 @@ export default function AdminCountries() {
         </div>
 
         {/* Country list */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <span className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 p-14 text-center text-gray-400 shadow-sm">
             <span className="text-5xl block text-center mb-2 opacity-40">🌍</span>
             <p className="text-sm font-medium">{search || regionFilter ? 'No countries match your filters.' : 'No countries yet. Add one above.'}</p>
@@ -697,7 +596,7 @@ export default function AdminCountries() {
           <div className="space-y-3">
             {filtered.map(c => (
               <CountryRow
-                key={(c.id || c._id)?.toString()}
+                key={c._id?.toString()}
                 country={c}
                 onEdit={c => setEditingCountry(c)}
                 onDelete={handleDelete}

@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const University = require('../models/University');
+const Country = require('../models/Country');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -172,6 +173,39 @@ router.put('/students/:id/assign', authMiddleware, adminOnly, async (req, res) =
   }
 });
 
+// Create application for a student (admin or counselor)
+router.post('/applications', authMiddleware, async (req, res) => {
+  if (!['admin', 'counselor'].includes(req.user.role)) {
+    return res.status(403).json({ message: 'Forbidden' });
+  }
+  const { studentId, universityName, courseName, intake, universityId, courseId } = req.body;
+  if (!studentId || !universityName || !courseName) {
+    return res.status(400).json({ message: 'studentId, universityName, and courseName are required' });
+  }
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const app = {
+      universityName, courseName,
+      intake: intake || '',
+      universityId: universityId || '',
+      courseId: courseId || '',
+      status: 'submitted',
+      submittedDate: today,
+      updatedDate: today,
+    };
+    const student = await User.findOneAndUpdate(
+      { _id: studentId, role: 'student' },
+      { $push: { applications: app } },
+      { new: true }
+    ).select('-password');
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+    const newApp = student.applications[student.applications.length - 1];
+    res.json(newApp.toJSON ? newApp.toJSON() : newApp);
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // List all applications across all students
 router.get('/applications', authMiddleware, adminOnly, async (req, res) => {
   try {
@@ -301,6 +335,41 @@ router.delete('/universities/:id/courses/:courseId', authMiddleware, adminOnly, 
     await uni.save();
     res.json(uni);
   } catch (err) { res.status(500).json({ message: err.message || 'Server error' }); }
+});
+
+// ── Countries CRUD ───────────────────────────────────────────────────────────
+
+router.get('/countries', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const countries = await Country.find({}).sort({ name: 1 });
+    res.json(countries);
+  } catch { res.status(500).json({ message: 'Server error' }); }
+});
+
+router.post('/countries', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ message: 'Country name is required' });
+    const country = new Country(req.body);
+    await country.save();
+    res.status(201).json(country);
+  } catch (err) { res.status(500).json({ message: err.message || 'Server error' }); }
+});
+
+router.put('/countries/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { _id, __v, id: customId, ...updates } = req.body;
+    const country = await Country.findByIdAndUpdate(req.params.id, updates, { new: true });
+    if (!country) return res.status(404).json({ message: 'Country not found' });
+    res.json(country);
+  } catch (err) { res.status(500).json({ message: err.message || 'Server error' }); }
+});
+
+router.delete('/countries/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    await Country.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Country deleted' });
+  } catch { res.status(500).json({ message: 'Server error' }); }
 });
 
 module.exports = router;

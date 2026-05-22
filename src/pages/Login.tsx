@@ -85,7 +85,7 @@ export default function Login() {
               <input
                 type="email" value={email} onChange={e => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
-                placeholder="your@email.com" required
+                placeholder="your@email.com" required autoComplete="email"
               />
             </div>
             <div>
@@ -94,7 +94,7 @@ export default function Login() {
                 <input
                   type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm pr-12"
-                  placeholder="••••••••" required
+                  placeholder="••••••••" required autoComplete="current-password"
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}

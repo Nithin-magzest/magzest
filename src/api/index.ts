@@ -175,6 +175,10 @@ export const api = {
     deleteCourse: (uniId: string, courseId: string) => req<any>(`/admin/universities/${uniId}/courses/${courseId}`, {
       method: 'DELETE', headers: authHeaders(),
     }),
+    createApplication: (data: { studentId: string; universityName: string; courseName: string; intake?: string; universityId?: string; courseId?: string }) =>
+      req<any>('/admin/applications', {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+      }),
     applications: () => req<any[]>('/admin/applications', { headers: authHeaders() }),
     updateApplication: (studentId: string, appId: string, data: { status?: string; notes?: string }) =>
       req<any>(`/admin/applications/${studentId}/${appId}`, {

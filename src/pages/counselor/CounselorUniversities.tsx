@@ -1,6 +1,7 @@
-﻿import { useState, useEffect } from 'react';
-import { Search, MapPin, Star, BookOpen, ChevronDown, ChevronUp, DollarSign, Calendar, CheckCircle, ExternalLink, Users, Award, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, MapPin, Star, BookOpen, ChevronDown, ChevronUp, DollarSign, Calendar, CheckCircle, ExternalLink, Users, Award, X, Plus } from 'lucide-react';
 import { api } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 
 const LEVEL_COLORS: Record<string, string> = {
   "Bachelor's": 'bg-blue-100 text-blue-700',
@@ -10,7 +11,128 @@ const LEVEL_COLORS: Record<string, string> = {
   'Certificate': 'bg-yellow-100 text-yellow-700',
 };
 
-function CourseRow({ course }: { course: any }) {
+// ── Apply Modal ───────────────────────────────────────────────────────────────
+
+function ApplyModal({ course, universityName, universityId, students, onClose, onApplied }: {
+  course: any; universityName: string; universityId: string;
+  students: any[]; onClose: () => void; onApplied: () => void;
+}) {
+  const [studentId, setStudentId] = useState('');
+  const [intake, setIntake] = useState(course.intake?.[0] || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleApply = async () => {
+    if (!studentId) { setError('Please select a student.'); return; }
+    setSaving(true); setError('');
+    try {
+      await api.admin.createApplication({
+        studentId,
+        universityName,
+        courseName: course.name,
+        intake,
+        universityId,
+        courseId: (course._id || course.id || '').toString(),
+      });
+      setSuccess(true);
+      setTimeout(() => { onApplied(); onClose(); }, 1200);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create application.');
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+        {/* Header */}
+        <div className="flex items-start justify-between p-5 border-b border-gray-100">
+          <div className="flex-1 min-w-0 pr-3">
+            <h2 className="text-base font-bold text-gray-900">Apply for Course</h2>
+            <p className="text-sm font-semibold text-blue-700 mt-0.5 truncate">{course.name}</p>
+            <p className="text-xs text-gray-500 truncate">{universityName}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors flex-shrink-0">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Course info chips */}
+        <div className="px-5 pt-4 flex flex-wrap gap-2">
+          {course.level && (
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${LEVEL_COLORS[course.level] || 'bg-gray-100 text-gray-700'}`}>
+              {course.level}
+            </span>
+          )}
+          {course.tuitionFee > 0 && (
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+              {course.currency || 'USD'} {Number(course.tuitionFee).toLocaleString()}/yr
+            </span>
+          )}
+          {course.duration && (
+            <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">{course.duration}</span>
+          )}
+        </div>
+
+        {/* Form */}
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Student <span className="text-red-500">*</span></label>
+            <select value={studentId} onChange={e => setStudentId(e.target.value)}
+              aria-label="Select student"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="">— Choose a student —</option>
+              {students.map(s => (
+                <option key={s._id || s.id} value={s._id || s.id}>{s.name} ({s.email})</option>
+              ))}
+            </select>
+          </div>
+
+          {course.intake?.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Intake</label>
+              <select value={intake} onChange={e => setIntake(e.target.value)}
+                aria-label="Select intake"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                {course.intake.map((i: string) => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+          )}
+
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2.5 rounded-xl">{error}</p>}
+
+          {success && (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2.5 rounded-xl">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />Application created successfully!
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+              Cancel
+            </button>
+            <button type="button" onClick={handleApply} disabled={saving || success}
+              className="flex-1 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              {saving
+                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
+                : <><Plus className="w-4 h-4" />Apply</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Course Row ────────────────────────────────────────────────────────────────
+
+function CourseRow({ course, universityName, universityId, onApply }: {
+  course: any; universityName: string; universityId: string; onApply: (course: any, universityName: string, universityId: string) => void;
+}) {
   return (
     <div className="border border-gray-100 rounded-xl p-4 bg-white hover:border-blue-200 hover:shadow-sm transition-all">
       <div className="flex items-start justify-between gap-3 mb-1.5">
@@ -23,12 +145,18 @@ function CourseRow({ course }: { course: any }) {
           </div>
           <p className="font-bold text-gray-900 text-sm">{course.name}</p>
         </div>
-        {course.tuitionFee > 0 && (
-          <div className="text-right flex-shrink-0">
-            <p className="font-bold text-green-700 text-sm">{course.currency || 'USD'} {Number(course.tuitionFee).toLocaleString()}</p>
-            <p className="text-xs text-gray-400">per year</p>
-          </div>
-        )}
+        <div className="flex items-start gap-2 flex-shrink-0">
+          {course.tuitionFee > 0 && (
+            <div className="text-right">
+              <p className="font-bold text-green-700 text-sm">{course.currency || 'USD'} {Number(course.tuitionFee).toLocaleString()}</p>
+              <p className="text-xs text-gray-400">per year</p>
+            </div>
+          )}
+          <button type="button" onClick={() => onApply(course, universityName, universityId)}
+            className="flex items-center gap-1 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+            <Plus className="w-3.5 h-3.5" />Apply
+          </button>
+        </div>
       </div>
 
       {course.description && <p className="text-xs text-gray-500 mb-2 line-clamp-2">{course.description}</p>}
@@ -39,7 +167,6 @@ function CourseRow({ course }: { course: any }) {
         {course.paymentPlan && <span className="text-purple-600">{course.paymentPlan} billing</span>}
       </div>
 
-      {/* Fee breakdown */}
       {(course.applicationFee > 0 || course.registrationFee > 0 || course.scholarshipAvailable) && (
         <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 mb-2 flex flex-wrap gap-x-4 gap-y-1">
           {course.applicationFee > 0 && (
@@ -70,7 +197,11 @@ function CourseRow({ course }: { course: any }) {
   );
 }
 
-function UniversityCard({ uni }: { uni: any }) {
+// ── University Card ───────────────────────────────────────────────────────────
+
+function UniversityCard({ uni, onApply }: {
+  uni: any; onApply: (course: any, universityName: string, universityId: string) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<'courses' | 'details'>('courses');
 
@@ -110,7 +241,6 @@ function UniversityCard({ uni }: { uni: any }) {
         </div>
       </div>
 
-      {/* Tags */}
       {uni.tags?.length > 0 && (
         <div className="px-5 pb-3 flex flex-wrap gap-1">
           {uni.tags.slice(0, 4).map((t: string) => (
@@ -135,10 +265,8 @@ function UniversityCard({ uni }: { uni: any }) {
         )}
       </div>
 
-      {/* Expandable panel with tabs */}
       {expanded && (
         <div className="border-t border-gray-100">
-          {/* Tab bar */}
           <div className="flex border-b border-gray-100 bg-gray-50">
             <button type="button" onClick={() => setTab('courses')}
               className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${tab === 'courses' ? 'text-blue-700 border-b-2 border-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -160,7 +288,13 @@ function UniversityCard({ uni }: { uni: any }) {
               ) : (
                 <div className="space-y-3">
                   {uni.courses.map((course: any) => (
-                    <CourseRow key={course.id || course._id} course={course} />
+                    <CourseRow
+                      key={course.id || course._id}
+                      course={course}
+                      universityName={uni.name}
+                      universityId={(uni._id || uni.id || '').toString()}
+                      onApply={onApply}
+                    />
                   ))}
                 </div>
               )}
@@ -221,15 +355,25 @@ function UniversityCard({ uni }: { uni: any }) {
   );
 }
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function CounselorUniversities() {
+  const { user } = useAuth();
   const [universities, setUniversities] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [country, setCountry] = useState('');
   const [level, setLevel] = useState('');
+  const [applyTarget, setApplyTarget] = useState<{ course: any; universityName: string; universityId: string } | null>(null);
 
   useEffect(() => {
     api.universities.list().then(setUniversities).catch(() => {});
+    api.students.list().then(setStudents).catch(() => {});
   }, []);
+
+  const myStudents = user?.role === 'counselor'
+    ? students.filter((s: any) => (user as any).assignedStudents?.includes(s._id || s.id))
+    : students;
 
   const countries = [...new Set(universities.map((u: any) => u.country))].sort();
 
@@ -243,11 +387,26 @@ export default function CounselorUniversities() {
 
   const hasFilters = query || country || level;
 
+  const handleApply = (course: any, universityName: string, universityId: string) => {
+    setApplyTarget({ course, universityName, universityId });
+  };
+
   return (
     <div className="space-y-6">
+      {applyTarget && (
+        <ApplyModal
+          course={applyTarget.course}
+          universityName={applyTarget.universityName}
+          universityId={applyTarget.universityId}
+          students={myStudents.length > 0 ? myStudents : students}
+          onClose={() => setApplyTarget(null)}
+          onApplied={() => setApplyTarget(null)}
+        />
+      )}
+
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Partner Universities</h1>
-        <p className="text-gray-500 mt-1">Browse all partner universities and their courses — view only</p>
+        <p className="text-gray-500 mt-1">Browse universities and apply courses on behalf of students</p>
       </div>
 
       <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
@@ -280,7 +439,7 @@ export default function CounselorUniversities() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {filtered.map(uni => (
-          <UniversityCard key={uni.id} uni={uni} />
+          <UniversityCard key={uni.id} uni={uni} onApply={handleApply} />
         ))}
       </div>
     </div>
