@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X, Award, Edit3, CheckCircle2, Target, ClipboardList } from 'lucide-react';
+import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X, Award, Edit3, CheckCircle2, Target, ClipboardList, MessageCircle, Send } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -165,13 +165,28 @@ export default function CounselorDashboard() {
   const [editingNote, setEditingNote] = useState(false);
   const [noteInput, setNoteInput] = useState((user as any)?.bio || '');
   const [savingNote, setSavingNote] = useState(false);
+  const [replyTexts, setReplyTexts] = useState<Record<string, string>>({});
+  const [replying, setReplying] = useState<string | null>(null);
 
-  useEffect(() => {
+  const refreshStudents = () =>
     api.students.list().then(all => {
       const mine = all.filter((s: any) => counselor.assignedStudents?.includes(s._id || s.id));
       setStudents(mine);
     }).catch(() => {});
-  }, []);
+
+  useEffect(() => { refreshStudents(); }, []);
+
+  const submitReply = async (appId: string) => {
+    const text = (replyTexts[appId] || '').trim();
+    if (!text || replying) return;
+    setReplying(appId);
+    try {
+      await api.applications.addComment(appId, text);
+      setReplyTexts(prev => ({ ...prev, [appId]: '' }));
+      await refreshStudents();
+    } catch {}
+    setReplying(null);
+  };
 
   const handleSaveNote = async () => {
     setSavingNote(true);
@@ -185,6 +200,20 @@ export default function CounselorDashboard() {
 
   const myStudents = students;
   const allApplications = myStudents.flatMap((s: any) => s.applications || []);
+
+  const studentQuestions = allApplications
+    .filter((a: any) => {
+      const comments: any[] = a.comments || [];
+      return comments.length > 0 && comments[comments.length - 1]?.authorRole === 'student';
+    })
+    .map((a: any) => {
+      const comments: any[] = a.comments || [];
+      const lastQ = [...comments].reverse().find((c: any) => c.authorRole === 'student');
+      const student = myStudents.find((s: any) =>
+        (s.applications || []).some((ap: any) => (ap._id || ap.id) === (a._id || a.id))
+      );
+      return { app: a, question: lastQ, studentName: student?.name || 'Student' };
+    });
 
   const stats = {
     totalStudents: myStudents.length,
@@ -292,6 +321,67 @@ export default function CounselorDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Student Questions */}
+      {studentQuestions.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 border border-orange-100 shadow-sm">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-orange-500" />
+              <h2 className="text-lg font-bold text-gray-900">Student Questions</h2>
+              <span className="text-xs bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full font-semibold">
+                {studentQuestions.length} unanswered
+              </span>
+            </div>
+            <Link to="/counselor/applications"
+              className="text-sm text-[#0d1b4b] font-medium hover:text-sky-700 flex items-center gap-1">
+              View All <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="space-y-4">
+            {studentQuestions.map(({ app, question, studentName }) => {
+              const appId = app._id || app.id;
+              return (
+                <div key={appId} className="bg-orange-50/50 border border-orange-100 rounded-xl p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-9 h-9 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {studentName.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm">{studentName}</p>
+                      <p className="text-xs text-gray-500 truncate">{app.universityName} · {app.courseName}</p>
+                      {question?.createdAt && (
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          {new Date(question.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-xl px-3 py-2.5 mb-3 border border-orange-100">
+                    <p className="text-sm text-gray-800 leading-relaxed">{question?.text}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={replyTexts[appId] || ''}
+                      onChange={e => setReplyTexts(prev => ({ ...prev, [appId]: e.target.value }))}
+                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply(appId); } }}
+                      placeholder="Reply to student…"
+                      disabled={replying === appId}
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] bg-white"
+                    />
+                    <button type="button" onClick={() => submitReply(appId)}
+                      disabled={replying === appId || !replyTexts[appId]?.trim()}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-[#0d1b4b] text-white rounded-xl text-xs font-semibold hover:bg-[#152258] disabled:opacity-40 transition-colors flex-shrink-0">
+                      <Send className="w-3.5 h-3.5" />
+                      {replying === appId ? 'Sending…' : 'Reply'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Performance Score + Contributions */}
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
