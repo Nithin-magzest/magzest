@@ -4,6 +4,7 @@ import {
   Check, DollarSign, Clock, FileCheck2, CreditCard, RefreshCw,
 } from 'lucide-react';
 import { api } from '../../api';
+import { CountryFlag } from '../../components/CountryFlag';
 
 /* ── Shared UI primitives ──────────────────────────────────────────────────── */
 
@@ -319,7 +320,7 @@ function CountryRow({ country, onEdit, onDelete }: {
     <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
       {/* Header row */}
       <div className="flex items-center gap-4 px-5 py-4">
-        <div className="text-4xl flex-shrink-0 select-none">{country.flag || '🌍'}</div>
+        <CountryFlag name={country.name} code={country.code} flag={country.flag} sizeCls="w-20 h-14" rounded="rounded-xl" quality="w160" />
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900">{country.name}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">

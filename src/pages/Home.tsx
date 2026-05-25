@@ -586,7 +586,10 @@ function DetailModal({
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-sm text-gray-900 truncate">{p.uni}</p>
-                        <p className="text-xs text-gray-500">{p.flag} {p.city}, {p.country}</p>
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          <CountryFlagImg name={p.country} flag={p.flag} sizeCls="w-4 h-3" rounded="rounded-sm" quality="w40" />
+                          {p.city}, {p.country}
+                        </p>
                       </div>
                       <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     </button>
@@ -1071,7 +1074,9 @@ export default function Home() {
                     <h3 className="font-bold text-gray-900 leading-snug mb-1">{p.course}</h3>
                     <p className="text-sm text-gray-500 mb-3">{p.uni}</p>
                     <div className="flex items-center gap-1 text-gray-400 text-xs mb-3">
-                      <MapPin className="w-3 h-3" /> {p.flag} {p.city}, {p.country}
+                      <MapPin className="w-3 h-3" />
+                      <CountryFlagImg name={p.country} flag={p.flag} sizeCls="w-4 h-3" rounded="rounded-sm" quality="w40" />
+                      {p.city}, {p.country}
                     </div>
                     <div className="flex gap-2 text-xs text-gray-500 flex-wrap">
                       <span className="bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">{p.level}</span>
