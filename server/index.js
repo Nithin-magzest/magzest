@@ -64,10 +64,21 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
+async function autoSeedIfEmpty() {
+  const User = require('./models/User');
+  const count = await User.countDocuments();
+  if (count === 0) {
+    console.log('Database is empty — running seed...');
+    await require('./seed').run();
+    console.log('Auto-seed complete.');
+  }
+}
+
 async function connectWithRetry() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
+    await autoSeedIfEmpty();
   } catch (err) {
     console.error(`MongoDB connection failed (${err.message}) — retrying in 5s...`);
     setTimeout(connectWithRetry, 5000);

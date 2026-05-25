@@ -165,10 +165,7 @@ const universityData = [
   },
 ];
 
-async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('Connected to MongoDB');
-
+async function run() {
   await User.deleteMany({});
   await University.deleteMany({});
   await ChatRoom.deleteMany({});
@@ -404,7 +401,14 @@ async function seed() {
   console.log('Admin login: admin@eduabroad.com / admin123');
   console.log('Student login: aryan@example.com / student123');
   console.log('Counselor login: kavitha@eduabroad.com / counselor123');
-  process.exit(0);
 }
 
-seed().catch(err => { console.error(err); process.exit(1); });
+// Allow running standalone: node seed.js
+if (require.main === module) {
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => run())
+    .then(() => process.exit(0))
+    .catch(err => { console.error(err); process.exit(1); });
+}
+
+module.exports = { run };
