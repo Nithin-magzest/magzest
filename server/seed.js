@@ -11,7 +11,7 @@ const universityData = [
   {
     id: 'u1', name: 'University of Toronto', country: 'Canada', city: 'Toronto',
     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/04/Utoronto_coa.svg/120px-Utoronto_coa.svg.png',
-    coverImage: 'https://images.unsplash.com/photo-1569498141572-29b0a26d25a7?w=800',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Convocation_Hall_%28University_of_Toronto%29.jpg/1280px-Convocation_Hall_%28University_of_Toronto%29.jpg',
     ranking: 18, type: 'Public', founded: 1827, website: 'https://www.utoronto.ca',
     description: 'The University of Toronto is a globally top-ranked public research university in Toronto, Ontario, Canada.',
     averageFees: { undergraduate: 30000, postgraduate: 35000, currency: 'CAD' },
@@ -32,7 +32,7 @@ const universityData = [
   {
     id: 'u2', name: 'University of Melbourne', country: 'Australia', city: 'Melbourne',
     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/10/University_of_Melbourne_logo.svg/120px-University_of_Melbourne_logo.svg.png',
-    coverImage: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/The_University_of_Melbourne.JPG/1280px-The_University_of_Melbourne.JPG',
     ranking: 33, type: 'Public', founded: 1853, website: 'https://www.unimelb.edu.au',
     description: "Australia's leading university and one of the world's top 50 universities.",
     averageFees: { undergraduate: 38000, postgraduate: 42000, currency: 'AUD' },
@@ -53,7 +53,7 @@ const universityData = [
   {
     id: 'u3', name: 'University of Edinburgh', country: 'United Kingdom', city: 'Edinburgh',
     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/University_of_Edinburgh_ceremonial_roundel.svg/120px-University_of_Edinburgh_ceremonial_roundel.svg.png',
-    coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Old_College%2C_University_of_Edinburgh.JPG/1280px-Old_College%2C_University_of_Edinburgh.JPG',
     ranking: 22, type: 'Public', founded: 1583, website: 'https://www.ed.ac.uk',
     description: 'One of the oldest and most prestigious universities in the world, situated in Scotland.',
     averageFees: { undergraduate: 23000, postgraduate: 26000, currency: 'GBP' },
@@ -74,7 +74,7 @@ const universityData = [
   {
     id: 'u4', name: 'TU Munich', country: 'Germany', city: 'Munich',
     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/TU_Muenchen_Logo.svg/120px-TU_Muenchen_Logo.svg.png',
-    coverImage: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=800',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/TUM-Audimax.JPG/1280px-TUM-Audimax.JPG',
     ranking: 37, type: 'Public', founded: 1868, website: 'https://www.tum.de',
     description: "Technical University of Munich is one of Europe's top universities for engineering and natural sciences.",
     averageFees: { undergraduate: 2000, postgraduate: 2500, currency: 'EUR' },
@@ -95,7 +95,7 @@ const universityData = [
   {
     id: 'u5', name: 'National University of Singapore', country: 'Singapore', city: 'Singapore',
     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b9/NUS_coat_of_arms.svg/120px-NUS_coat_of_arms.svg.png',
-    coverImage: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Main_entrance_to_Temasek_Hall%2C_NUS.JPG/1280px-Main_entrance_to_Temasek_Hall%2C_NUS.JPG',
     ranking: 8, type: 'Public', founded: 1905, website: 'https://www.nus.edu.sg',
     description: "Asia's leading global university consistently ranked top 15 in the world.",
     averageFees: { undergraduate: 18000, postgraduate: 22000, currency: 'SGD' },
@@ -115,7 +115,7 @@ const universityData = [
   {
     id: 'u6', name: 'University of Amsterdam', country: 'Netherlands', city: 'Amsterdam',
     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/UvA_logo.svg/120px-UvA_logo.svg.png',
-    coverImage: 'https://images.unsplash.com/photo-1584811644165-33db78b2e50a?w=800',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Amsterdam%2C_university%2C_2012.JPG/1280px-Amsterdam%2C_university%2C_2012.JPG',
     ranking: 55, type: 'Public', founded: 1632, website: 'https://www.uva.nl',
     description: "One of Europe's premier research universities, known for innovation and international culture.",
     averageFees: { undergraduate: 12000, postgraduate: 16000, currency: 'EUR' },
@@ -132,7 +132,7 @@ const universityData = [
   {
     id: 'u7', name: 'University of British Columbia', country: 'Canada', city: 'Vancouver',
     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/6e/UBC_coat_of_arms.svg/120px-UBC_coat_of_arms.svg.png',
-    coverImage: 'https://images.unsplash.com/photo-1572120360610-d971b9d7767c?w=800',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/The_University_of_British_Columbia_%2848856934403%29.jpg/1280px-The_University_of_British_Columbia_%2848856934403%29.jpg',
     ranking: 34, type: 'Public', founded: 1908, website: 'https://www.ubc.ca',
     description: "One of the world's leading universities, UBC creates an exceptional learning environment.",
     averageFees: { undergraduate: 35000, postgraduate: 40000, currency: 'CAD' },
@@ -149,7 +149,7 @@ const universityData = [
   {
     id: 'u8', name: 'Monash University', country: 'Australia', city: 'Melbourne',
     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b7/Monash_University_logo.svg/120px-Monash_University_logo.svg.png',
-    coverImage: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Clayton_-_Monash_University.jpg/1280px-Clayton_-_Monash_University.jpg',
     ranking: 42, type: 'Public', founded: 1958, website: 'https://www.monash.edu',
     description: 'A leading research university and member of the Group of Eight.',
     averageFees: { undergraduate: 34000, postgraduate: 38000, currency: 'AUD' },

@@ -101,18 +101,20 @@ function CourseCard({ course, uni, student }: { course: any; uni: any; student: 
   );
 }
 
-function UniLogoImg({ name, website }: { name: string; website?: string }) {
+function UniLogoImg({ name, website, logo }: { name: string; website?: string; logo?: string }) {
   const [err, setErr] = useState(false);
-  if (!website || err) {
+  const src = logo || (website ? `https://www.google.com/s2/favicons?domain=${website}&sz=256` : null);
+  if (!src || (err && !logo)) {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
         {name?.charAt(0) || '?'}
       </span>
     );
   }
+  if (err && logo) return null;
   return (
     <img
-      src={`https://www.google.com/s2/favicons?domain=${website}&sz=256`}
+      src={src}
       alt={name}
       className="w-full h-full object-contain"
       onError={() => setErr(true)}
@@ -125,11 +127,11 @@ function UniversityCard({ uni, student }: { uni: any; student: any }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
       {/* Cover image */}
-      <div className="h-40 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
+      <div className="h-40 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden rounded-t-2xl">
         <img src={uni.coverImage} alt={uni.name}
-          className="w-full h-full object-cover opacity-70 transition-transform duration-300"
+          className="w-full h-full object-cover transition-transform duration-300"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         <div className="absolute top-2 left-2 bg-white/90 text-xs font-bold text-blue-800 px-2.5 py-1 rounded-full">
           #{uni.ranking} World
@@ -147,10 +149,10 @@ function UniversityCard({ uni, student }: { uni: any; student: any }) {
         )}
       </div>
 
-      <div className="p-4">
-        {/* Logo floating over cover bottom */}
-        <div className="-mt-8 mb-2 w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-md overflow-hidden p-1.5 flex items-center justify-center">
-          <UniLogoImg name={uni.name} website={uni.website} />
+      <div className="relative px-4 pb-4 pt-9">
+        {/* Logo on left, half over cover / half in content */}
+        <div className="absolute -top-7 left-4 w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-md overflow-hidden p-1.5 flex items-center justify-center z-10">
+          <UniLogoImg name={uni.name} website={uni.website} logo={uni.id === 'u5' ? 'https://nus.edu.sg/images/default-source/base/logo.png' : undefined} />
         </div>
         <h3 className="font-bold text-gray-900">{uni.name}</h3>
         <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5 mb-2">
