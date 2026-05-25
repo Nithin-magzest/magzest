@@ -118,6 +118,25 @@ function ApplyModal({ course, students, onClose }: {
   );
 }
 
+function UniLogoImg({ name, website }: { name: string; website?: string }) {
+  const [err, setErr] = useState(false);
+  if (!website || err) {
+    return (
+      <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
+        {name?.charAt(0) || '?'}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${website}&sz=256`}
+      alt={name}
+      className="w-full h-full object-contain"
+      onError={() => setErr(true)}
+    />
+  );
+}
+
 export default function CounselorCourses() {
   const [universities, setUniversities] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
@@ -132,7 +151,7 @@ export default function CounselorCourses() {
   }, []);
 
   const allCourses = universities.flatMap(uni =>
-    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, uniId: uni.id || uni._id, city: uni.city, country: uni.country }))
+    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, uniId: uni.id || uni._id, city: uni.city, country: uni.country, website: uni.website }))
   );
 
   const uniNames = [...new Set(universities.map(u => u.name))].sort() as string[];
@@ -193,7 +212,10 @@ export default function CounselorCourses() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filtered.map((course, i) => (
           <div key={course.id || course._id || i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow flex flex-col">
-            <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex items-start gap-3 mb-2">
+              <div className="w-10 h-10 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1 flex-shrink-0 mt-0.5">
+                <UniLogoImg name={course.uniName} website={course.website} />
+              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1.5">
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${LEVEL_COLORS[course.level] || 'bg-gray-100 text-gray-700'}`}>

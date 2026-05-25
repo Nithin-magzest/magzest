@@ -445,6 +445,25 @@ function UniversityModal({ uni, onClose, onSaved }: {
 
 // ── University Row (expandable) ───────────────────────────────────────────────
 
+function UniLogoImg({ name, website }: { name: string; website?: string }) {
+  const [err, setErr] = useState(false);
+  if (!website || err) {
+    return (
+      <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-xl rounded-lg leading-none">
+        {name?.charAt(0) || '?'}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${website}&sz=256`}
+      alt={name}
+      className="w-full h-full object-contain"
+      onError={() => setErr(true)}
+    />
+  );
+}
+
 function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply }: {
   uni: any; onEdit: (u: any) => void; onDelete: (id: string) => void; onUniUpdated: (u: any) => void;
   onApply: (course: any, universityName: string) => void;
@@ -478,8 +497,8 @@ function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply }: {
       <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
         {/* University header row */}
         <div className="flex items-center gap-4 px-5 py-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0 shadow-sm">
-            {uni.name?.charAt(0)}
+          <div className="w-12 h-12 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0">
+            <UniLogoImg name={uni.name} website={uni.website} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-900">{uni.name}</p>
@@ -838,7 +857,7 @@ export default function AdminUniversities() {
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search universities…"
                 className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
             </div>
-            <select value={countryFilter} onChange={e => setCountryFilter(e.target.value)}
+            <select aria-label="Filter by country" value={countryFilter} onChange={e => setCountryFilter(e.target.value)}
               className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm min-w-[160px]">
               <option value="">All Countries</option>
               {countries.map(c => <option key={c}>{c}</option>)}

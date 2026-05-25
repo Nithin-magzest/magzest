@@ -329,6 +329,25 @@ function CourseModal({ universities, uniId: initialUniId, course, onClose, onSav
   );
 }
 
+function UniLogoImg({ name, website }: { name: string; website?: string }) {
+  const [err, setErr] = useState(false);
+  if (!website || err) {
+    return (
+      <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
+        {name?.charAt(0) || '?'}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${website}&sz=256`}
+      alt={name}
+      className="w-full h-full object-contain"
+      onError={() => setErr(true)}
+    />
+  );
+}
+
 function CourseCard({ course, uniName, onEdit, onDelete, onApply }: {
   course: any; uniName: string; onEdit: () => void; onDelete: () => void; onApply: () => void;
 }) {
@@ -337,8 +356,8 @@ function CourseCard({ course, uniName, onEdit, onDelete, onApply }: {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       <div className="flex items-start gap-4 px-5 py-4">
-        <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-          <BookOpen className="w-5 h-5 text-purple-600" />
+        <div className="w-10 h-10 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1 flex-shrink-0 mt-0.5">
+          <UniLogoImg name={uniName} website={course.website} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -457,6 +476,7 @@ export default function AdminCourses() {
       ...c,
       _uniId: normalId(uni),
       _uniName: uni.name,
+      website: uni.website,
     }))
   );
 

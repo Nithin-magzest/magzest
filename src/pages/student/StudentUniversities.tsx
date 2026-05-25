@@ -101,6 +101,25 @@ function CourseCard({ course, uni, student }: { course: any; uni: any; student: 
   );
 }
 
+function UniLogoImg({ name, website }: { name: string; website?: string }) {
+  const [err, setErr] = useState(false);
+  if (!website || err) {
+    return (
+      <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
+        {name?.charAt(0) || '?'}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${website}&sz=256`}
+      alt={name}
+      className="w-full h-full object-contain"
+      onError={() => setErr(true)}
+    />
+  );
+}
+
 function UniversityCard({ uni, student }: { uni: any; student: any }) {
   const [tab, setTab] = useState<'courses' | 'details'>('courses');
   const [expanded, setExpanded] = useState(false);
@@ -129,6 +148,10 @@ function UniversityCard({ uni, student }: { uni: any; student: any }) {
       </div>
 
       <div className="p-4">
+        {/* Logo floating over cover bottom */}
+        <div className="-mt-8 mb-2 w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-md overflow-hidden p-1.5 flex items-center justify-center">
+          <UniLogoImg name={uni.name} website={uni.website} />
+        </div>
         <h3 className="font-bold text-gray-900">{uni.name}</h3>
         <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5 mb-2">
           <MapPin className="w-3 h-3" /> {uni.city}, {uni.country}

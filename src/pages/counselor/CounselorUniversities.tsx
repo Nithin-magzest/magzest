@@ -199,6 +199,25 @@ function CourseRow({ course, universityName, universityId, onApply }: {
 
 // ── University Card ───────────────────────────────────────────────────────────
 
+function UniLogoImg({ name, website }: { name: string; website?: string }) {
+  const [err, setErr] = useState(false);
+  if (!website || err) {
+    return (
+      <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-xl rounded-lg leading-none">
+        {name?.charAt(0) || '?'}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${website}&sz=256`}
+      alt={name}
+      className="w-full h-full object-contain"
+      onError={() => setErr(true)}
+    />
+  );
+}
+
 function UniversityCard({ uni, onApply }: {
   uni: any; onApply: (course: any, universityName: string, universityId: string) => void;
 }) {
@@ -209,8 +228,8 @@ function UniversityCard({ uni, onApply }: {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       {/* Header */}
       <div className="flex gap-4 p-5">
-        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-white text-xl flex-shrink-0">
-          {uni.name?.charAt(0)}
+        <div className="w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0">
+          <UniLogoImg name={uni.name} website={uni.website} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
