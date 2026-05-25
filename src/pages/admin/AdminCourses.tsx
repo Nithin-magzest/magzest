@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Plus, Trash2, X, Search, BookOpen, Edit2, DollarSign, Check, Award,
-  Calendar, ChevronDown, ChevronUp, GraduationCap,
+  Calendar, ChevronDown, ChevronUp, GraduationCap, CheckCircle,
 } from 'lucide-react';
 import { api } from '../../api';
 
@@ -31,6 +31,113 @@ const DEFAULT_COURSE = {
   applicationFee: '', registrationFee: '', scholarshipAvailable: false,
   scholarshipAmount: '', paymentPlan: 'Annual',
 };
+
+function ApplyModal({ course, students, onClose }: {
+  course: { name: string; _uniId: string; _uniName: string; intake?: string[]; tuitionFee?: number; currency?: string; level?: string };
+  students: any[];
+  onClose: () => void;
+}) {
+  const [studentId, setStudentId] = useState('');
+  const [intake, setIntake] = useState(course.intake?.[0] || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleApply = async () => {
+    if (!studentId) { setError('Please select a student.'); return; }
+    setSaving(true); setError('');
+    try {
+      await api.admin.createApplication({
+        studentId,
+        universityId: course._uniId,
+        universityName: course._uniName,
+        courseName: course.name,
+        intake,
+      });
+      setSuccess(true);
+      setTimeout(() => onClose(), 1200);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create application.');
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+        <div className="flex items-start justify-between p-5 border-b border-gray-100">
+          <div className="flex-1 min-w-0 pr-3">
+            <h2 className="text-base font-bold text-gray-900">Apply for Course</h2>
+            <p className="text-sm font-semibold text-blue-700 mt-0.5 truncate">{course.name}</p>
+            <p className="text-xs text-gray-500 truncate">{course._uniName}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors flex-shrink-0">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-5 pt-4 flex flex-wrap gap-2">
+          {course.level && (
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${LEVEL_COLORS[course.level] || 'bg-gray-100 text-gray-700'}`}>
+              {course.level}
+            </span>
+          )}
+          {course.tuitionFee && course.tuitionFee > 0 && (
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+              {course.currency || 'USD'} {Number(course.tuitionFee).toLocaleString()}/yr
+            </span>
+          )}
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Student <span className="text-red-500">*</span></label>
+            <select value={studentId} onChange={e => setStudentId(e.target.value)} aria-label="Select student"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+              <option value="">— Choose a student —</option>
+              {students.map(s => (
+                <option key={s._id || s.id} value={s._id || s.id}>{s.name} ({s.email})</option>
+              ))}
+            </select>
+          </div>
+
+          {course.intake && course.intake.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Intake</label>
+              <select value={intake} onChange={e => setIntake(e.target.value)} aria-label="Select intake"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                {course.intake.map((i: string) => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+          )}
+
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2.5 rounded-xl">{error}</p>}
+
+          {success && (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2.5 rounded-xl">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />Application created successfully!
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+              Cancel
+            </button>
+            <button type="button" onClick={handleApply} disabled={saving || success}
+              className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              {saving
+                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
+                : <><Plus className="w-4 h-4" />Apply</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function CourseModal({ universities, uniId: initialUniId, course, onClose, onSaved }: {
   universities: any[]; uniId?: string; course?: any; onClose: () => void; onSaved: () => void;
@@ -222,8 +329,8 @@ function CourseModal({ universities, uniId: initialUniId, course, onClose, onSav
   );
 }
 
-function CourseCard({ course, uniName, onEdit, onDelete }: {
-  course: any; uniName: string; onEdit: () => void; onDelete: () => void;
+function CourseCard({ course, uniName, onEdit, onDelete, onApply }: {
+  course: any; uniName: string; onEdit: () => void; onDelete: () => void; onApply: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -268,6 +375,10 @@ function CourseCard({ course, uniName, onEdit, onDelete }: {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          <button type="button" onClick={onApply}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0d1b4b] hover:bg-[#152258] active:scale-95 transition-all shadow-sm">
+            <Plus className="w-3.5 h-3.5" /> Apply
+          </button>
           <button type="button" onClick={onEdit}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 hover:bg-purple-100 active:scale-95 transition-all">
             <Edit2 className="w-3.5 h-3.5" /> Edit
@@ -319,12 +430,14 @@ function CourseCard({ course, uniName, onEdit, onDelete }: {
 
 export default function AdminCourses() {
   const [universities, setUniversities] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState('');
   const [uniFilter, setUniFilter] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<{ course: any; uniId: string } | null>(null);
+  const [applyModal, setApplyModal] = useState<any | null>(null);
 
   const fetchUniversities = () => {
     setLoading(true);
@@ -334,7 +447,10 @@ export default function AdminCourses() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchUniversities(); }, []);
+  useEffect(() => {
+    fetchUniversities();
+    api.admin.students().then(setStudents).catch(() => {});
+  }, []);
 
   const allCourses = universities.flatMap(uni =>
     (uni.courses || []).map((c: any) => ({
@@ -380,6 +496,13 @@ export default function AdminCourses() {
           course={editing.course}
           onClose={() => setEditing(null)}
           onSaved={() => { setEditing(null); fetchUniversities(); }}
+        />
+      )}
+      {applyModal && (
+        <ApplyModal
+          course={applyModal}
+          students={students}
+          onClose={() => setApplyModal(null)}
         />
       )}
 
@@ -456,6 +579,7 @@ export default function AdminCourses() {
                 uniName={c._uniName}
                 onEdit={() => setEditing({ course: c, uniId: c._uniId })}
                 onDelete={() => handleDelete(c._uniId, normalId(c))}
+                onApply={() => setApplyModal(c)}
               />
             ))}
           </div>

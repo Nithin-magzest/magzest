@@ -5,6 +5,24 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import ApplicationModal from '../components/ApplicationModal';
 
+function useWikipediaPhoto(name: string) {
+  const [photo, setPhoto] = useState<string | null>(null);
+  useEffect(() => {
+    if (!name) return;
+    setPhoto(null);
+    fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(name)}&prop=pageimages&format=json&pithumbsize=1200&origin=*`)
+      .then(r => r.json())
+      .then(d => {
+        const pages = d?.query?.pages;
+        if (!pages) return;
+        const page = Object.values(pages)[0] as any;
+        if (page?.thumbnail?.source) setPhoto(page.thumbnail.source);
+      })
+      .catch(() => {});
+  }, [name]);
+  return photo;
+}
+
 export default function UniversityDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -12,6 +30,8 @@ export default function UniversityDetail() {
   const [uni, setUni] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applyModal, setApplyModal] = useState<any>(null);
+
+  const wikiPhoto = useWikipediaPhoto(uni?.name || '');
 
   useEffect(() => {
     if (id) {
@@ -57,7 +77,7 @@ export default function UniversityDetail() {
         />
       )}
       <div className="relative h-72 bg-gradient-to-br from-blue-600 to-indigo-700 overflow-hidden">
-        <img src={uni.coverImage} alt={uni.name} className="w-full h-full object-cover opacity-50" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <img src={wikiPhoto || uni.coverImage} alt={uni.name} className="w-full h-full object-cover opacity-50" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
         <div className="absolute top-4 left-4">
           <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors text-sm">
@@ -66,15 +86,17 @@ export default function UniversityDetail() {
         </div>
         <div className="absolute bottom-6 left-6 right-6">
           <div className="flex items-end justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">#{uni.ranking} World Ranking</span>
-                <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">{uni.type}</span>
-              </div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-white">{uni.name}</h1>
-              <div className="flex items-center gap-2 mt-2 text-white/90">
-                <MapPin className="w-4 h-4" /><span>{uni.city}, {uni.country}</span>
-                <span>•</span><span>Est. {uni.founded}</span>
+            <div className="flex items-end gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">#{uni.ranking} World Ranking</span>
+                  <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">{uni.type}</span>
+                </div>
+                <h1 className="text-3xl lg:text-4xl font-bold text-white">{uni.name}</h1>
+                <div className="flex items-center gap-2 mt-2 text-white/90">
+                  <MapPin className="w-4 h-4" /><span>{uni.city}, {uni.country}</span>
+                  <span>•</span><span>Est. {uni.founded}</span>
+                </div>
               </div>
             </div>
             <div className="hidden md:flex items-center gap-3">
@@ -180,6 +202,16 @@ export default function UniversityDetail() {
           </div>
 
           <div className="space-y-5">
+            {wikiPhoto && (
+              <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                <div className="relative h-44">
+                  <img src={wikiPhoto} alt={`${uni.name} campus`} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <p className="absolute bottom-2 right-3 text-white/70 text-[10px]">Photo · Wikipedia</p>
+                </div>
+              </div>
+            )}
+
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-2xl p-6 shadow-lg">
               <h3 className="font-bold text-lg mb-4">Interested in {uni.name}?</h3>
               {isAuthenticated && user?.role === 'student' ? (

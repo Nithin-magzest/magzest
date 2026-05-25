@@ -38,6 +38,26 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
+// Add comment to application
+router.post('/:appId/comments', authMiddleware, async (req, res) => {
+  const { text } = req.body;
+  if (!text?.trim()) return res.status(400).json({ message: 'Comment text required' });
+  try {
+    const poster = await User.findById(req.user.id).select('name role');
+    const comment = { author: poster.name, authorRole: poster.role, text: text.trim() };
+    const user = await User.findOneAndUpdate(
+      { 'applications._id': req.params.appId },
+      { $push: { 'applications.$.comments': comment } },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'Application not found' });
+    const app = user.applications.find(a => a._id.toString() === req.params.appId);
+    res.json(app.toJSON());
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Update application status
 router.put('/:appId', authMiddleware, async (req, res) => {
   const { status, notes } = req.body;

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, X, Search, Edit2, ChevronDown, ChevronUp,
   Check, DollarSign, Clock, FileCheck2, CreditCard, RefreshCw,
+  Eye, Globe, Languages, Coins,
 } from 'lucide-react';
 import { api } from '../../api';
 
@@ -307,10 +308,168 @@ function CountryModal({ country, onClose, onSaved }: {
   );
 }
 
+/* ── Country detail modal ──────────────────────────────────────────────────── */
+
+function CountryDetailModal({ country, onClose }: { country: any; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
+
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-2xl px-6 py-5 text-white">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              {country.code ? (
+                <img
+                  src={`https://flagcdn.com/w80/${country.code.toLowerCase()}.png`}
+                  alt={`${country.name} flag`}
+                  className="w-16 h-11 object-cover rounded-lg shadow-md border border-white/30"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).replaceWith(Object.assign(document.createElement('span'), { textContent: country.flag || '🌍', className: 'text-5xl leading-none' })); }}
+                />
+              ) : (
+                <span className="text-5xl leading-none">{country.flag || '🌍'}</span>
+              )}
+              <div>
+                <h2 className="text-2xl font-bold leading-tight">{country.name}</h2>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-sm text-blue-100">
+                  {country.capital && <span className="flex items-center gap-1">🏛 {country.capital}</span>}
+                  {country.region && <span className="flex items-center gap-1">📍 {country.region}</span>}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {country.currency && (
+                    <span className="flex items-center gap-1 text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                      <Coins className="w-3 h-3" /> {country.currency}
+                    </span>
+                  )}
+                  {country.language && (
+                    <span className="flex items-center gap-1 text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                      <Languages className="w-3 h-3" /> {country.language}
+                    </span>
+                  )}
+                  {country.code && (
+                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-mono">{country.code}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button type="button" onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-all flex-shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-5">
+
+          {/* Student Visa */}
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+            <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              <FileCheck2 className="w-4 h-4" /> Student Visa
+            </p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              {country.visa?.type && (
+                <div><span className="text-gray-400 text-xs">Visa Type</span><p className="font-semibold text-gray-800">{country.visa.type}</p></div>
+              )}
+              {country.visa?.processingTime && (
+                <div><span className="text-gray-400 text-xs">Processing Time</span><p className="font-medium text-gray-700 flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-blue-500" />{country.visa.processingTime}</p></div>
+              )}
+              {country.visa?.cost && (
+                <div><span className="text-gray-400 text-xs">Application Cost</span><p className="font-medium text-gray-700">{country.visa.cost}</p></div>
+              )}
+              {country.visa?.validity && (
+                <div><span className="text-gray-400 text-xs">Visa Validity</span><p className="font-medium text-gray-700">{country.visa.validity}</p></div>
+              )}
+            </div>
+            {country.visa?.documents?.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-blue-100">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Required Documents</p>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                  {country.visa.documents.map((d: string, i: number) => (
+                    <li key={i} className="flex items-start gap-1.5 text-xs text-gray-700">
+                      <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />{d}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {country.visa?.notes && (
+              <div className="mt-3 pt-3 border-t border-blue-100">
+                <p className="text-xs font-semibold text-gray-500 mb-1">Notes</p>
+                <p className="text-xs text-indigo-800 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 leading-relaxed">{country.visa.notes}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Passport Requirements */}
+          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+            <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              <CreditCard className="w-4 h-4" /> Passport Requirements
+            </p>
+            {country.passport?.minValidity ? (
+              <div className="text-sm mb-2">
+                <span className="text-gray-400 text-xs">Minimum Validity Required</span>
+                <p className="font-semibold text-gray-800">{country.passport.minValidity}</p>
+              </div>
+            ) : <p className="text-xs text-gray-400">No passport requirements added.</p>}
+            {country.passport?.notes && (
+              <p className="text-xs text-purple-800 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 leading-relaxed mt-2">{country.passport.notes}</p>
+            )}
+          </div>
+
+          {/* Costs & Fees */}
+          <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+            <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              <DollarSign className="w-4 h-4" /> Costs &amp; Fees
+            </p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              {(country.costs?.monthlyLivingMin || country.costs?.monthlyLivingMax) && (
+                <div className="col-span-2">
+                  <span className="text-gray-400 text-xs">Monthly Living Cost</span>
+                  <p className="font-semibold text-gray-800">
+                    {country.costs.currency} {Number(country.costs.monthlyLivingMin).toLocaleString()} – {Number(country.costs.monthlyLivingMax).toLocaleString()} / month
+                  </p>
+                </div>
+              )}
+              {country.costs?.applicationFee && (
+                <div>
+                  <span className="text-gray-400 text-xs">Application Fee</span>
+                  <p className="font-medium text-gray-700">{country.costs.applicationFee}</p>
+                </div>
+              )}
+              {country.costs?.tuitionRange && (
+                <div>
+                  <span className="text-gray-400 text-xs">Tuition Range</span>
+                  <p className="font-semibold text-emerald-700">{country.costs.tuitionRange}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Popular Programs */}
+          {country.popular?.length > 0 && (
+            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                <Globe className="w-4 h-4" /> Popular Programs
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {country.popular.map((p: string, i: number) => (
+                  <span key={i} className="text-xs bg-white text-emerald-700 px-3 py-1 rounded-full border border-emerald-200 font-medium shadow-sm">{p}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Expandable country row ────────────────────────────────────────────────── */
 
-function CountryRow({ country, onEdit, onDelete }: {
-  country: any; onEdit: (c: any) => void; onDelete: (id: string) => void;
+function CountryRow({ country, onEdit, onDelete, onView }: {
+  country: any; onEdit: (c: any) => void; onDelete: (id: string) => void; onView: (c: any) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const mongoId = country._id?.toString() ?? '';
@@ -319,7 +478,19 @@ function CountryRow({ country, onEdit, onDelete }: {
     <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
       {/* Header row */}
       <div className="flex items-center gap-4 px-5 py-4">
-        <div className="text-4xl flex-shrink-0 select-none">{country.flag || '🌍'}</div>
+        <div className="flex flex-col items-center flex-shrink-0 w-16 text-center">
+          {country.code ? (
+            <img
+              src={`https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
+              alt={`${country.name} flag`}
+              className="w-10 h-7 object-cover rounded shadow-sm border border-gray-100"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).replaceWith(Object.assign(document.createElement('span'), { textContent: country.flag || '🌍', className: 'text-4xl select-none' })); }}
+            />
+          ) : (
+            <div className="text-4xl select-none">{country.flag || '🌍'}</div>
+          )}
+          <span className="text-xs font-semibold text-gray-600 mt-1 leading-tight line-clamp-2">{country.name}</span>
+        </div>
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900">{country.name}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
@@ -347,6 +518,10 @@ function CountryRow({ country, onEdit, onDelete }: {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          <button type="button" onClick={() => onView(country)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 active:scale-95 transition-all">
+            <Eye className="w-3.5 h-3.5" /> View
+          </button>
           <button type="button" onClick={() => onEdit(country)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 bg-sky-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all">
             <Edit2 className="w-3.5 h-3.5" /> Edit
@@ -472,6 +647,7 @@ export default function AdminCountries() {
   const [regionFilter, setRegionFilter] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editingCountry, setEditingCountry] = useState<any>(null);
+  const [viewingCountry, setViewingCountry] = useState<any>(null);
 
   const loadCountries = useCallback(async () => {
     setLoading(true);
@@ -523,6 +699,9 @@ export default function AdminCountries() {
           onClose={() => { setShowAdd(false); setEditingCountry(null); }}
           onSaved={handleSaved}
         />
+      )}
+      {viewingCountry && (
+        <CountryDetailModal country={viewingCountry} onClose={() => setViewingCountry(null)} />
       )}
 
       <div className="space-y-6">
@@ -598,6 +777,7 @@ export default function AdminCountries() {
               <CountryRow
                 key={c._id?.toString()}
                 country={c}
+                onView={c => setViewingCountry(c)}
                 onEdit={c => setEditingCountry(c)}
                 onDelete={handleDelete}
               />

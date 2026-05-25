@@ -95,6 +95,9 @@ export const api = {
     update: (appId: string, data: any) => req<any>(`/applications/${appId}`, {
       method: 'PUT', headers: authHeaders(), body: JSON.stringify(data),
     }),
+    addComment: (appId: string, text: string) => req<any>(`/applications/${appId}/comments`, {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({ text }),
+    }),
   },
 
   chat: {

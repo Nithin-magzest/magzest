@@ -1,5 +1,5 @@
-﻿import { useState, useEffect } from 'react';
-import { Search, BookOpen, Calendar, Award, CheckCircle, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, BookOpen, Calendar, Award, CheckCircle, X, Plus } from 'lucide-react';
 import { api } from '../../api';
 
 const LEVELS = ["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'];
@@ -11,14 +11,124 @@ const LEVEL_COLORS: Record<string, string> = {
   'Certificate': 'bg-yellow-100 text-yellow-700',
 };
 
+function ApplyModal({ course, students, onClose }: {
+  course: { name: string; uniId: string; uniName: string; intake?: string[]; tuitionFee?: number; currency?: string; level?: string };
+  students: any[];
+  onClose: () => void;
+}) {
+  const [studentId, setStudentId] = useState('');
+  const [intake, setIntake] = useState(course.intake?.[0] || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleApply = async () => {
+    if (!studentId) { setError('Please select a student.'); return; }
+    setSaving(true); setError('');
+    try {
+      await api.admin.createApplication({
+        studentId,
+        universityId: course.uniId,
+        universityName: course.uniName,
+        courseName: course.name,
+        intake,
+      });
+      setSuccess(true);
+      setTimeout(() => onClose(), 1200);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create application.');
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+        <div className="flex items-start justify-between p-5 border-b border-gray-100">
+          <div className="flex-1 min-w-0 pr-3">
+            <h2 className="text-base font-bold text-gray-900">Apply for Course</h2>
+            <p className="text-sm font-semibold text-blue-700 mt-0.5 truncate">{course.name}</p>
+            <p className="text-xs text-gray-500 truncate">{course.uniName}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors flex-shrink-0">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-5 pt-4 flex flex-wrap gap-2">
+          {course.level && (
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${LEVEL_COLORS[course.level] || 'bg-gray-100 text-gray-700'}`}>
+              {course.level}
+            </span>
+          )}
+          {course.tuitionFee && course.tuitionFee > 0 && (
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+              {course.currency || 'USD'} {Number(course.tuitionFee).toLocaleString()}/yr
+            </span>
+          )}
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Student <span className="text-red-500">*</span></label>
+            <select value={studentId} onChange={e => setStudentId(e.target.value)} aria-label="Select student"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="">— Choose a student —</option>
+              {students.map(s => (
+                <option key={s._id || s.id} value={s._id || s.id}>{s.name} ({s.email})</option>
+              ))}
+            </select>
+          </div>
+
+          {course.intake && course.intake.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Intake</label>
+              <select value={intake} onChange={e => setIntake(e.target.value)} aria-label="Select intake"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                {course.intake.map((i: string) => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+          )}
+
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2.5 rounded-xl">{error}</p>}
+
+          {success && (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2.5 rounded-xl">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />Application created successfully!
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+              Cancel
+            </button>
+            <button type="button" onClick={handleApply} disabled={saving || success}
+              className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              {saving
+                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
+                : <><Plus className="w-4 h-4" />Apply</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CounselorCourses() {
   const [universities, setUniversities] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [level, setLevel] = useState('');
   const [uniFilter, setUniFilter] = useState('');
+  const [applyModal, setApplyModal] = useState<any | null>(null);
 
   useEffect(() => {
     api.universities.list().then(setUniversities).catch(() => {});
+    api.students.list().then(setStudents).catch(() => {});
   }, []);
 
   const allCourses = universities.flatMap(uni =>
@@ -39,9 +149,17 @@ export default function CounselorCourses() {
 
   return (
     <div className="space-y-6">
+      {applyModal && (
+        <ApplyModal
+          course={applyModal}
+          students={students}
+          onClose={() => setApplyModal(null)}
+        />
+      )}
+
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Available Courses</h1>
-        <p className="text-gray-500 mt-1">Browse all courses across partner universities — view only</p>
+        <p className="text-gray-500 mt-1">Browse courses and apply on behalf of your students</p>
       </div>
 
       <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
@@ -74,7 +192,7 @@ export default function CounselorCourses() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filtered.map((course, i) => (
-          <div key={course.id || course._id || i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+          <div key={course.id || course._id || i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow flex flex-col">
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -116,7 +234,7 @@ export default function CounselorCourses() {
             )}
 
             {course.requirements?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 mb-3">
                 {course.requirements.map((req: string) => (
                   <span key={req} className="flex items-center gap-1 text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
                     <CheckCircle className="w-3 h-3 text-green-500" />{req}
@@ -124,6 +242,13 @@ export default function CounselorCourses() {
                 ))}
               </div>
             )}
+
+            <div className="mt-auto pt-2">
+              <button type="button" onClick={() => setApplyModal(course)}
+                className="flex items-center gap-1.5 bg-[#0d1b4b] hover:bg-[#152258] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm">
+                <Plus className="w-4 h-4" />Apply for Student
+              </button>
+            </div>
           </div>
         ))}
 

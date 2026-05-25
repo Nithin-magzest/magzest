@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Plus, Calendar, ArrowRight, CheckCircle, Clock, Star, ChevronDown, ChevronUp, User, BookOpen, Globe, DollarSign } from 'lucide-react';
+import { FileText, Plus, Calendar, ArrowRight, CheckCircle, Clock, Star, ChevronDown, ChevronUp, User, BookOpen, Globe, DollarSign, MessageCircle, Send } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Student } from '../../types';
@@ -25,10 +25,28 @@ function DetailRow({ label, value }: { label: string; value?: string | boolean |
   );
 }
 
-function ApplicationCard({ app, onAccept, accepting }: { app: any; onAccept: (id: string) => void; accepting: string | null }) {
+function ApplicationCard({ app, onAccept, accepting, onCommentPosted }: {
+  app: any;
+  onAccept: (id: string) => void;
+  accepting: string | null;
+  onCommentPosted: () => Promise<void>;
+}) {
   const [expanded, setExpanded] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const currentStep = statusOrder.indexOf(app.status);
   const appId = app._id || app.id;
+
+  const submitComment = async () => {
+    if (!commentText.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      await api.applications.addComment(appId, commentText.trim());
+      setCommentText('');
+      await onCommentPosted();
+    } catch {}
+    setSubmitting(false);
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
@@ -216,6 +234,58 @@ function ApplicationCard({ app, onAccept, accepting }: { app: any; onAccept: (id
               <p className="text-sm text-yellow-800">{app.notes}</p>
             </div>
           )}
+
+          {/* Q&A Comments */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageCircle className="w-4 h-4 text-blue-500" />
+              <h4 className="text-sm font-semibold text-gray-700">Questions & Updates</h4>
+              {app.comments?.length > 0 && (
+                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">{app.comments.length}</span>
+              )}
+            </div>
+
+            {app.comments?.length > 0 ? (
+              <div className="space-y-2 mb-3 max-h-52 overflow-y-auto pr-1">
+                {app.comments.map((c: any, i: number) => (
+                  <div key={i} className={`flex ${c.authorRole === 'student' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[78%] px-3 py-2 rounded-xl text-xs leading-relaxed ${
+                      c.authorRole === 'student'
+                        ? 'bg-blue-600 text-white rounded-br-none'
+                        : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
+                    }`}>
+                      <p className={`font-semibold mb-0.5 ${c.authorRole === 'student' ? 'text-blue-100' : 'text-blue-600'}`}>
+                        {c.authorRole === 'counselor' ? `${c.author} · Counselor` : 'You'}
+                      </p>
+                      <p>{c.text}</p>
+                      {c.createdAt && (
+                        <p className={`text-[10px] mt-1 ${c.authorRole === 'student' ? 'text-blue-200' : 'text-gray-400'}`}>
+                          {new Date(c.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 mb-3">No messages yet. Ask your counselor a question below.</p>
+            )}
+
+            <div className="flex gap-2">
+              <input
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(); } }}
+                placeholder="Ask a question about your application…"
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                disabled={submitting}
+              />
+              <button type="button" aria-label="Send message" onClick={submitComment} disabled={submitting || !commentText.trim()}
+                className="flex items-center justify-center w-9 h-9 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-40 transition-colors flex-shrink-0">
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -282,7 +352,7 @@ export default function StudentApplications() {
       ) : (
         <div className="space-y-4">
           {filtered.map((app: any) => (
-            <ApplicationCard key={app._id || app.id} app={app} onAccept={acceptOffer} accepting={accepting} />
+            <ApplicationCard key={app._id || app.id} app={app} onAccept={acceptOffer} accepting={accepting} onCommentPosted={refreshUser} />
           ))}
         </div>
       )}

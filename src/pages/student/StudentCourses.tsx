@@ -1,6 +1,8 @@
 ﻿import { useState, useEffect } from 'react';
 import { Search, BookOpen, Calendar, Award, CheckCircle, X } from 'lucide-react';
 import { api } from '../../api';
+import { useAuth } from '../../context/AuthContext';
+import ApplicationModal from '../../components/ApplicationModal';
 
 const LEVELS = ["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'];
 const LEVEL_COLORS: Record<string, string> = {
@@ -12,10 +14,13 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 export default function StudentCourses() {
+  const { user } = useAuth();
+  const student = user as any;
   const [universities, setUniversities] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [level, setLevel] = useState('');
   const [uniFilter, setUniFilter] = useState('');
+  const [applyModal, setApplyModal] = useState<{ course: any; uni: any } | null>(null);
 
   useEffect(() => {
     api.universities.list().then(setUniversities).catch(() => {});
@@ -39,9 +44,17 @@ export default function StudentCourses() {
 
   return (
     <div className="space-y-6">
+      {applyModal && (
+        <ApplicationModal
+          course={applyModal.course}
+          uni={applyModal.uni}
+          onClose={() => setApplyModal(null)}
+          onSuccess={() => setApplyModal(null)}
+        />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Available Courses</h1>
-        <p className="text-gray-500 mt-1">Browse all courses across partner universities — view only</p>
+        <p className="text-gray-500 mt-1">Browse and apply to courses across partner universities</p>
       </div>
 
       <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
@@ -74,7 +87,7 @@ export default function StudentCourses() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filtered.map((course, i) => (
-          <div key={course.id || course._id || i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+          <div key={course.id || course._id || i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow flex flex-col">
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -116,7 +129,7 @@ export default function StudentCourses() {
             )}
 
             {course.requirements?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 mb-3">
                 {course.requirements.map((req: string) => (
                   <span key={req} className="flex items-center gap-1 text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
                     <CheckCircle className="w-3 h-3 text-green-500" />{req}
@@ -124,6 +137,25 @@ export default function StudentCourses() {
                 ))}
               </div>
             )}
+
+            <div className="mt-auto pt-2">
+              {(student?.applications || []).some((a: any) => a.universityId === course.uniId && a.courseId === (course.id || course._id)) ? (
+                <span className="inline-flex items-center gap-1.5 text-sm text-green-700 font-medium">
+                  <CheckCircle className="w-4 h-4" /> Applied
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const uni = universities.find(u => (u.id || u._id) === course.uniId);
+                    if (uni) setApplyModal({ course, uni });
+                  }}
+                  className="bg-[#0d1b4b] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#152258] transition-colors font-medium"
+                >
+                  Apply Now
+                </button>
+              )}
+            </div>
           </div>
         ))}
 

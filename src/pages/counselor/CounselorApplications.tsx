@@ -55,6 +55,22 @@ function UpdateStatusModal({
   const [notes, setNotes] = useState(app.notes || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [replyText, setReplyText] = useState('');
+  const [replying, setReplying] = useState(false);
+  const [comments, setComments] = useState<any[]>(app.comments || []);
+
+  const submitReply = async () => {
+    if (!replyText.trim() || replying) return;
+    setReplying(true);
+    try {
+      const appId = app._id || app.id;
+      const updated = await api.applications.addComment(appId, replyText.trim());
+      setComments(updated.comments || []);
+      setReplyText('');
+      onUpdated({ ...app, ...updated });
+    } catch {}
+    setReplying(false);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -119,6 +135,56 @@ function UpdateStatusModal({
               placeholder="Add a note about this status update…"
               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] resize-none placeholder:text-gray-400"
             />
+          </div>
+
+          {/* Comments thread */}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              Student Messages
+              {comments.length > 0 && (
+                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">{comments.length}</span>
+              )}
+            </p>
+            {comments.length > 0 ? (
+              <div className="space-y-2 mb-3 max-h-40 overflow-y-auto bg-gray-50 rounded-xl p-3">
+                {comments.map((c: any, i: number) => (
+                  <div key={i} className={`flex ${c.authorRole === 'counselor' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs leading-relaxed ${
+                      c.authorRole === 'counselor'
+                        ? 'bg-[#0d1b4b] text-white rounded-br-none'
+                        : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
+                    }`}>
+                      <p className={`font-semibold mb-0.5 ${c.authorRole === 'counselor' ? 'text-blue-200' : 'text-blue-600'}`}>
+                        {c.authorRole === 'student' ? `${c.author} · Student` : 'You'}
+                      </p>
+                      <p>{c.text}</p>
+                      {c.createdAt && (
+                        <p className={`text-[10px] mt-1 ${c.authorRole === 'counselor' ? 'text-blue-300' : 'text-gray-400'}`}>
+                          {new Date(c.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 mb-3">No student questions yet.</p>
+            )}
+            <div className="flex gap-2">
+              <input
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply(); } }}
+                placeholder="Reply to student…"
+                disabled={replying}
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] placeholder:text-gray-400"
+              />
+              <button type="button" onClick={submitReply} disabled={replying || !replyText.trim()}
+                aria-label="Send reply"
+                className="flex items-center gap-1.5 px-3 py-2 bg-[#0d1b4b] text-white rounded-xl text-xs font-semibold hover:bg-[#152258] disabled:opacity-40 transition-colors">
+                <Send className="w-3.5 h-3.5" /> Reply
+              </button>
+            </div>
           </div>
 
           {error && (

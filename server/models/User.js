@@ -8,6 +8,12 @@ const DocumentSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
 });
 
+const CommentSchema = new mongoose.Schema({
+  author: String,
+  authorRole: String,
+  text: { type: String, required: true },
+}, { timestamps: true });
+
 const ApplicationSchema = new mongoose.Schema({
   studentId: String,
   universityId: String,
@@ -76,6 +82,8 @@ const ApplicationSchema = new mongoose.Schema({
     referenceLetters: Boolean,
     sop: Boolean,
   },
+
+  comments: [CommentSchema],
 });
 
 const UserSchema = new mongoose.Schema({
