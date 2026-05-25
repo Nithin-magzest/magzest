@@ -7,7 +7,6 @@ import {
   LogOut,
   User,
   LayoutDashboard,
-  GraduationCap,
   Bell,
   Calendar,
   FileText,
@@ -126,12 +125,9 @@ export default function Navbar() {
           {/* Logo + nav */}
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center">
-              <div className="flex flex-col items-center justify-center bg-[#0d1b4b] rounded-xl px-3 py-1.5 min-w-[72px]">
-                <GraduationCap className="w-5 h-5 text-white" />
-                <span className="font-bold text-white text-xs tracking-tight leading-tight">
-                  GradZest
-                </span>
-              </div>
+              <span className="text-2xl font-extrabold tracking-tight select-none">
+                <span className="text-[#0d1b4b]">Grad</span><span className="text-blue-500">zest</span>
+              </span>
             </Link>
             <div className="hidden md:flex items-center gap-1">
               <Link
