@@ -5,6 +5,7 @@ import {
   Eye, Globe, Languages, Coins,
 } from 'lucide-react';
 import { api } from '../../api';
+import { CountryFlag } from '../../components/CountryFlag';
 
 /* ── Shared UI primitives ──────────────────────────────────────────────────── */
 
@@ -353,7 +354,7 @@ function CountryDetailModal({ country, onClose }: { country: any; onClose: () =>
                 </div>
               </div>
             </div>
-            <button type="button" onClick={onClose}
+            <button type="button" onClick={onClose} aria-label="Close"
               className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-all flex-shrink-0">
               <X className="w-4 h-4" />
             </button>
@@ -478,19 +479,7 @@ function CountryRow({ country, onEdit, onDelete, onView }: {
     <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
       {/* Header row */}
       <div className="flex items-center gap-4 px-5 py-4">
-        <div className="flex flex-col items-center flex-shrink-0 w-16 text-center">
-          {country.code ? (
-            <img
-              src={`https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
-              alt={`${country.name} flag`}
-              className="w-10 h-7 object-cover rounded shadow-sm border border-gray-100"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).replaceWith(Object.assign(document.createElement('span'), { textContent: country.flag || '🌍', className: 'text-4xl select-none' })); }}
-            />
-          ) : (
-            <div className="text-4xl select-none">{country.flag || '🌍'}</div>
-          )}
-          <span className="text-xs font-semibold text-gray-600 mt-1 leading-tight line-clamp-2">{country.name}</span>
-        </div>
+        <CountryFlag name={country.name} code={country.code} flag={country.flag} sizeCls="w-20 h-14" rounded="rounded-xl" quality="w160" />
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900">{country.name}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">

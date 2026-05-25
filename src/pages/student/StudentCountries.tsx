@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react';
 import { Search, ChevronDown, ChevronUp, Clock, DollarSign, FileCheck2, CreditCard, Check } from 'lucide-react';
 import { loadCountries } from '../../data/countries';
+import { CountryFlag } from '../../components/CountryFlag';
 
 function CountryCard({ country }: { country: any }) {
   const [expanded, setExpanded] = useState(false);
@@ -8,16 +9,7 @@ function CountryCard({ country }: { country: any }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       <div className="flex items-center gap-4 px-5 py-4">
-        {country.code ? (
-          <img
-            src={`https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
-            alt={`${country.name} flag`}
-            className="w-10 h-7 object-cover rounded shadow-sm border border-gray-100 flex-shrink-0"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).replaceWith(Object.assign(document.createElement('span'), { textContent: country.flag || '🌍', className: 'text-4xl select-none flex-shrink-0' })); }}
-          />
-        ) : (
-          <div className="text-4xl flex-shrink-0 select-none">{country.flag || '🌍'}</div>
-        )}
+        <CountryFlag name={country.name} code={country.code} flag={country.flag} sizeCls="w-20 h-14" rounded="rounded-xl" quality="w160" />
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900">{country.name}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
