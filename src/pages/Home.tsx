@@ -135,7 +135,13 @@ function getCourseIcon(name: string): React.ElementType {
   return BookOpen;
 }
 
-function getUniLogoUrl(_name: string, _website?: string): string | null {
+function getUniLogoUrl(name: string, website?: string): string | null {
+  const found = MARQUEE_UNIS.find(u => u.name.toLowerCase() === name.toLowerCase());
+  if (found) return found.logo;
+  if (website) {
+    const domain = website.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    return G(domain);
+  }
   return null;
 }
 
