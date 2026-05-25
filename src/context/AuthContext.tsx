@@ -7,6 +7,7 @@ type LoginResult = { success: true; role: string } | { success: false };
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<LoginResult>;
+  loginWithToken: (token: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
@@ -42,6 +43,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loginWithToken = async (token: string) => {
+    localStorage.setItem('token', token);
+    try {
+      const u = await api.auth.me();
+      setUser(u);
+    } catch {
+      localStorage.removeItem('token');
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
@@ -66,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, refreshUser, isAuthenticated: !!user, loading }}>
+    <AuthContext.Provider value={{ user, login, loginWithToken, logout, refreshUser, isAuthenticated: !!user, loading }}>
       {children}
     </AuthContext.Provider>
   );

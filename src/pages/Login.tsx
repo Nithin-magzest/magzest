@@ -1,7 +1,78 @@
-﻿import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { GraduationCap, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../api';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+// SVG icons for social providers
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+  );
+}
+
+function GitHubIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-800" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+    </svg>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="#1877F2" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+    </svg>
+  );
+}
+
+// useGoogleLogin must only be called inside a GoogleOAuthProvider with a real clientId
+function GoogleLoginButton({ onSuccess, onError, loading, disabled }: {
+  onSuccess: (tokenResponse: any) => void;
+  onError: () => void;
+  loading: boolean;
+  disabled: boolean;
+}) {
+  const triggerGoogle = useGoogleLogin({ onSuccess, onError });
+  return (
+    <button
+      type="button"
+      onClick={() => triggerGoogle()}
+      disabled={disabled}
+      className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Sign in with Google"
+    >
+      {loading
+        ? <span className="w-5 h-5 border-2 border-gray-300 border-t-[#4285F4] rounded-full animate-spin" />
+        : <GoogleIcon />}
+      <span className="text-xs font-medium text-gray-700 hidden sm:block">Google</span>
+    </button>
+  );
+}
+
+function GoogleButtonUnconfigured({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Google login not configured"
+    >
+      <GoogleIcon />
+      <span className="text-xs font-medium text-gray-700 hidden sm:block">Google</span>
+    </button>
+  );
+}
 
 export default function Login() {
   const [email, setEmail] = useState('aryan@example.com');
@@ -9,8 +80,40 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { login } = useAuth();
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
+  const { login, loginWithToken } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Handle GitHub OAuth callback redirect (token comes back in URL)
+  useEffect(() => {
+    const socialToken = searchParams.get('social_token');
+    const role = searchParams.get('role');
+    const oauthError = searchParams.get('error');
+
+    if (oauthError) {
+      const messages: Record<string, string> = {
+        github_not_configured: 'GitHub login is not configured on this server.',
+        github_token_failed: 'GitHub authentication failed. Please try again.',
+        github_failed: 'GitHub login failed. Please try again.',
+      };
+      setError(messages[oauthError] || 'Social login failed.');
+      return;
+    }
+
+    if (socialToken && role) {
+      loginWithToken(socialToken);
+      if (role === 'admin') navigate('/admin');
+      else if (role === 'counselor') navigate('/counselor');
+      else navigate('/student');
+    }
+  }, [searchParams, loginWithToken, navigate]);
+
+  function redirectAfterLogin(role: string) {
+    if (role === 'admin') navigate('/admin');
+    else if (role === 'counselor') navigate('/counselor');
+    else navigate('/student');
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,13 +121,8 @@ export default function Login() {
     setSubmitting(true);
     const result = await login(email, password);
     setSubmitting(false);
-    if (result.success) {
-      if (result.role === 'admin') navigate('/admin');
-      else if (result.role === 'counselor') navigate('/counselor');
-      else navigate('/student');
-    } else {
-      setError('Invalid email or password. Try the demo accounts below.');
-    }
+    if (result.success) redirectAfterLogin(result.role!);
+    else setError('Invalid email or password. Try the demo accounts below.');
   };
 
   const loginAs = async (demoEmail: string, demoPassword: string) => {
@@ -34,13 +132,73 @@ export default function Login() {
     setSubmitting(true);
     const result = await login(demoEmail, demoPassword);
     setSubmitting(false);
-    if (result.success) {
-      if (result.role === 'admin') navigate('/admin');
-      else if (result.role === 'counselor') navigate('/counselor');
-      else navigate('/student');
-    } else {
-      setError('Login failed. Please make sure the server is running and the database is seeded.');
+    if (result.success) redirectAfterLogin(result.role!);
+    else setError('Login failed. Please make sure the server is running and the database is seeded.');
+  };
+
+  // Google handler — called by GoogleLoginButton child component
+  const handleGoogleSuccess = async (tokenResponse: any) => {
+    setSocialLoading('google');
+    try {
+      const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+      });
+      const userInfo = await userInfoRes.json();
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: tokenResponse.access_token, userInfo }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Google login failed' }));
+        throw new Error(err.message);
+      }
+      const data = await res.json();
+      loginWithToken(data.token);
+      redirectAfterLogin(data.user.role);
+    } catch (err: any) {
+      setError(err.message || 'Google login failed. Make sure VITE_GOOGLE_CLIENT_ID is configured.');
+    } finally {
+      setSocialLoading(null);
     }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google sign-in was cancelled or failed.');
+    setSocialLoading(null);
+  };
+
+  // GitHub — server-side redirect flow
+  const handleGitHub = () => {
+    setSocialLoading('github');
+    window.location.href = '/api/auth/github';
+  };
+
+  // Facebook — uses FB JS SDK (loaded separately)
+  const handleFacebook = () => {
+    const FB = (window as any).FB;
+    if (!FB) {
+      setError('Facebook SDK not loaded. Add VITE_FACEBOOK_APP_ID to your .env and reload.');
+      return;
+    }
+    setSocialLoading('facebook');
+    FB.login(async (response: any) => {
+      if (response.authResponse) {
+        try {
+          const data = await api.auth.facebookLogin(
+            response.authResponse.accessToken,
+            response.authResponse.userID
+          );
+          loginWithToken(data.token);
+          redirectAfterLogin(data.user.role);
+        } catch (err: any) {
+          setError(err.message || 'Facebook login failed.');
+        }
+      } else {
+        setError('Facebook sign-in was cancelled.');
+      }
+      setSocialLoading(null);
+    }, { scope: 'public_profile,email' });
   };
 
   const demoAccounts = {
@@ -59,6 +217,8 @@ export default function Login() {
       { email: 'sara@example.com', password: 'student123', name: 'Sara Ahmed', initials: 'SA' },
     ],
   };
+
+  const anyLoading = submitting || !!socialLoading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -79,6 +239,59 @@ export default function Login() {
               <p className="text-red-700 text-sm">{error}</p>
             </div>
           )}
+
+          {/* Social Login Buttons */}
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            {GOOGLE_CLIENT_ID ? (
+              <GoogleLoginButton
+                onSuccess={(tr) => { setError(''); handleGoogleSuccess(tr); }}
+                onError={() => { setError(''); handleGoogleError(); }}
+                loading={socialLoading === 'google'}
+                disabled={anyLoading}
+              />
+            ) : (
+              <GoogleButtonUnconfigured
+                onClick={() => setError('Google login is not configured on this server.')}
+                disabled={anyLoading}
+              />
+            )}
+
+            <button
+              type="button"
+              onClick={() => { setError(''); handleGitHub(); }}
+              disabled={anyLoading}
+              className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Sign in with GitHub"
+            >
+              {socialLoading === 'github'
+                ? <span className="w-5 h-5 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin" />
+                : <GitHubIcon />}
+              <span className="text-xs font-medium text-gray-700 hidden sm:block">GitHub</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setError(''); handleFacebook(); }}
+              disabled={anyLoading}
+              className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Sign in with Facebook"
+            >
+              {socialLoading === 'facebook'
+                ? <span className="w-5 h-5 border-2 border-gray-300 border-t-[#1877F2] rounded-full animate-spin" />
+                : <FacebookIcon />}
+              <span className="text-xs font-medium text-gray-700 hidden sm:block">Facebook</span>
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="relative mb-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white px-3 text-xs text-gray-400 font-medium">or sign in with email</span>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -102,7 +315,7 @@ export default function Login() {
                 </button>
               </div>
             </div>
-            <button type="submit" disabled={submitting} className="w-full bg-[#0d1b4b] text-white py-3 rounded-xl font-semibold hover:bg-[#152258] transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed">
+            <button type="submit" disabled={anyLoading} className="w-full bg-[#0d1b4b] text-white py-3 rounded-xl font-semibold hover:bg-[#152258] transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed">
               {submitting ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
@@ -114,7 +327,7 @@ export default function Login() {
                 <p className="text-xs font-semibold text-purple-600 mb-2">Admin</p>
                 <div className="grid grid-cols-1 gap-2">
                   {demoAccounts.admin.map(a => (
-                    <button key={a.email} type="button" onClick={() => loginAs(a.email, a.password)} disabled={submitting}
+                    <button key={a.email} type="button" onClick={() => loginAs(a.email, a.password)} disabled={anyLoading}
                       className="flex items-center gap-3 p-3 border border-purple-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed">
                       <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 font-bold text-xs flex-shrink-0">{a.initials}</div>
                       <div className="flex-1 min-w-0">
@@ -130,7 +343,7 @@ export default function Login() {
                 <p className="text-xs font-semibold text-green-600 mb-2">Counselors</p>
                 <div className="grid grid-cols-1 gap-2">
                   {demoAccounts.counselors.map(a => (
-                    <button key={a.email} type="button" onClick={() => loginAs(a.email, a.password)} disabled={submitting}
+                    <button key={a.email} type="button" onClick={() => loginAs(a.email, a.password)} disabled={anyLoading}
                       className="flex items-center gap-3 p-3 border border-green-200 rounded-lg hover:border-green-400 hover:bg-green-50 transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed">
                       <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-xs flex-shrink-0">{a.initials}</div>
                       <div className="flex-1 min-w-0">
@@ -146,7 +359,7 @@ export default function Login() {
                 <p className="text-xs font-semibold text-[#0d1b4b] mb-2">Students</p>
                 <div className="grid grid-cols-1 gap-2">
                   {demoAccounts.students.map(a => (
-                    <button key={a.email} type="button" onClick={() => loginAs(a.email, a.password)} disabled={submitting}
+                    <button key={a.email} type="button" onClick={() => loginAs(a.email, a.password)} disabled={anyLoading}
                       className="flex items-center gap-3 p-3 border border-blue-200 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed">
                       <div className="w-8 h-8 bg-[#f0f4ff] rounded-full flex items-center justify-center text-[#0d1b4b] font-bold text-xs flex-shrink-0">{a.initials}</div>
                       <div className="flex-1 min-w-0">

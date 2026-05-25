@@ -81,8 +81,13 @@ const ApplicationSchema = new mongoose.Schema({
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true, lowercase: true },
-  password: { type: String, required: true },
+  password: { type: String, required: false },
   role: { type: String, enum: ['student', 'counselor', 'admin'], required: true },
+  // Social login provider IDs
+  googleId: { type: String, sparse: true },
+  githubId: { type: String, sparse: true },
+  facebookId: { type: String, sparse: true },
+  avatar: String,
 
   // Student fields
   phone: String,

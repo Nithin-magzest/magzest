@@ -2,6 +2,10 @@
 import { AuthProvider } from './context/AuthContext';
 import { CallProvider } from './context/CallContext';
 import { AuthModalProvider } from './context/AuthModalContext';
+import { NotificationProvider } from './context/NotificationContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 import AuthModal from './components/AuthModal';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -44,8 +48,10 @@ import AdminChat from './pages/admin/AdminChat';
 
 export default function App() {
   return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <AuthProvider>
       <CallProvider>
+      <NotificationProvider>
       <AuthModalProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthModal />
@@ -98,7 +104,9 @@ export default function App() {
         </Routes>
       </BrowserRouter>
       </AuthModalProvider>
+      </NotificationProvider>
       </CallProvider>
     </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }

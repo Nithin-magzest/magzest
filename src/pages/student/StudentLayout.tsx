@@ -29,7 +29,7 @@ export default function StudentLayout() {
   const unreadCount = useUnreadMessages();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#0d1b4b] border-t-transparent rounded-full animate-spin"></div></div>;
   if (!isAuthenticated) return <Navigate to="/login" />;
-  if (user?.role !== 'student') return <Navigate to="/counselor" />;
+  if (user?.role !== 'student') return <Navigate to="/login" />;
 
   return (
     <div className="min-h-screen bg-sky-50">

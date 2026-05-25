@@ -45,6 +45,18 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       }),
+    googleLogin: (credential: string) =>
+      req<{ token: string; user: any }>('/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+      }),
+    facebookLogin: (accessToken: string, userId: string) =>
+      req<{ token: string; user: any }>('/auth/facebook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken, userId }),
+      }),
   },
 
   universities: {
