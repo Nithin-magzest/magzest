@@ -1,5 +1,5 @@
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Users, MessageSquare, GraduationCap, User, BookOpen, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, GraduationCap, User, BookOpen, CalendarDays, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
 import { useUnreadMessages } from '../../hooks/useUnreadMessages';
@@ -14,6 +14,7 @@ const navItems: { to: string; label: string; icon: NavIcon; end?: boolean; mobil
   { to: '/counselor/courses', label: 'Courses', icon: BookOpen, mobileHide: true },
   { to: '/counselor/meetings', label: 'Meetings', icon: CalendarDays },
   { to: '/counselor/chat', label: 'Chat', icon: MessageSquare },
+  { to: '/counselor/applications', label: 'Applications', icon: FileText },
   { to: '/counselor/profile', label: 'My Profile', icon: User },
 ];
 

@@ -35,6 +35,7 @@ import CounselorProfile from './pages/counselor/CounselorProfile';
 import CounselorCourses from './pages/counselor/CounselorCourses';
 import CounselorCountries from './pages/counselor/CounselorCountries';
 import CounselorMeetings from './pages/counselor/CounselorMeetings';
+import CounselorApplications from './pages/counselor/CounselorApplications';
 
 // Admin module
 import AdminLayout from './pages/admin/AdminLayout';
@@ -87,6 +88,7 @@ export default function App() {
             <Route path="courses" element={<CounselorCourses />} />
             <Route path="countries" element={<CounselorCountries />} />
             <Route path="meetings" element={<CounselorMeetings />} />
+            <Route path="applications" element={<CounselorApplications />} />
           </Route>
 
           {/* Admin module */}

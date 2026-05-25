@@ -1,0 +1,361 @@
+import { useState, useEffect, useCallback } from 'react';
+import {
+  FileText, RefreshCw, Search, X, ChevronDown, AlertTriangle,
+  CheckCircle, Clock, Send, Award, XCircle, BookOpen, Edit2,
+} from 'lucide-react';
+import { api } from '../../api';
+import StatusBadge from '../../components/StatusBadge';
+
+const ALL_STATUSES = [
+  { value: 'draft',          label: 'Draft' },
+  { value: 'submitted',      label: 'Submitted' },
+  { value: 'under_review',   label: 'Under Review' },
+  { value: 'offer_received', label: 'Offer Received' },
+  { value: 'accepted',       label: 'Accepted' },
+  { value: 'rejected',       label: 'Rejected' },
+  { value: 'enrolled',       label: 'Enrolled' },
+];
+
+const STATUS_ICONS: Record<string, React.ReactNode> = {
+  draft:          <Edit2       className="w-4 h-4" />,
+  submitted:      <Send        className="w-4 h-4" />,
+  under_review:   <Clock       className="w-4 h-4" />,
+  offer_received: <Award       className="w-4 h-4" />,
+  accepted:       <CheckCircle className="w-4 h-4" />,
+  rejected:       <XCircle     className="w-4 h-4" />,
+  enrolled:       <BookOpen    className="w-4 h-4" />,
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  draft:          'bg-gray-100 text-gray-600 border-gray-200',
+  submitted:      'bg-blue-100 text-blue-700 border-blue-200',
+  under_review:   'bg-yellow-100 text-yellow-700 border-yellow-200',
+  offer_received: 'bg-green-100 text-green-700 border-green-200',
+  accepted:       'bg-emerald-100 text-emerald-700 border-emerald-200',
+  rejected:       'bg-red-100 text-red-700 border-red-200',
+  enrolled:       'bg-purple-100 text-purple-700 border-purple-200',
+};
+
+function Spinner({ size = 4, white = false }: { size?: number; white?: boolean }) {
+  return (
+    <span
+      className={`w-${size} h-${size} border-2 ${white ? 'border-white/40 border-t-white' : 'border-gray-300 border-t-[#0d1b4b]'} rounded-full animate-spin inline-block`}
+    />
+  );
+}
+
+function UpdateStatusModal({
+  app, onClose, onUpdated,
+}: {
+  app: any;
+  onClose: () => void;
+  onUpdated: (updated: any) => void;
+}) {
+  const [status, setStatus] = useState(app.status);
+  const [notes, setNotes] = useState(app.notes || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const appId = app._id || app.id;
+      const updated = await api.applications.update(appId, { status, notes });
+      onUpdated({ ...app, ...updated, status, notes });
+      onClose();
+    } catch (e: any) {
+      setError(e.message || 'Failed to update application.');
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">Update Application Stage</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{app.studentName} · {app.universityName}</p>
+          </div>
+          <button type="button" aria-label="Close" onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-1">Course</p>
+            <p className="text-sm font-semibold text-gray-800">{app.courseName}</p>
+            {app.intake && <p className="text-xs text-gray-400">{app.intake}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Application Stage</label>
+            <div className="grid grid-cols-2 gap-2">
+              {ALL_STATUSES.map(s => (
+                <button key={s.value} type="button" onClick={() => setStatus(s.value)}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all
+                    ${status === s.value
+                      ? `${STATUS_COLORS[s.value]} border-current shadow-sm ring-2 ring-offset-1 ring-current/30`
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}>
+                  {STATUS_ICONS[s.value]}
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes (optional)</label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              rows={3}
+              placeholder="Add a note about this status update…"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] resize-none placeholder:text-gray-400"
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-200">{error}</p>
+          )}
+        </div>
+
+        <div className="flex gap-3 px-6 pb-6">
+          <button type="button" onClick={onClose}
+            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button type="button" onClick={handleSave} disabled={saving}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60 shadow-sm">
+            {saving ? <><Spinner size={4} white />Saving…</> : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CounselorApplications() {
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [editingApp, setEditingApp] = useState<any>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      const data = await api.applications.list();
+      setApplications(data);
+    } catch (err: any) {
+      setLoadError(err.message || 'Failed to load applications.');
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const statusCounts = ALL_STATUSES.map(s => ({
+    ...s,
+    count: applications.filter(a => a.status === s.value).length,
+  }));
+
+  const filtered = applications.filter(a => {
+    const matchesSearch =
+      a.studentName?.toLowerCase().includes(search.toLowerCase()) ||
+      a.universityName?.toLowerCase().includes(search.toLowerCase()) ||
+      a.courseName?.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleUpdated = (updated: any) => {
+    setApplications(prev =>
+      prev.map(a =>
+        (a._id || a.id) === (updated._id || updated.id) ? { ...a, ...updated } : a
+      )
+    );
+  };
+
+  return (
+    <>
+      {editingApp && (
+        <UpdateStatusModal
+          app={editingApp}
+          onClose={() => setEditingApp(null)}
+          onUpdated={updated => { handleUpdated(updated); setEditingApp(null); }}
+        />
+      )}
+
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="bg-[#0d1b4b] rounded-2xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-blue-200 text-xs font-medium uppercase tracking-wide">Counselor Portal</p>
+                <h1 className="text-2xl font-bold leading-tight">Student Applications</h1>
+              </div>
+            </div>
+            <button type="button" onClick={loadData} disabled={loading}
+              className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+
+          {/* Status strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+            {statusCounts.map(s => (
+              <button key={s.value} type="button"
+                onClick={() => setStatusFilter(prev => prev === s.value ? 'all' : s.value)}
+                className={`rounded-xl p-3 text-center transition-all border
+                  ${statusFilter === s.value
+                    ? 'bg-white/30 border-white/60 shadow-inner'
+                    : 'bg-white/10 border-white/20 hover:bg-white/20'}`}>
+                <div className="text-2xl font-bold">{loading ? '…' : s.count}</div>
+                <div className="text-xs text-white/70 mt-0.5 leading-tight">{s.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loadError && (
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-5">
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-800">Failed to load</p>
+              <p className="text-xs text-red-600 mt-0.5">{loadError}</p>
+            </div>
+            <button type="button" onClick={loadData}
+              className="text-xs font-semibold text-red-700 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loadError && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {/* Toolbar */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gray-50/60 flex-wrap">
+              <div className="relative flex-1 min-w-0 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search by student, university or course…"
+                  className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b]"
+                />
+              </div>
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                  aria-label="Filter by status"
+                  className="appearance-none pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] text-gray-700"
+                >
+                  <option value="all">All Statuses ({applications.length})</option>
+                  {ALL_STATUSES.map(s => (
+                    <option key={s.value} value={s.value}>
+                      {s.label} ({statusCounts.find(c => c.value === s.value)?.count ?? 0})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+              {(search || statusFilter !== 'all') && (
+                <button type="button" onClick={() => { setSearch(''); setStatusFilter('all'); }}
+                  className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                  <X className="w-3.5 h-3.5" />Clear
+                </button>
+              )}
+              <p className="text-xs text-gray-400 ml-auto">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</p>
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center gap-3 py-16 text-gray-400">
+                <Spinner size={5} />
+                <span className="text-sm">Loading applications…</span>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <FileText className="w-8 h-8 mb-2 opacity-40" />
+                <p className="text-sm">{search || statusFilter !== 'all' ? 'No applications match your filter.' : 'No applications found.'}</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {filtered.map(app => {
+                  const appId = app._id || app.id;
+                  return (
+                    <div key={`${app.studentId}-${appId}`}
+                      className="flex items-center gap-4 px-5 py-4 hover:bg-[#f0f4ff]/40 transition-colors">
+                      <div className="w-10 h-10 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {app.studentName?.charAt(0)}
+                      </div>
+
+                      <div className="w-36 flex-shrink-0 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{app.studentName}</p>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{app.universityName}</p>
+                        <p className="text-xs text-gray-500 truncate">{app.courseName}</p>
+                        {app.intake && <p className="text-xs text-gray-400">{app.intake}</p>}
+                      </div>
+
+                      <div className="hidden lg:block text-right flex-shrink-0 w-24">
+                        {app.submittedDate && (
+                          <>
+                            <p className="text-xs text-gray-400">Submitted</p>
+                            <p className="text-xs font-medium text-gray-600">{app.submittedDate}</p>
+                          </>
+                        )}
+                        {app.updatedDate && app.updatedDate !== app.submittedDate && (
+                          <>
+                            <p className="text-xs text-gray-400 mt-1">Updated</p>
+                            <p className="text-xs font-medium text-gray-600">{app.updatedDate}</p>
+                          </>
+                        )}
+                      </div>
+
+                      {app.notes && (
+                        <div className="hidden xl:block w-32 flex-shrink-0">
+                          <p className="text-xs text-gray-400 truncate italic">{app.notes}</p>
+                        </div>
+                      )}
+
+                      <div className="flex-shrink-0">
+                        <StatusBadge status={app.status} />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditingApp(app)}
+                        className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+                          text-[#0d1b4b] bg-[#f0f4ff] border border-[#c7d4f5] hover:bg-[#e0e9ff] hover:border-[#a0b4e8]
+                          active:scale-95 transition-all">
+                        <Edit2 className="w-3.5 h-3.5" />
+                        Update
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
