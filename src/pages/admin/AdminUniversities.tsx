@@ -228,7 +228,7 @@ function CourseModal({ uniId, course, onClose, onSaved }: {
 
 const DEFAULT_UNI = {
   name: '', country: '', city: '', ranking: '', type: '', founded: '',
-  website: '', description: '', acceptanceRate: '', totalStudents: '',
+  website: '', logo: '', coverImage: '', description: '', acceptanceRate: '', totalStudents: '',
   internationalStudents: '', rating: '',
   avgUndergrad: '', avgPostgrad: '', avgCurrency: 'USD',
   tags: [] as string[], facilities: [] as string[],
@@ -241,7 +241,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
   const [form, setForm] = useState(editing ? {
     name: uni.name || '', country: uni.country || '', city: uni.city || '',
     ranking: String(uni.ranking || ''), type: uni.type || '', founded: String(uni.founded || ''),
-    website: uni.website || '', description: uni.description || '',
+    website: uni.website || '', logo: uni.logo || '', coverImage: uni.coverImage || '', description: uni.description || '',
     acceptanceRate: String(uni.acceptanceRate || ''), totalStudents: String(uni.totalStudents || ''),
     internationalStudents: String(uni.internationalStudents || ''), rating: String(uni.rating || ''),
     avgUndergrad: String(uni.averageFees?.undergraduate || ''),
@@ -265,6 +265,8 @@ function UniversityModal({ uni, onClose, onSaved }: {
         ...f,
         country: data.country || f.country,
         website: data.website || f.website,
+        logo: data.logo || f.logo,
+        coverImage: data.coverImage || f.coverImage,
         description: data.description || f.description,
         avgCurrency: data.avgCurrency || f.avgCurrency,
       }));
@@ -287,7 +289,8 @@ function UniversityModal({ uni, onClose, onSaved }: {
       const payload = {
         name: form.name.trim(), country: form.country, city: form.city.trim(),
         ranking: parseInt(form.ranking) || undefined, type: form.type, founded: parseInt(form.founded) || undefined,
-        website: form.website.trim(), description: form.description.trim(),
+        website: form.website.trim(), logo: form.logo.trim(), coverImage: form.coverImage.trim(),
+        description: form.description.trim(),
         acceptanceRate: parseFloat(form.acceptanceRate) || undefined,
         totalStudents: parseInt(form.totalStudents) || undefined,
         internationalStudents: parseInt(form.internationalStudents) || undefined,
@@ -373,6 +376,42 @@ function UniversityModal({ uni, onClose, onSaved }: {
                 <input type="url" value={form.website} onChange={e => set('website', e.target.value)} placeholder="https://www.university.edu"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
+
+              {/* Logo & Cover Image — auto-filled or manually entered */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Logo URL</label>
+                  <input value={form.logo} onChange={e => set('logo', e.target.value)} placeholder="Auto-filled by Auto-fill"
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Cover Image URL</label>
+                  <input value={form.coverImage} onChange={e => set('coverImage', e.target.value)} placeholder="Auto-filled by Auto-fill"
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+
+              {/* Live preview of logo + cover image */}
+              {(form.logo || form.coverImage) && (
+                <div className="rounded-xl overflow-hidden border border-gray-200">
+                  <div className="relative h-32 bg-gradient-to-br from-blue-400 to-indigo-600 overflow-hidden">
+                    {form.coverImage && (
+                      <img src={form.coverImage} alt="cover" className="w-full h-full object-cover opacity-80"
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    {form.logo && (
+                      <div className="absolute top-3 left-3 w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center p-1.5 overflow-hidden">
+                        <img src={form.logo} alt="logo" className="w-full h-full object-contain"
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      </div>
+                    )}
+                    <div className="absolute bottom-3 left-3 text-white text-sm font-semibold drop-shadow">{form.name || 'University Name'}</div>
+                  </div>
+                  <p className="text-xs text-gray-400 text-center py-1.5 bg-gray-50">Preview of university card header</p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
                 <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} placeholder="Brief university description…"

@@ -271,12 +271,14 @@ router.get('/universities', authMiddleware, adminOnly, async (req, res) => {
 router.post('/universities', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { name, country, city, ranking, type, founded, website, description,
+            logo, coverImage,
             acceptanceRate, totalStudents, internationalStudents, rating, tags,
             averageFees, courses, facilities, scholarships, applicationDeadlines } = req.body;
     if (!name || !country) return res.status(400).json({ message: 'Name and country are required' });
     const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
     const uni = new University({
       id, name, country, city, ranking, type, founded, website, description,
+      logo: logo || '', coverImage: coverImage || '',
       acceptanceRate, totalStudents, internationalStudents, rating,
       tags: tags || [], facilities: facilities || [],
       averageFees: averageFees || {}, courses: courses || [],

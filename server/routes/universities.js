@@ -29,10 +29,12 @@ router.get('/autofill', async (req, res) => {
 
     const wiki = wikiRes?.data;
     const description = (wiki?.extract || '').slice(0, 400);
+    // Wikipedia often includes a thumbnail of the campus building
+    const coverImage = wiki?.originalimage?.source || wiki?.thumbnail?.source || '';
 
     // 3. Build website & logo from hipo data
     const website = hipo?.web_pages?.[0]?.replace(/\/$/, '') || '';
-    const domain = hipo?.domains?.[0] || (website ? new URL(website).hostname.replace('www.', '') : '');
+    const domain = hipo?.domains?.[0] || (website ? (() => { try { return new URL(website).hostname.replace('www.', ''); } catch { return ''; } })() : '');
     const logo = domain ? `https://logo.clearbit.com/${domain}` : '';
 
     // 4. Guess country-based currency
@@ -50,6 +52,7 @@ router.get('/autofill', async (req, res) => {
       country,
       website,
       logo,
+      coverImage,
       description: description.trim(),
       avgCurrency: currency,
     });
