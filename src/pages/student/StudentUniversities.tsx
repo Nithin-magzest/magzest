@@ -122,6 +122,26 @@ function UniLogoImg({ name, website, logo }: { name: string; website?: string; l
   );
 }
 
+function UniCoverImg({ website, coverImage, name }: { website?: string; coverImage?: string; name: string }) {
+  const thumbUrl = website ? `https://image.thum.io/get/width/1280/crop/640/${website}` : null;
+  const [src, setSrc] = useState<string | null>(thumbUrl || coverImage || null);
+  const [usedThumb, setUsedThumb] = useState(!!thumbUrl);
+
+  const handleError = () => {
+    if (usedThumb && coverImage) {
+      setSrc(coverImage);
+      setUsedThumb(false);
+    } else {
+      setSrc(null);
+    }
+  };
+
+  if (!src) return null;
+  return (
+    <img src={src} alt={name} className="w-full h-full object-cover" onError={handleError} />
+  );
+}
+
 function UniversityCard({ uni, student }: { uni: any; student: any }) {
   const [tab, setTab] = useState<'courses' | 'details'>('courses');
   const [expanded, setExpanded] = useState(false);
@@ -130,9 +150,7 @@ function UniversityCard({ uni, student }: { uni: any; student: any }) {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
       {/* Cover image */}
       <div className="h-40 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden rounded-t-2xl">
-        <img src={uni.coverImage} alt={uni.name}
-          className="w-full h-full object-cover transition-transform duration-300"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <UniCoverImg website={uni.website} coverImage={uni.coverImage} name={uni.name} />
         <div className="absolute top-2 left-2 bg-white/90 text-xs font-bold text-blue-800 px-2.5 py-1 rounded-full">
           #{uni.ranking} World
         </div>

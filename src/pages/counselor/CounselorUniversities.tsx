@@ -218,6 +218,26 @@ function UniLogoImg({ name, website }: { name: string; website?: string }) {
   );
 }
 
+function UniCoverImg({ website, coverImage, name }: { website?: string; coverImage?: string; name: string }) {
+  const thumbUrl = website ? `https://image.thum.io/get/width/1280/crop/640/${website}` : null;
+  const [src, setSrc] = useState<string | null>(thumbUrl || coverImage || null);
+  const [usedThumb, setUsedThumb] = useState(!!thumbUrl);
+
+  const handleError = () => {
+    if (usedThumb && coverImage) {
+      setSrc(coverImage);
+      setUsedThumb(false);
+    } else {
+      setSrc(null);
+    }
+  };
+
+  if (!src) return null;
+  return (
+    <img src={src} alt={name} className="w-full h-full object-cover" onError={handleError} />
+  );
+}
+
 function UniversityCard({ uni, onApply }: {
   uni: any; onApply: (course: any, universityName: string, universityId: string) => void;
 }) {
@@ -226,6 +246,22 @@ function UniversityCard({ uni, onApply }: {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      {/* Cover image */}
+      <div className="h-36 bg-gradient-to-br from-blue-400 to-indigo-600 relative overflow-hidden">
+        <UniCoverImg website={uni.website} coverImage={uni.coverImage} name={uni.name} />
+        <div className="absolute top-2 left-2 bg-white/90 text-xs font-bold text-blue-800 px-2.5 py-1 rounded-full">#{uni.ranking} World</div>
+        <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-white/90 px-2 py-0.5 rounded-full">
+          <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+          <span className="text-xs font-bold text-gray-800">{uni.rating}</span>
+        </div>
+        {uni.website && (
+          <a href={uni.website} target="_blank" rel="noopener noreferrer"
+            title={`Visit ${uni.name} website`}
+            className="absolute top-2 right-2 bg-white/80 hover:bg-white text-gray-700 p-1.5 rounded-full transition-colors">
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        )}
+      </div>
       {/* Header */}
       <div className="flex gap-4 p-5">
         <div className="w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0">
