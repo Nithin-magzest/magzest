@@ -265,12 +265,13 @@ function UniversityModal({ uni, onClose, onSaved }: {
         ...f,
         country: data.country || f.country,
         website: data.website || f.website,
-        logo: data.logo || f.logo,
+        logo: data.logo || data.logoFallback || f.logo,
         coverImage: data.coverImage || f.coverImage,
         description: data.description || f.description,
         avgCurrency: data.avgCurrency || f.avgCurrency,
       }));
-      setAutofillMsg('Details filled! Review and complete remaining fields.');
+      const filled = [data.country, data.coverImage, data.logo || data.logoFallback].filter(Boolean).length;
+      setAutofillMsg(filled > 0 ? 'Details filled! Review and complete remaining fields.' : 'Partial info found — fill remaining fields manually.');
     } catch {
       setError('Could not fetch details. Please fill in manually.');
     }
@@ -392,7 +393,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
               </div>
 
               {/* Live preview of logo + cover image */}
-              {(form.logo || form.coverImage) && (
+              {(form.logo || form.coverImage || form.website) && (
                 <div className="rounded-xl overflow-hidden border border-gray-200">
                   <div className="relative h-32 bg-gradient-to-br from-blue-400 to-indigo-600 overflow-hidden">
                     {form.coverImage && (
@@ -400,10 +401,9 @@ function UniversityModal({ uni, onClose, onSaved }: {
                         onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    {form.logo && (
+                    {(form.logo || form.website) && (
                       <div className="absolute top-3 left-3 w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center p-1.5 overflow-hidden">
-                        <img src={form.logo} alt="logo" className="w-full h-full object-contain"
-                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <UniLogoImg name={form.name} logo={form.logo} website={form.website} />
                       </div>
                     )}
                     <div className="absolute bottom-3 left-3 text-white text-sm font-semibold drop-shadow">{form.name || 'University Name'}</div>
@@ -512,21 +512,31 @@ function UniversityModal({ uni, onClose, onSaved }: {
 
 // ── University Row (expandable) ───────────────────────────────────────────────
 
-function UniLogoImg({ name, website }: { name: string; website?: string }) {
-  const [err, setErr] = useState(false);
-  if (!website || err) {
+function UniLogoImg({ name, logo, website }: { name: string; logo?: string; website?: string }) {
+  const initial = logo ? 'logo' : website ? 'favicon' : 'letter';
+  const [stage, setStage] = useState<'logo' | 'favicon' | 'letter'>(initial as any);
+
+  if (stage === 'letter') {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-xl rounded-lg leading-none">
         {name?.charAt(0) || '?'}
       </span>
     );
   }
+
+  const src = stage === 'logo'
+    ? logo!
+    : `https://www.google.com/s2/favicons?domain=${website}&sz=256`;
+
   return (
     <img
-      src={`https://www.google.com/s2/favicons?domain=${website}&sz=256`}
+      src={src}
       alt={name}
       className="w-full h-full object-contain"
-      onError={() => setErr(true)}
+      onError={() => {
+        if (stage === 'logo' && website) setStage('favicon');
+        else setStage('letter');
+      }}
     />
   );
 }
@@ -565,7 +575,7 @@ function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply }: {
         {/* University header row */}
         <div className="flex items-center gap-4 px-5 py-4">
           <div className="w-12 h-12 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0">
-            <UniLogoImg name={uni.name} website={uni.website} />
+            <UniLogoImg name={uni.name} logo={uni.logo} website={uni.website} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-900">{uni.name}</p>
