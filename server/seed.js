@@ -177,11 +177,19 @@ async function run() {
   const studentPass = await bcrypt.hash('student123', 10);
   const counselorPass = await bcrypt.hash('counselor123', 10);
   const adminPass = await bcrypt.hash('admin123', 10);
+  const demoPass = await bcrypt.hash('demo123', 10);
 
   await User.create({
     name: 'Admin', email: 'admin@eduabroad.com', password: adminPass, role: 'admin',
     specialization: [], assignedStudents: [],
   });
+
+  // Demo accounts for the login modal
+  await User.create([
+    { name: 'Demo Student', email: 'student@demo.com', password: demoPass, role: 'student', status: 'active', joinedDate: new Date().toISOString().split('T')[0] },
+    { name: 'Demo Counselor', email: 'counselor@demo.com', password: demoPass, role: 'counselor', status: 'active', joinedDate: new Date().toISOString().split('T')[0], specialization: [], assignedStudents: [] },
+    { name: 'Demo Admin', email: 'admin@demo.com', password: demoPass, role: 'admin', status: 'active', joinedDate: new Date().toISOString().split('T')[0], specialization: [], assignedStudents: [] },
+  ]);
   console.log('Admin seeded');
 
   const [kavitha, rajesh] = await User.create([
