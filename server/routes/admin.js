@@ -313,6 +313,7 @@ router.post('/universities/enrich-all', authMiddleware, adminOnly, async (req, r
           if (data.website && !uni.website) update.website = data.website;
           if (data.description && !uni.description) update.description = data.description;
           if (data.socialLinks) update.socialLinks = data.socialLinks;
+          if (data.courses?.length && !uni.courses?.length) update.courses = data.courses;
           await University.findByIdAndUpdate(uni._id, update);
           await new Promise(r => setTimeout(r, 600)); // ~1.6 req/sec to avoid rate limits
         } catch (err) {
@@ -345,6 +346,7 @@ router.post('/universities/:id/enrich', authMiddleware, adminOnly, async (req, r
     if (data.website) update.website = data.website;
     if (data.description) update.description = data.description;
     if (data.socialLinks) update.socialLinks = data.socialLinks;
+    if (data.courses?.length && !uni.courses?.length) update.courses = data.courses;
 
     const updated = await University.findByIdAndUpdate(req.params.id, update, { new: true });
     res.json(updated);

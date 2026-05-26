@@ -226,6 +226,96 @@ async function fetchCampusImage(wikiTitle) {
   return '';
 }
 
+// ── Course scraper ────────────────────────────────────────────────────────────
+const DEGREE_RE = /(?:Bachelor(?:'?s)?(?:\s+of)?|B\.?Sc\.?|B\.?A\.(?:\s|$)|B\.?Eng\.?|B\.?Tech\.?|LLB|BArch|BBA|Master(?:'?s)?(?:\s+of)?|M\.?Sc\.?|M\.?A\.(?:\s|$)|MPhil|M\.?Eng\.?|MBA|LLM|MEd|MRes|PhD|Doctorate|Doctor\s+of|Postgrad(?:uate)?\s+Diploma|Pg\s*Dip|Diploma\s+in|Certificate\s+in|Foundation\s+(?:Year|Course|Degree))\s+(?:of\s+|in\s+)?(?:[A-Z][A-Za-z](?:[A-Za-z ,&()\-]{3,55}))/g;
+
+const LEVEL_MAP = [
+  [/PhD|Doctorate|Doctor\s+of/i, 'PhD'],
+  [/MBA|Master\s+of\s+Business/i, 'Masters'],
+  [/MSc|M\.Sc|MA\b|M\.A\b|MPhil|MEng|MEd|MRes|LLM|Masters?/i, 'Masters'],
+  [/BSc|B\.Sc|BA\b|B\.A\b|BEng|BArch|BBA|B\.Tech|LLB|Bachelors?/i, 'Bachelors'],
+  [/Diploma|Pg\s*Dip|Certificate|Foundation/i, 'Diploma'],
+];
+
+const DURATION_RE = /\b(\d[\d.]*)\s*[-–]?\s*(?:year|yr|semester|month)s?\b/i;
+
+function inferLevel(text) {
+  for (const [re, lv] of LEVEL_MAP) if (re.test(text)) return lv;
+  return 'Bachelors';
+}
+
+function inferDuration(text) {
+  const m = text.match(DURATION_RE);
+  if (!m) return '';
+  const n = parseFloat(m[1]);
+  const unit = /month/i.test(m[0]) ? 'month' : 'year';
+  return `${n} ${unit}${n !== 1 ? 's' : ''}`;
+}
+
+async function fetchCoursesFromWebsite(website, currency) {
+  if (!website) return [];
+  const base = website.replace(/\/$/, '');
+  const PATHS = [
+    '', '/programmes', '/programs', '/courses', '/study',
+    '/study/courses', '/study/programmes', '/study/undergraduate',
+    '/study/postgraduate', '/academics', '/academics/programs',
+    '/undergraduate', '/postgraduate', '/admissions/programs',
+  ];
+
+  const htmlPages = await Promise.allSettled(
+    PATHS.slice(0, 8).map(p =>
+      axios.get(base + p, {
+        timeout: 6000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EduAbroad/1.0; +https://eduabroad.com)' },
+        maxRedirects: 3, responseType: 'text',
+      }).then(r => (typeof r.data === 'string' ? r.data.slice(0, 100000) : '')).catch(() => '')
+    )
+  );
+
+  const seen = new Set();
+  const courses = [];
+
+  for (const result of htmlPages) {
+    if (result.status !== 'fulfilled' || !result.value) continue;
+    const html = result.value;
+
+    const texts = [];
+    let m;
+    const linkRe = /<a[^>]+>([^<]{8,150})<\/a>/gi;
+    while ((m = linkRe.exec(html)) !== null) texts.push(m[1]);
+    const headRe = /<h[1-5][^>]*>([^<]{5,150})<\/h[1-5]>/gi;
+    while ((m = headRe.exec(html)) !== null) texts.push(m[1]);
+    const liRe = /<li[^>]*>\s*(?:<[^>]+>)*([^<]{8,150})(?:<[^>]+>)*\s*<\/li>/gi;
+    while ((m = liRe.exec(html)) !== null) texts.push(m[1]);
+    const tdRe = /<td[^>]*>([^<]{8,150})<\/td>/gi;
+    while ((m = tdRe.exec(html)) !== null) texts.push(m[1]);
+
+    const cleanText = texts.join('\n')
+      .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
+      .replace(/&#\d+;/g, ' ').replace(/&[a-z]+;/g, ' ')
+      .replace(/[\r\n]+/g, '\n');
+
+    DEGREE_RE.lastIndex = 0;
+    while ((m = DEGREE_RE.exec(cleanText)) !== null) {
+      const raw = m[0].replace(/\s+/g, ' ').trim();
+      if (raw.length < 12 || raw.length > 100) continue;
+      const key = raw.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const level = inferLevel(raw);
+      const duration = inferDuration(raw) ||
+        (level === 'PhD' ? '3–4 years' : level === 'Masters' ? '1–2 years' : level === 'Bachelors' ? '3–4 years' : '1 year');
+
+      courses.push({ name: raw, level, duration, currency: currency || 'USD' });
+      if (courses.length >= 40) break;
+    }
+    if (courses.length >= 40) break;
+  }
+
+  return courses.slice(0, 30);
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 async function fetchEnrichmentData(name) {
   const cached = getCached(name);
@@ -382,6 +472,9 @@ async function fetchEnrichmentData(name) {
 
   const currency = COUNTRY_CURRENCY[country] || 'USD';
 
+  // Step 13: Scrape courses from the university website
+  const courses = finalWebsite ? await fetchCoursesFromWebsite(finalWebsite, currency) : [];
+
   const data = {
     name: hipo?.name || name,
     country, city, type, founded,
@@ -392,6 +485,7 @@ async function fetchEnrichmentData(name) {
     avgCurrency: currency,
     totalStudents: wikidata.totalStudents || '',
     socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : null,
+    courses,
   };
 
   setCache(name, data);
