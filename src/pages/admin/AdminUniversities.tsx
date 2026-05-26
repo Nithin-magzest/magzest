@@ -96,7 +96,7 @@ function CourseModal({ uniId, course, onClose, onSaved }: {
             </div>
             <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit Course' : 'Add Course'}</h2>
           </div>
-          <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"><X className="w-4 h-4" /></button>
+          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"><X className="w-4 h-4" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
@@ -264,14 +264,17 @@ function UniversityModal({ uni, onClose, onSaved }: {
       setForm(f => ({
         ...f,
         country: data.country || f.country,
+        city: data.city || f.city,
+        type: data.type || f.type,
+        founded: data.founded || f.founded,
         website: data.website || f.website,
         logo: data.logo || data.logoFallback || f.logo,
         coverImage: data.coverImage || f.coverImage,
         description: data.description || f.description,
         avgCurrency: data.avgCurrency || f.avgCurrency,
       }));
-      const filled = [data.country, data.coverImage, data.logo || data.logoFallback].filter(Boolean).length;
-      setAutofillMsg(filled > 0 ? 'Details filled! Review and complete remaining fields.' : 'Partial info found — fill remaining fields manually.');
+      const filled = [data.country, data.city, data.type, data.founded, data.coverImage, data.logo || data.logoFallback].filter(Boolean).length;
+      setAutofillMsg(filled >= 3 ? 'Details filled! Review and complete remaining fields.' : 'Partial info found — fill remaining fields manually.');
     } catch {
       setError('Could not fetch details. Please fill in manually.');
     }
@@ -318,7 +321,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
             </div>
             <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit University' : 'Add University'}</h2>
           </div>
-          <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"><X className="w-4 h-4" /></button>
+          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"><X className="w-4 h-4" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Basic info */}
@@ -340,7 +343,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Country <span className="text-red-500">*</span></label>
-                  <select value={form.country} onChange={e => set('country', e.target.value)}
+                  <select value={form.country} onChange={e => set('country', e.target.value)} title="Country"
                     className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">Select country…</option>
                     {COUNTRIES.map(c => <option key={c}>{c}</option>)}
@@ -360,7 +363,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
-                  <select value={form.type} onChange={e => set('type', e.target.value)}
+                  <select value={form.type} onChange={e => set('type', e.target.value)} title="University type"
                     className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">Select…</option>
                     {UNI_TYPES.map(t => <option key={t}>{t}</option>)}
@@ -455,7 +458,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
-                <select value={form.avgCurrency} onChange={e => set('avgCurrency', e.target.value)}
+                <select value={form.avgCurrency} onChange={e => set('avgCurrency', e.target.value)} title="Currency"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                   {CURRENCIES.map(c => <option key={c}>{c}</option>)}
                 </select>

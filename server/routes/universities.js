@@ -116,6 +116,54 @@ router.get('/autofill', async (req, res) => {
       }
     }
 
+    // 6. Scrape og:image from university website if still no cover image
+    const finalWebsite = website || (domain ? `https://www.${domain}` : '');
+    if (!coverImage && finalWebsite) {
+      const pageRes = await axios.get(finalWebsite, {
+        timeout: 7000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+        maxRedirects: 4,
+        responseType: 'text',
+      }).catch(() => null);
+      if (pageRes?.data && typeof pageRes.data === 'string') {
+        const html = pageRes.data.slice(0, 30000); // only parse head section
+        const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+          || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+          || html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)
+          || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i);
+        const rawImg = ogMatch?.[1] || '';
+        if (rawImg) {
+          try {
+            coverImage = rawImg.startsWith('http') ? rawImg : new URL(rawImg, finalWebsite).href;
+          } catch {}
+        }
+      }
+    }
+
+    // 7. Extract structured fields from Wikipedia description text
+    const fullText = wikiShort + ' ' + description;
+
+    // Founded year
+    const foundedMatch = fullText.match(/[Ff]ounded\s+in\s+(\d{4})|[Ee]stablished\s+in\s+(\d{4})|[Ee]stablished\s+(\d{4})|(\d{4})\s+as\s+(?:a\s+)?(?:college|university|institute)/);
+    const founded = foundedMatch ? (foundedMatch[1] || foundedMatch[2] || foundedMatch[3] || foundedMatch[4]) : '';
+
+    // Type (Public / Private / Research / Technical)
+    const typeMap = [
+      [/\b(private)\b/i, 'Private'],
+      [/\b(public|state|government|national)\b/i, 'Public'],
+      [/\b(research university|research institution)\b/i, 'Research'],
+      [/\b(institute of technology|technical university|technical institute)\b/i, 'Technical'],
+    ];
+    let type = '';
+    for (const [re, label] of typeMap) {
+      if (re.test(fullText)) { type = label; break; }
+    }
+
+    // City — look for "located in <City>" or "in <City>," pattern
+    let city = '';
+    const cityMatch = fullText.match(/located in ([A-Z][a-zA-Z\s]+?)(?:,|\.|and\s)/);
+    if (cityMatch) city = cityMatch[1].trim();
+
     const logo = domain ? `https://logo.clearbit.com/${domain}` : '';
     const logoFallback = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : '';
     const currency = COUNTRY_CURRENCY[country] || 'USD';
@@ -123,7 +171,10 @@ router.get('/autofill', async (req, res) => {
     res.json({
       name: hipo?.name || name,
       country,
-      website: website || (domain ? `https://www.${domain}` : ''),
+      city,
+      type,
+      founded,
+      website: finalWebsite,
       logo,
       logoFallback,
       coverImage,
