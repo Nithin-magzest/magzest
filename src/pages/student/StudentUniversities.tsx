@@ -103,7 +103,7 @@ function CourseCard({ course, uni, student }: { course: any; uni: any; student: 
 
 function UniLogoImg({ name, website, logo }: { name: string; website?: string; logo?: string }) {
   const [err, setErr] = useState(false);
-  const src = logo || (website ? `https://www.google.com/s2/favicons?domain=${website}&sz=64` : null);
+  const src = logo || (website ? `https://icons.duckduckgo.com/ip3/${website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}.ico` : null);
   if (!src || (err && !logo)) {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">

@@ -468,7 +468,7 @@ async function fetchEnrichmentData(name) {
 
   // Step 12: Logo — Wikidata logo only (frontend falls back to Google favicon via UniLogoImg)
   const logo = wikidata.logoFromWikidata || '';
-  const logoFallback2 = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=64` : '';
+  const logoFallback2 = domain ? `https://icons.duckduckgo.com/ip3/${domain}.ico` : '';
 
   const currency = COUNTRY_CURRENCY[country] || 'USD';
 

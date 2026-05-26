@@ -340,7 +340,7 @@ function UniLogoImg({ name, website }: { name: string; website?: string }) {
   }
   return (
     <img
-      src={`https://www.google.com/s2/favicons?domain=${website}&sz=64`}
+      src={`https://icons.duckduckgo.com/ip3/${website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}.ico`}
       alt={name}
       className="w-full h-full object-contain"
       onError={() => setErr(true)}

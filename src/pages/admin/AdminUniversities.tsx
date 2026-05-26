@@ -559,9 +559,10 @@ function UniLogoImg({ name, logo, website }: { name: string; logo?: string; webs
     );
   }
 
+  const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
   const src = stage === 'logo'
     ? logo!
-    : `https://www.google.com/s2/favicons?domain=${website}&sz=64`;
+    : `https://icons.duckduckgo.com/ip3/${domain}.ico`;
 
   return (
     <img
