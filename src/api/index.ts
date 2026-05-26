@@ -61,6 +61,7 @@ export const api = {
 
   countries: {
     list: () => req<any[]>('/countries'),
+    autofill: (name: string) => req<any>(`/countries/autofill?name=${encodeURIComponent(name)}`),
   },
 
   universities: {

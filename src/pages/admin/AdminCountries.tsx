@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, X, Search, Edit2, ChevronDown, ChevronUp,
   Check, DollarSign, Clock, FileCheck2, CreditCard, RefreshCw,
-  Eye, Globe, Languages, Coins, GraduationCap,
+  Eye, Globe, Languages, Coins, GraduationCap, Wand2,
 } from 'lucide-react';
 import { api } from '../../api';
 import { CountryFlag } from '../../components/CountryFlag';
@@ -29,7 +29,7 @@ function Spinner({ white = false }: { white?: boolean }) {
 /* ── Form constants ────────────────────────────────────────────────────────── */
 
 const REGIONS = ['North America', 'Europe', 'Asia', 'Southeast Asia', 'Oceania', 'Middle East', 'Africa', 'South America'];
-const CURRENCIES = ['USD', 'GBP', 'EUR', 'AUD', 'CAD', 'SGD', 'NZD', 'JPY', 'CHF', 'DKK', 'SEK', 'INR'];
+const CURRENCIES = ['USD', 'GBP', 'EUR', 'AUD', 'CAD', 'SGD', 'NZD', 'JPY', 'CHF', 'DKK', 'SEK', 'INR', 'KRW', 'MYR', 'AED', 'CNY', 'NOK', 'HKD', 'THB', 'PHP', 'IDR', 'SAR', 'QAR', 'BDT', 'PKR', 'LKR', 'ZAR', 'BRL', 'MXN', 'TRY', 'PLN'];
 
 const DEFAULT_FORM = {
   name: '', flag: '', code: '', capital: '', region: '', currency: 'USD', language: '',
@@ -69,8 +69,47 @@ function CountryModal({ country, onClose, onSaved }: {
   const [popularInput, setPopularInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [autofilling, setAutofilling] = useState(false);
+  const [autofillMsg, setAutofillMsg] = useState('');
 
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleAutofill = async () => {
+    if (!form.name.trim() || autofilling) return;
+    setAutofilling(true);
+    setAutofillMsg('');
+    try {
+      const data = await api.countries.autofill(form.name.trim());
+      setForm(f => ({
+        ...f,
+        flag: data.flag || f.flag,
+        code: data.code || f.code,
+        capital: data.capital || f.capital,
+        region: data.region || f.region,
+        currency: data.currency || f.currency,
+        language: data.language || f.language,
+        visaType: data.visa?.type || f.visaType,
+        processingTime: data.visa?.processingTime || f.processingTime,
+        visaCost: data.visa?.cost || f.visaCost,
+        visaValidity: data.visa?.validity || f.visaValidity,
+        visaDocs: data.visa?.documents?.length ? data.visa.documents : f.visaDocs,
+        visaNotes: data.visa?.notes || f.visaNotes,
+        passportMinValidity: data.passport?.minValidity || f.passportMinValidity,
+        passportNotes: data.passport?.notes || f.passportNotes,
+        monthlyLivingMin: data.costs?.monthlyLivingMin ? String(data.costs.monthlyLivingMin) : f.monthlyLivingMin,
+        monthlyLivingMax: data.costs?.monthlyLivingMax ? String(data.costs.monthlyLivingMax) : f.monthlyLivingMax,
+        livingCurrency: data.costs?.currency || f.livingCurrency,
+        applicationFee: data.costs?.applicationFee || f.applicationFee,
+        tuitionRange: data.costs?.tuitionRange || f.tuitionRange,
+        popular: data.popular?.length ? data.popular : f.popular,
+      }));
+      setAutofillMsg('Details filled successfully!');
+    } catch {
+      setAutofillMsg('Could not fetch country details. Fill in manually.');
+    } finally {
+      setAutofilling(false);
+    }
+  };
 
   const addDoc = () => {
     if (docInput.trim()) { set('visaDocs', [...form.visaDocs, docInput.trim()]); setDocInput(''); }
@@ -128,17 +167,39 @@ function CountryModal({ country, onClose, onSaved }: {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-              <span className="text-lg leading-none">🌍</span>
+        <div className="sticky top-0 bg-white z-10">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                <span className="text-lg leading-none">🌍</span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit Country' : 'Add Country'}</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Enter the country name then click Autofill</p>
+              </div>
             </div>
-            <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit Country' : 'Add Country'}</h2>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={handleAutofill}
+                disabled={!form.name.trim() || autofilling}
+                title={!form.name.trim() ? 'Enter a country name first' : 'Auto-fill details from country name'}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                {autofilling ? <Spinner /> : <Wand2 className="w-3.5 h-3.5" />}
+                {autofilling ? 'Fetching…' : 'Autofill'}
+              </button>
+              <button type="button" aria-label="Close" onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <button type="button" aria-label="Close" onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all">
-            <X className="w-4 h-4" />
-          </button>
+          {autofillMsg && (
+            <div className={`px-6 py-2 text-xs font-medium flex items-center gap-1.5 border-b ${autofillMsg.includes('success') || autofillMsg.includes('filled') ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
+              {autofillMsg.includes('success') || autofillMsg.includes('filled')
+                ? <Check className="w-3.5 h-3.5 flex-shrink-0" />
+                : <span className="flex-shrink-0">⚠</span>}
+              {autofillMsg}
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-3">
