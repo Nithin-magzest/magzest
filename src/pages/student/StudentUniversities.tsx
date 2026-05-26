@@ -102,23 +102,23 @@ function CourseCard({ course, uni, student }: { course: any; uni: any; student: 
 }
 
 function UniLogoImg({ name, website, logo }: { name: string; website?: string; logo?: string }) {
-  const [err, setErr] = useState(false);
-  const src = logo || (website ? `https://www.google.com/s2/favicons?domain=${website}&sz=256` : null);
-  if (!src || (err && !logo)) {
+  const domain = website ? (() => { try { return new URL(website).hostname.replace('www.', ''); } catch { return null; } })() : null;
+  const sources = [
+    logo,
+    domain ? `https://logo.clearbit.com/${domain}` : null,
+    website ? `https://www.google.com/s2/favicons?domain=${website}&sz=256` : null,
+  ].filter(Boolean) as string[];
+  const [idx, setIdx] = useState(0);
+
+  if (idx >= sources.length) {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
         {name?.charAt(0) || '?'}
       </span>
     );
   }
-  if (err && logo) return null;
   return (
-    <img
-      src={src}
-      alt={name}
-      className="w-full h-full object-contain"
-      onError={() => setErr(true)}
-    />
+    <img src={sources[idx]} alt={name} className="w-full h-full object-contain" onError={() => setIdx(i => i + 1)} />
   );
 }
 
@@ -170,7 +170,7 @@ function UniversityCard({ uni, student }: { uni: any; student: any }) {
       <div className="relative px-4 pb-4 pt-9">
         {/* Logo on left, half over cover / half in content */}
         <div className="absolute -top-7 left-4 w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-md overflow-hidden p-1.5 flex items-center justify-center z-10">
-          <UniLogoImg name={uni.name} website={uni.website} logo={uni.id === 'u5' ? 'https://nus.edu.sg/images/default-source/base/logo.png' : undefined} />
+          <UniLogoImg name={uni.name} website={uni.website} logo={uni.logo} />
         </div>
         <h3 className="font-bold text-gray-900">{uni.name}</h3>
         <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5 mb-2">
