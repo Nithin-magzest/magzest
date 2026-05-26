@@ -313,7 +313,11 @@ router.post('/universities/enrich-all', authMiddleware, adminOnly, async (req, r
           if (data.website && !uni.website) update.website = data.website;
           if (data.description && !uni.description) update.description = data.description;
           if (data.socialLinks) update.socialLinks = data.socialLinks;
-          if (data.courses?.length && !uni.courses?.length) update.courses = data.courses;
+          if (data.courses?.length) {
+            const existingNames = new Set((uni.courses || []).map(c => c.name?.toLowerCase()));
+            const newCourses = data.courses.filter(c => !existingNames.has(c.name?.toLowerCase()));
+            if (newCourses.length) update.courses = [...(uni.courses || []), ...newCourses];
+          }
           await University.findByIdAndUpdate(uni._id, update);
           await new Promise(r => setTimeout(r, 600)); // ~1.6 req/sec to avoid rate limits
         } catch (err) {
@@ -346,7 +350,11 @@ router.post('/universities/:id/enrich', authMiddleware, adminOnly, async (req, r
     if (data.website) update.website = data.website;
     if (data.description) update.description = data.description;
     if (data.socialLinks) update.socialLinks = data.socialLinks;
-    if (data.courses?.length && !uni.courses?.length) update.courses = data.courses;
+    if (data.courses?.length) {
+      const existingNames = new Set((uni.courses || []).map(c => c.name?.toLowerCase()));
+      const newCourses = data.courses.filter(c => !existingNames.has(c.name?.toLowerCase()));
+      if (newCourses.length) update.courses = [...(uni.courses || []), ...newCourses];
+    }
 
     const updated = await University.findByIdAndUpdate(req.params.id, update, { new: true });
     res.json(updated);

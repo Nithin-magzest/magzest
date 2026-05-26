@@ -255,20 +255,48 @@ function inferDuration(text) {
 async function fetchCoursesFromWebsite(website, currency) {
   if (!website) return [];
   const base = website.replace(/\/$/, '');
-  const PATHS = [
+  const PRESET_PATHS = [
     '', '/programmes', '/programs', '/courses', '/study',
     '/study/courses', '/study/programmes', '/study/undergraduate',
     '/study/postgraduate', '/academics', '/academics/programs',
     '/undergraduate', '/postgraduate', '/admissions/programs',
+    '/faculties', '/schools', '/departments',
   ];
 
+  // Fetch homepage first to discover course-listing links
+  let discoveredPaths = [];
+  try {
+    const homeRes = await axios.get(base, {
+      timeout: 6000,
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EduAbroad/1.0; +https://eduabroad.com)' },
+      maxRedirects: 3, responseType: 'text',
+    });
+    if (typeof homeRes.data === 'string') {
+      const hrefRe = /href=["']([^"'#?]{4,120})["']/gi;
+      let hm;
+      const seen = new Set(PRESET_PATHS);
+      while ((hm = hrefRe.exec(homeRes.data)) !== null && discoveredPaths.length < 6) {
+        const href = hm[1];
+        if (!/course|programme|program|study|faculty|school|department|academic/i.test(href)) continue;
+        try {
+          const path = href.startsWith('http')
+            ? (href.startsWith(base) ? href.replace(base, '') : null)
+            : (href.startsWith('/') ? href : '/' + href);
+          if (path && !seen.has(path)) { seen.add(path); discoveredPaths.push(path); }
+        } catch {}
+      }
+    }
+  } catch {}
+
+  const allPaths = [...PRESET_PATHS.slice(0, 6), ...discoveredPaths].slice(0, 12);
+
   const htmlPages = await Promise.allSettled(
-    PATHS.slice(0, 8).map(p =>
+    allPaths.map(p =>
       axios.get(base + p, {
         timeout: 6000,
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EduAbroad/1.0; +https://eduabroad.com)' },
         maxRedirects: 3, responseType: 'text',
-      }).then(r => (typeof r.data === 'string' ? r.data.slice(0, 100000) : '')).catch(() => '')
+      }).then(r => (typeof r.data === 'string' ? r.data.slice(0, 120000) : '')).catch(() => '')
     )
   );
 
@@ -289,6 +317,10 @@ async function fetchCoursesFromWebsite(website, currency) {
     while ((m = liRe.exec(html)) !== null) texts.push(m[1]);
     const tdRe = /<td[^>]*>([^<]{8,150})<\/td>/gi;
     while ((m = tdRe.exec(html)) !== null) texts.push(m[1]);
+    const spanRe = /<span[^>]*>([^<]{8,120})<\/span>/gi;
+    while ((m = spanRe.exec(html)) !== null) texts.push(m[1]);
+    const pRe = /<p[^>]*>([^<]{10,200})<\/p>/gi;
+    while ((m = pRe.exec(html)) !== null) texts.push(m[1]);
 
     const cleanText = texts.join('\n')
       .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
@@ -308,12 +340,87 @@ async function fetchCoursesFromWebsite(website, currency) {
         (level === 'PhD' ? '3–4 years' : level === 'Masters' ? '1–2 years' : level === 'Bachelors' ? '3–4 years' : '1 year');
 
       courses.push({ name: raw, level, duration, currency: currency || 'USD' });
-      if (courses.length >= 40) break;
+      if (courses.length >= 50) break;
     }
-    if (courses.length >= 40) break;
+    if (courses.length >= 50) break;
   }
 
-  return courses.slice(0, 30);
+  return courses.slice(0, 35);
+}
+
+async function fetchCoursesFromWikipedia(wikiTitle, currency) {
+  if (!wikiTitle) return [];
+
+  // Fetch full plain-text extract of the Wikipedia page
+  const extractRes = await axios.get('https://en.wikipedia.org/w/api.php', {
+    params: {
+      action: 'query', titles: wikiTitle,
+      prop: 'extracts', explaintext: true, exsectionformat: 'plain', format: 'json',
+    },
+    timeout: 10000, headers: WIKI_HEADERS,
+  }).catch(() => null);
+
+  const page = Object.values(extractRes?.data?.query?.pages || {})[0];
+  const fullText = page?.extract || '';
+  if (!fullText) return [];
+
+  // Find academic-related sections for richer wikitext
+  const secListRes = await axios.get('https://en.wikipedia.org/w/api.php', {
+    params: { action: 'parse', page: wikiTitle, prop: 'sections', format: 'json' },
+    timeout: 6000, headers: WIKI_HEADERS,
+  }).catch(() => null);
+
+  const sections = secListRes?.data?.parse?.sections || [];
+  const acadIdxs = sections
+    .filter(s => /academic|facult|school|college|department|programme|course|offered|curricul|study/i.test(s.line))
+    .map(s => s.index)
+    .slice(0, 6);
+
+  let searchText = fullText.slice(0, 25000);
+
+  if (acadIdxs.length) {
+    const secResults = await Promise.allSettled(
+      acadIdxs.map(idx =>
+        axios.get('https://en.wikipedia.org/w/api.php', {
+          params: { action: 'parse', page: wikiTitle, prop: 'wikitext', section: idx, format: 'json' },
+          timeout: 6000, headers: WIKI_HEADERS,
+        }).then(r => {
+          const raw = r?.data?.parse?.wikitext?.['*'] || '';
+          return raw
+            .replace(/\{\{[^{}]*\}\}/g, ' ')
+            .replace(/\[\[(?:[^\]|]*\|)?([^\]|]*)\]\]/g, '$1')
+            .replace(/'{2,}/g, '')
+            .replace(/=+[^=]+=+/g, ' ');
+        }).catch(() => '')
+      )
+    );
+    const sectionContent = secResults
+      .filter(r => r.status === 'fulfilled' && r.value)
+      .map(r => r.value)
+      .join('\n');
+    if (sectionContent) searchText = sectionContent + '\n' + searchText;
+  }
+
+  const seen = new Set();
+  const courses = [];
+
+  DEGREE_RE.lastIndex = 0;
+  let m;
+  while ((m = DEGREE_RE.exec(searchText)) !== null) {
+    const raw = m[0].replace(/\s+/g, ' ').trim();
+    if (raw.length < 12 || raw.length > 100) continue;
+    const key = raw.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const level = inferLevel(raw);
+    const duration = inferDuration(raw) ||
+      (level === 'PhD' ? '3–4 years' : level === 'Masters' ? '1–2 years' : level === 'Bachelors' ? '3–4 years' : '1 year');
+    courses.push({ name: raw, level, duration, currency: currency || 'USD' });
+    if (courses.length >= 35) break;
+  }
+
+  return courses;
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
@@ -472,8 +579,24 @@ async function fetchEnrichmentData(name) {
 
   const currency = COUNTRY_CURRENCY[country] || 'USD';
 
-  // Step 13: Scrape courses from the university website
-  const courses = finalWebsite ? await fetchCoursesFromWebsite(finalWebsite, currency) : [];
+  // Step 13: Scrape courses from university website + Wikipedia in parallel
+  const [websiteResult, wikiResult] = await Promise.allSettled([
+    finalWebsite ? fetchCoursesFromWebsite(finalWebsite, currency) : Promise.resolve([]),
+    fetchCoursesFromWikipedia(wikiTitle, currency),
+  ]);
+  const websiteCourses = websiteResult.status === 'fulfilled' ? websiteResult.value : [];
+  const wikiCourses = wikiResult.status === 'fulfilled' ? wikiResult.value : [];
+
+  // Merge: website data takes priority; fill remaining slots from Wikipedia
+  const seenNames = new Set(websiteCourses.map(c => c.name.toLowerCase()));
+  const courses = [...websiteCourses];
+  for (const c of wikiCourses) {
+    if (!seenNames.has(c.name.toLowerCase())) {
+      seenNames.add(c.name.toLowerCase());
+      courses.push(c);
+      if (courses.length >= 50) break;
+    }
+  }
 
   const data = {
     name: hipo?.name || name,

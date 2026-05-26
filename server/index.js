@@ -36,6 +36,7 @@ app.use('/api/applications', require('./routes/applications'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/meetings', require('./routes/meetings'));
+app.use('/api/favicon', require('./routes/favicon'));
 
 // WebRTC signaling
 io.on('connection', (socket) => {

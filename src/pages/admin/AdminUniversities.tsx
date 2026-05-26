@@ -562,7 +562,7 @@ function UniLogoImg({ name, logo, website }: { name: string; logo?: string; webs
   const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
   const src = stage === 'logo'
     ? logo!
-    : `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+    : `/api/favicon/${domain}`;
 
   return (
     <img

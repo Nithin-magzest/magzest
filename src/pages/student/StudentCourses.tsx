@@ -24,7 +24,7 @@ function UniLogoImg({ name, website }: { name: string; website?: string }) {
   }
   return (
     <img
-      src={`https://icons.duckduckgo.com/ip3/${website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}.ico`}
+      src={`/api/favicon/${website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}`}
       alt={name}
       className="w-full h-full object-contain"
       onError={() => setErr(true)}
