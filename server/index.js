@@ -2,7 +2,6 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
@@ -10,6 +9,8 @@ if (!process.env.JWT_SECRET || !process.env.MONGODB_URI) {
   console.error('Missing required env vars: JWT_SECRET and MONGODB_URI must be set in server/.env');
   process.exit(1);
 }
+
+const { connectDB } = require('./db');
 
 const app = express();
 const httpServer = createServer(app);
@@ -74,15 +75,7 @@ async function autoSeedIfEmpty() {
   }
 }
 
-async function connectWithRetry() {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
-    await autoSeedIfEmpty();
-  } catch (err) {
-    console.error(`MongoDB connection failed (${err.message}) — retrying in 5s...`);
-    setTimeout(connectWithRetry, 5000);
-  }
-}
-
-connectWithRetry();
+connectDB().then(autoSeedIfEmpty).catch((err) => {
+  console.error('[Startup] Fatal DB error:', err.message);
+  process.exit(1);
+});
