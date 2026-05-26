@@ -67,9 +67,21 @@ httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 async function autoSeedIfEmpty() {
   const User = require('./models/User');
+  const University = require('./models/University');
+  const Country = require('./models/Country');
+  const { universityData, countryData } = require('./seed');
+
+  // Always sync latest university and country data on startup
+  for (const u of universityData) {
+    await University.updateOne({ id: u.id }, { $set: u }, { upsert: true });
+  }
+  for (const c of countryData) {
+    await Country.updateOne({ id: c.id }, { $set: c }, { upsert: true });
+  }
+
   const count = await User.countDocuments();
   if (count === 0) {
-    console.log('Database is empty — running seed...');
+    console.log('Database is empty — running full seed...');
     await require('./seed').run();
     console.log('Auto-seed complete.');
   }
