@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, X, Search, GraduationCap, Edit2, ChevronDown, ChevronUp,
-  Globe, MapPin, BookOpen, DollarSign, Check, AlertTriangle, RefreshCw, CheckCircle,
+  Globe, MapPin, BookOpen, DollarSign, Check, AlertTriangle, RefreshCw, CheckCircle, Sparkles,
 } from 'lucide-react';
 import { api } from '../../api';
 
@@ -252,7 +252,28 @@ function UniversityModal({ uni, onClose, onSaved }: {
   const [tagInput, setTagInput] = useState('');
   const [facInput, setFacInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [autofilling, setAutofilling] = useState(false);
+  const [autofillMsg, setAutofillMsg] = useState('');
   const [error, setError] = useState('');
+
+  const handleAutofill = async () => {
+    if (!form.name.trim()) { setError('Enter a university name first.'); return; }
+    setAutofilling(true); setAutofillMsg(''); setError('');
+    try {
+      const data = await api.universities.autofill(form.name.trim());
+      setForm(f => ({
+        ...f,
+        country: data.country || f.country,
+        website: data.website || f.website,
+        description: data.description || f.description,
+        avgCurrency: data.avgCurrency || f.avgCurrency,
+      }));
+      setAutofillMsg('Details filled! Review and complete remaining fields.');
+    } catch {
+      setError('Could not fetch details. Please fill in manually.');
+    }
+    setAutofilling(false);
+  };
 
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
   const addTag = () => { if (tagInput.trim()) { set('tags', [...form.tags, tagInput.trim()]); setTagInput(''); } };
@@ -302,8 +323,15 @@ function UniversityModal({ uni, onClose, onSaved }: {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">University Name <span className="text-red-500">*</span></label>
-                <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. University of Toronto"
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <div className="flex gap-2">
+                  <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. University of Oxford"
+                    className="flex-1 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <button type="button" onClick={handleAutofill} disabled={autofilling}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap">
+                    {autofilling ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Fetching…</> : <><Sparkles className="w-3.5 h-3.5" />Auto-fill</>}
+                  </button>
+                </div>
+                {autofillMsg && <p className="text-xs text-green-700 mt-1.5 flex items-center gap-1"><Check className="w-3 h-3" />{autofillMsg}</p>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
