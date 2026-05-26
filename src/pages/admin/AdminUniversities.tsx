@@ -9,7 +9,13 @@ const COUNTRIES = [
   'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany',
   'Netherlands', 'Singapore', 'New Zealand', 'Ireland', 'France',
   'Sweden', 'Switzerland', 'Japan', 'South Korea', 'India',
-];
+  'United Arab Emirates', 'Malaysia', 'China', 'Italy', 'Spain',
+  'Denmark', 'Norway', 'Finland', 'Belgium', 'Austria',
+  'Portugal', 'Poland', 'Czech Republic', 'Hungary',
+  'Pakistan', 'Bangladesh', 'Sri Lanka', 'Nepal', 'Philippines',
+  'Indonesia', 'Thailand', 'Vietnam', 'Turkey', 'South Africa',
+  'Egypt', 'Kenya', 'Nigeria', 'Brazil', 'Mexico', 'Argentina',
+].sort();
 const UNI_TYPES = ['Public', 'Private', 'Research', 'Liberal Arts', 'Technical'];
 const LEVELS = ["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'];
 const INTAKES = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -235,7 +241,7 @@ const DEFAULT_UNI = {
 };
 
 function UniversityModal({ uni, onClose, onSaved }: {
-  uni?: any; onClose: () => void; onSaved: (u: any) => void;
+  uni?: any; onClose: () => void; onSaved: (u: any, isNew?: boolean) => void;
 }) {
   const editing = !!uni;
   const [form, setForm] = useState(editing ? {
@@ -266,17 +272,38 @@ function UniversityModal({ uni, onClose, onSaved }: {
         country: data.country || f.country,
         city: data.city || f.city,
         type: data.type || f.type,
-        founded: data.founded || f.founded,
+        founded: String(data.founded || f.founded),
         website: data.website || f.website,
-        logo: data.logo || data.logoFallback || f.logo,
+        logo: data.logo || data.logoFallback || data.logoFallback2 || f.logo,
         coverImage: data.coverImage || f.coverImage,
         description: data.description || f.description,
         avgCurrency: data.avgCurrency || f.avgCurrency,
+        totalStudents: data.totalStudents || f.totalStudents,
       }));
-      const filled = [data.country, data.city, data.type, data.founded, data.coverImage, data.logo || data.logoFallback].filter(Boolean).length;
-      setAutofillMsg(filled >= 3 ? 'Details filled! Review and complete remaining fields.' : 'Partial info found — fill remaining fields manually.');
+      // Add country to list if not already there
+      if (data.country && !COUNTRIES.includes(data.country)) {
+        COUNTRIES.push(data.country);
+        COUNTRIES.sort();
+      }
+      const filledFields: string[] = [];
+      if (data.country) filledFields.push('Country');
+      if (data.city) filledFields.push('City');
+      if (data.type) filledFields.push('Type');
+      if (data.founded) filledFields.push('Founded');
+      if (data.website) filledFields.push('Website');
+      if (data.logo || data.logoFallback || data.logoFallback2) filledFields.push('Logo');
+      if (data.coverImage) filledFields.push('Cover Image');
+      if (data.description) filledFields.push('Description');
+      if (data.totalStudents) filledFields.push('Enrollment');
+      if (filledFields.length >= 4) {
+        setAutofillMsg(`Auto-filled: ${filledFields.join(', ')}`);
+      } else if (filledFields.length > 0) {
+        setAutofillMsg(`Partial data found — filled: ${filledFields.join(', ')}. Complete the rest manually.`);
+      } else {
+        setAutofillMsg('No data found for this university. Please fill in manually.');
+      }
     } catch {
-      setError('Could not fetch details. Please fill in manually.');
+      setError('Could not fetch details from Wikipedia/Google. Please fill in manually.');
     }
     setAutofilling(false);
   };
@@ -305,7 +332,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
       const saved = editing
         ? await api.admin.updateUniversity(normalId(uni), payload)
         : await api.admin.createUniversity(payload);
-      onSaved(saved);
+      onSaved(saved, !editing);
     } catch (err: any) { setError(err.message || 'Failed to save university.'); }
     setSaving(false);
   };
@@ -338,7 +365,12 @@ function UniversityModal({ uni, onClose, onSaved }: {
                     {autofilling ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Fetching…</> : <><Sparkles className="w-3.5 h-3.5" />Auto-fill</>}
                   </button>
                 </div>
-                {autofillMsg && <p className="text-xs text-green-700 mt-1.5 flex items-center gap-1"><Check className="w-3 h-3" />{autofillMsg}</p>}
+                {autofillMsg && (
+                  <p className={`text-xs mt-1.5 flex items-center gap-1 ${autofillMsg.startsWith('Auto-filled') ? 'text-green-700' : autofillMsg.startsWith('Partial') ? 'text-amber-700' : 'text-gray-500'}`}>
+                    {autofillMsg.startsWith('Auto-filled') ? <Check className="w-3 h-3 flex-shrink-0" /> : <AlertTriangle className="w-3 h-3 flex-shrink-0" />}
+                    {autofillMsg}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -544,15 +576,23 @@ function UniLogoImg({ name, logo, website }: { name: string; logo?: string; webs
   );
 }
 
-function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply }: {
+function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply, onEnrich }: {
   uni: any; onEdit: (u: any) => void; onDelete: (id: string) => void; onUniUpdated: (u: any) => void;
-  onApply: (course: any, universityName: string) => void;
+  onApply: (course: any, universityName: string) => void; onEnrich: (id: string) => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [addingCourse, setAddingCourse] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
+  const [enriching, setEnriching] = useState(false);
   const mongoId = normalId(uni);
+
+  const handleEnrichClick = async () => {
+    setEnriching(true);
+    try { await onEnrich(mongoId); }
+    catch (err: any) { alert('Enrichment failed: ' + (err?.message || 'Could not fetch data')); }
+    setEnriching(false);
+  };
 
   const handleDeleteCourse = async (courseId: string) => {
     if (!window.confirm('Delete this course?')) return;
@@ -598,6 +638,12 @@ function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply }: {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button type="button" onClick={handleEnrichClick} disabled={enriching}
+              title="Re-fetch logo, image, description and social links from Wikipedia"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50">
+              {enriching ? <Spinner /> : <Sparkles className="w-3.5 h-3.5" />}
+              Enrich
+            </button>
             <button type="button" onClick={() => onEdit(uni)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 bg-sky-50 border border-blue-200 hover:bg-blue-100 transition-colors">
               <Edit2 className="w-3.5 h-3.5" />Edit
@@ -848,13 +894,36 @@ export default function AdminUniversities() {
     setDeletingId(null);
   };
 
-  const handleSaved = (saved: any) => {
+  const handleSaved = (saved: any, isNew = false) => {
     setUniversities(prev => {
       const idx = prev.findIndex(u => normalId(u) === normalId(saved));
       return idx >= 0 ? prev.map((u, i) => i === idx ? saved : u) : [...prev, saved];
     });
     setShowAdd(false);
     setEditingUni(null);
+    if (isNew) {
+      // Auto-fetch logo + cover image from Wikipedia/Google after create
+      handleEnrich(normalId(saved)).catch(() => {});
+    }
+  };
+
+  const handleEnrich = async (id: string) => {
+    const updated = await api.admin.enrichUniversity(id);
+    handleSaved(updated);
+  };
+
+  const [enrichingAll, setEnrichingAll] = useState(false);
+  const [enrichAllMsg, setEnrichAllMsg] = useState('');
+
+  const handleEnrichAll = async () => {
+    setEnrichingAll(true); setEnrichAllMsg('');
+    try {
+      const result = await api.admin.enrichAll();
+      setEnrichAllMsg(`Enriching ${result.count} universities in background — refresh in ~1 min to see images.`);
+    } catch {
+      setEnrichAllMsg('Failed to start bulk enrichment.');
+    }
+    setEnrichingAll(false);
   };
 
   const countries = [...new Set(universities.map(u => u.country).filter(Boolean))].sort();
@@ -893,16 +962,26 @@ export default function AdminUniversities() {
                 <h1 className="text-2xl font-bold leading-tight">Universities</h1>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button type="button" onClick={load} disabled={loading}
                 className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors disabled:opacity-50">
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Refresh
+              </button>
+              <button type="button" onClick={handleEnrichAll} disabled={enrichingAll}
+                title="Fetch logos & cover images from Wikipedia/Google for all universities missing them"
+                className="flex items-center gap-2 px-3 py-2 bg-emerald-500/90 hover:bg-emerald-400 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 text-white">
+                {enrichingAll ? <Spinner white /> : <Sparkles className="w-4 h-4" />}Enrich All
               </button>
               <button type="button" onClick={() => setShowAdd(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-white text-blue-700 rounded-xl text-sm font-bold hover:bg-sky-50 transition-colors shadow-sm">
                 <Plus className="w-4 h-4" />Add University
               </button>
             </div>
+            {enrichAllMsg && (
+              <p className="text-xs text-emerald-200 mt-2 flex items-center gap-1">
+                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />{enrichAllMsg}
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -966,6 +1045,7 @@ export default function AdminUniversities() {
                 onDelete={handleDelete}
                 onUniUpdated={handleSaved}
                 onApply={(course, universityName) => setApplyTarget({ course, universityName })}
+                onEnrich={handleEnrich}
               />
             ))}
           </div>

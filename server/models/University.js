@@ -11,6 +11,11 @@ const CourseSchema = new mongoose.Schema({
   description: String,
   department: String,
   intake: [String],
+  applicationFee: Number,
+  registrationFee: Number,
+  scholarshipAvailable: Boolean,
+  scholarshipAmount: String,
+  paymentPlan: String,
 });
 
 const UniversitySchema = new mongoose.Schema({
@@ -37,6 +42,15 @@ const UniversitySchema = new mongoose.Schema({
   internationalStudents: Number,
   rating: Number,
   tags: [String],
+  socialLinks: {
+    facebook:  String,
+    twitter:   String,
+    linkedin:  String,
+    instagram: String,
+    youtube:   String,
+  },
+  enrichedAt: Date,
+  enrichmentStatus: { type: String, default: 'pending' },
 });
 
 module.exports = mongoose.model('University', UniversitySchema);

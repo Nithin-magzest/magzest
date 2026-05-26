@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, ExternalLink, TrendingUp } from 'lucide-react';
+import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, ExternalLink, TrendingUp, Share2 } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import ApplicationModal from '../components/ApplicationModal';
@@ -263,6 +263,37 @@ export default function UniversityDetail() {
                 ))}
               </div>
             </div>
+
+            {/* Social media links */}
+            {uni.socialLinks && Object.values(uni.socialLinks).some(Boolean) && (
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Share2 className="w-5 h-5 text-blue-600" /> Follow on Social Media
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: 'facebook',  label: 'Facebook',   cls: 'bg-blue-600 hover:bg-blue-700' },
+                    { key: 'twitter',   label: 'Twitter / X', cls: 'bg-black hover:bg-gray-800' },
+                    { key: 'linkedin',  label: 'LinkedIn',   cls: 'bg-sky-600 hover:bg-sky-700' },
+                    { key: 'instagram', label: 'Instagram',  cls: 'bg-pink-600 hover:bg-pink-700' },
+                    { key: 'youtube',   label: 'YouTube',    cls: 'bg-red-600 hover:bg-red-700' },
+                  ]
+                    .filter(s => uni.socialLinks[s.key])
+                    .map(s => (
+                      <a
+                        key={s.key}
+                        href={uni.socialLinks[s.key]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-colors ${s.cls}`}
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        {s.label}
+                      </a>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ const User = require('../models/User');
 const University = require('../models/University');
 const Country = require('../models/Country');
 const authMiddleware = require('../middleware/auth');
+const { fetchEnrichmentData, clearCache } = require('../lib/enrichUniversity');
 
 const router = express.Router();
 
@@ -287,6 +288,70 @@ router.post('/universities', authMiddleware, adminOnly, async (req, res) => {
     await uni.save();
     res.status(201).json(uni);
   } catch (err) { res.status(500).json({ message: err.message || 'Server error' }); }
+});
+
+// Bulk enrich all universities missing logo or cover image
+router.post('/universities/enrich-all', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const unis = await University.find({
+      $or: [{ logo: '' }, { logo: null }, { coverImage: '' }, { coverImage: null }],
+    });
+    res.json({ message: `Started enriching ${unis.length} universities`, count: unis.length });
+
+    setImmediate(async () => {
+      for (const uni of unis) {
+        try {
+          clearCache(uni.name);
+          const data = await fetchEnrichmentData(uni.name);
+          const update = { enrichedAt: new Date(), enrichmentStatus: 'done' };
+          if (data.logo) update.logo = data.logo;
+          if (data.coverImage) update.coverImage = data.coverImage;
+          if (data.country && !uni.country) update.country = data.country;
+          if (data.city && !uni.city) update.city = data.city;
+          if (data.type && !uni.type) update.type = data.type;
+          if (data.founded && !uni.founded) update.founded = data.founded;
+          if (data.website && !uni.website) update.website = data.website;
+          if (data.description && !uni.description) update.description = data.description;
+          if (data.socialLinks) update.socialLinks = data.socialLinks;
+          await University.findByIdAndUpdate(uni._id, update);
+          await new Promise(r => setTimeout(r, 600)); // ~1.6 req/sec to avoid rate limits
+        } catch (err) {
+          console.error('Enrich-all failed for', uni.name, ':', err.message);
+        }
+      }
+      console.log(`[enrich-all] Done. Processed ${unis.length} universities.`);
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Server error' });
+  }
+});
+
+// Force-refresh enrichment data for a university (clears cache too)
+router.post('/universities/:id/enrich', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const uni = await University.findById(req.params.id);
+    if (!uni) return res.status(404).json({ message: 'University not found' });
+
+    clearCache(uni.name); // bypass 24h cache for manual re-enrich
+    const data = await fetchEnrichmentData(uni.name);
+
+    const update = { enrichedAt: new Date(), enrichmentStatus: 'done' };
+    if (data.logo) update.logo = data.logo;
+    if (data.coverImage) update.coverImage = data.coverImage;
+    if (data.country) update.country = data.country;
+    if (data.city) update.city = data.city;
+    if (data.type) update.type = data.type;
+    if (data.founded) update.founded = data.founded;
+    if (data.website) update.website = data.website;
+    if (data.description) update.description = data.description;
+    if (data.socialLinks) update.socialLinks = data.socialLinks;
+
+    const updated = await University.findByIdAndUpdate(req.params.id, update, { new: true });
+    res.json(updated);
+  } catch (err) {
+    console.error('Enrich error:', err.message);
+    res.status(500).json({ message: 'Enrichment failed: ' + (err.message || 'Unknown error') });
+  }
 });
 
 router.put('/universities/:id', authMiddleware, adminOnly, async (req, res) => {

@@ -182,6 +182,12 @@ export const api = {
     deleteUniversity: (id: string) => req<any>(`/admin/universities/${id}`, {
       method: 'DELETE', headers: authHeaders(),
     }),
+    enrichUniversity: (id: string) => req<any>(`/admin/universities/${id}/enrich`, {
+      method: 'POST', headers: authHeaders(),
+    }),
+    enrichAll: () => req<any>('/admin/universities/enrich-all', {
+      method: 'POST', headers: authHeaders(),
+    }),
     addCourse: (uniId: string, data: any) => req<any>(`/admin/universities/${uniId}/courses`, {
       method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
     }),
