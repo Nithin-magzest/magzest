@@ -329,7 +329,16 @@ async function run() {
 
   // ── Countries ────────────────────────────────────────────────────────────
   await Country.deleteMany({});
-  await Country.insertMany([
+  await Country.insertMany(countryData);
+  console.log('Countries seeded');
+
+  console.log('\n=== Seed complete! ===');
+  console.log('Admin login: admin@eduabroad.com / admin123');
+  console.log('Student login: aryan@example.com / student123');
+  console.log('Counselor login: kavitha@eduabroad.com / counselor123');
+}
+
+const countryData = [
     {
       id: 'us', name: 'United States', flag: '🇺🇸', code: 'US',
       capital: 'Washington D.C.', region: 'North America', currency: 'USD', language: 'English',
@@ -394,14 +403,7 @@ async function run() {
       costs: { monthlyLivingMin: 900, monthlyLivingMax: 2000, currency: 'NZD', applicationFee: 'NZD 0–100 per university', tuitionRange: 'NZD 22,000–35,000 / year' },
       popular: ['Agriculture', 'Engineering', 'Business', 'IT', 'Healthcare'],
     },
-  ]);
-  console.log('Countries seeded');
-
-  console.log('\n=== Seed complete! ===');
-  console.log('Admin login: admin@eduabroad.com / admin123');
-  console.log('Student login: aryan@example.com / student123');
-  console.log('Counselor login: kavitha@eduabroad.com / counselor123');
-}
+];
 
 // Allow running standalone: node seed.js
 if (require.main === module) {
@@ -411,4 +413,4 @@ if (require.main === module) {
     .catch(err => { console.error(err); process.exit(1); });
 }
 
-module.exports = { run };
+module.exports = { run, universityData, countryData };
