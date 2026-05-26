@@ -59,6 +59,10 @@ export const api = {
       }),
   },
 
+  countries: {
+    list: () => req<any[]>('/countries'),
+  },
+
   universities: {
     list: () => req<any[]>('/universities'),
     get: (id: string) => req<any>(`/universities/${id}`),

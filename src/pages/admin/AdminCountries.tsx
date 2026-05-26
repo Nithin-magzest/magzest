@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, X, Search, Edit2, ChevronDown, ChevronUp,
   Check, DollarSign, Clock, FileCheck2, CreditCard, RefreshCw,
-  Eye, Globe, Languages, Coins,
+  Eye, Globe, Languages, Coins, GraduationCap,
 } from 'lucide-react';
 import { api } from '../../api';
 import { CountryFlag } from '../../components/CountryFlag';
@@ -311,7 +311,7 @@ function CountryModal({ country, onClose, onSaved }: {
 
 /* ── Country detail modal ──────────────────────────────────────────────────── */
 
-function CountryDetailModal({ country, onClose }: { country: any; onClose: () => void }) {
+function CountryDetailModal({ country, unis, onClose }: { country: any; unis: any[]; onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -461,7 +461,72 @@ function CountryDetailModal({ country, onClose }: { country: any; onClose: () =>
             </div>
           )}
 
+          {/* Universities */}
+          {unis.length > 0 && (
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+              <p className="text-xs font-bold text-indigo-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                <GraduationCap className="w-4 h-4" /> Universities
+                <span className="ml-1 text-xs bg-white text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-200 font-medium normal-case tracking-normal">{unis.length} listed</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {unis.slice(0, 8).map((u: any) => <UniMiniCard key={u._id || u.id} uni={u} />)}
+                {unis.length > 8 && (
+                  <div className="flex items-center justify-center px-4 py-2 text-xs text-indigo-400 bg-white border border-dashed border-indigo-200 rounded-xl">
+                    +{unis.length - 8} more
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── University mini-card ──────────────────────────────────────────────────── */
+
+function UniMiniCard({ uni }: { uni: any }) {
+  return (
+    <div className="flex items-center gap-2.5 bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm min-w-0 hover:border-sky-200 hover:shadow-md transition-all">
+      {uni.logo ? (
+        <img src={uni.logo} alt="" className="w-9 h-9 rounded-lg object-contain bg-gray-50 border border-gray-100 flex-shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+      ) : (
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center flex-shrink-0">
+          <span className="text-sm font-bold text-blue-600">{uni.name?.charAt(0) || '?'}</span>
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-gray-800 truncate max-w-[140px]">{uni.name}</p>
+        <p className="text-xs text-gray-400 truncate">{uni.city || uni.type || ''}</p>
+      </div>
+      {uni.courses?.length > 0 && (
+        <span className="text-xs bg-sky-50 text-sky-700 font-medium px-2 py-0.5 rounded-full border border-sky-100 flex-shrink-0">
+          {uni.courses.length}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function UniversitiesSection({ unis }: { unis: any[] }) {
+  if (!unis.length) return null;
+  const show = unis.slice(0, 6);
+  const extra = unis.length - 6;
+  return (
+    <div className="border-t border-gray-100 bg-white/60 px-5 py-4">
+      <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+        <GraduationCap className="w-3.5 h-3.5" /> Universities in this country
+        <span className="ml-1 text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100 font-medium normal-case tracking-normal">{unis.length}</span>
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {show.map((u: any) => <UniMiniCard key={u._id || u.id} uni={u} />)}
+        {extra > 0 && (
+          <div className="flex items-center justify-center px-4 py-2 text-xs text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+            +{extra} more
+          </div>
+        )}
       </div>
     </div>
   );
@@ -469,8 +534,8 @@ function CountryDetailModal({ country, onClose }: { country: any; onClose: () =>
 
 /* ── Expandable country row ────────────────────────────────────────────────── */
 
-function CountryRow({ country, onEdit, onDelete, onView }: {
-  country: any; onEdit: (c: any) => void; onDelete: (id: string) => void; onView: (c: any) => void;
+function CountryRow({ country, unis, onEdit, onDelete, onView }: {
+  country: any; unis: any[]; onEdit: (c: any) => void; onDelete: (id: string) => void; onView: (c: any) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const mongoId = country._id?.toString() ?? '';
@@ -529,6 +594,7 @@ function CountryRow({ country, onEdit, onDelete, onView }: {
 
       {/* Expanded details */}
       {expanded && (
+        <>
         <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-5 grid grid-cols-1 md:grid-cols-3 gap-6">
 
           {/* Visa column */}
@@ -621,6 +687,8 @@ function CountryRow({ country, onEdit, onDelete, onView }: {
             </div>
           </div>
         </div>
+        <UniversitiesSection unis={unis} />
+        </>
       )}
     </div>
   );
@@ -630,6 +698,7 @@ function CountryRow({ country, onEdit, onDelete, onView }: {
 
 export default function AdminCountries() {
   const [countries, setCountries] = useState<any[]>([]);
+  const [universities, setUniversities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -642,8 +711,12 @@ export default function AdminCountries() {
     setLoading(true);
     setError('');
     try {
-      const data = await api.admin.countries();
+      const [data, unis] = await Promise.all([
+        api.admin.countries(),
+        api.universities.list(),
+      ]);
       setCountries(data);
+      setUniversities(unis);
     } catch (err: any) {
       setError(err.message || 'Failed to load countries.');
     }
@@ -690,7 +763,11 @@ export default function AdminCountries() {
         />
       )}
       {viewingCountry && (
-        <CountryDetailModal country={viewingCountry} onClose={() => setViewingCountry(null)} />
+        <CountryDetailModal
+          country={viewingCountry}
+          unis={universities.filter(u => u.country?.toLowerCase() === viewingCountry.name?.toLowerCase())}
+          onClose={() => setViewingCountry(null)}
+        />
       )}
 
       <div className="space-y-6">
@@ -766,6 +843,7 @@ export default function AdminCountries() {
               <CountryRow
                 key={c._id?.toString()}
                 country={c}
+                unis={universities.filter(u => u.country?.toLowerCase() === c.name?.toLowerCase())}
                 onView={c => setViewingCountry(c)}
                 onEdit={c => setEditingCountry(c)}
                 onDelete={handleDelete}

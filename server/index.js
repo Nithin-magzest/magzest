@@ -28,6 +28,7 @@ app.set('io', io);
 app.set('userSockets', userSockets);
 
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/countries', require('./routes/countries'));
 app.use('/api/universities', require('./routes/universities'));
 app.use('/api/students', require('./routes/students'));
 app.use('/api/counselors', require('./routes/counselors'));
