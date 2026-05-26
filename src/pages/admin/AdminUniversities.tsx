@@ -446,16 +446,9 @@ function UniversityModal({ uni, onClose, onSaved }: {
 
 // ── University Row (expandable) ───────────────────────────────────────────────
 
-function UniLogoImg({ name, website, logo }: { name: string; website?: string; logo?: string }) {
-  const domain = website ? (() => { try { return new URL(website).hostname.replace('www.', ''); } catch { return null; } })() : null;
-  const sources = [
-    logo,
-    domain ? `https://logo.clearbit.com/${domain}` : null,
-    website ? `https://www.google.com/s2/favicons?domain=${website}&sz=256` : null,
-  ].filter(Boolean) as string[];
-  const [idx, setIdx] = useState(0);
-
-  if (idx >= sources.length) {
+function UniLogoImg({ name, website }: { name: string; website?: string }) {
+  const [err, setErr] = useState(false);
+  if (!website || err) {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-xl rounded-lg leading-none">
         {name?.charAt(0) || '?'}
@@ -463,7 +456,12 @@ function UniLogoImg({ name, website, logo }: { name: string; website?: string; l
     );
   }
   return (
-    <img src={sources[idx]} alt={name} className="w-full h-full object-contain" onError={() => setIdx(i => i + 1)} />
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${website}&sz=256`}
+      alt={name}
+      className="w-full h-full object-contain"
+      onError={() => setErr(true)}
+    />
   );
 }
 
@@ -541,7 +539,7 @@ function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply }: {
         {/* University header row */}
         <div className="flex items-center gap-4 px-5 py-4">
           <div className="w-12 h-12 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0">
-            <UniLogoImg name={uni.name} website={uni.website} logo={uni.logo} />
+            <UniLogoImg name={uni.name} website={uni.website} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-900">{uni.name}</p>

@@ -3,20 +3,6 @@ import { Link } from 'react-router-dom';
 import { MapPin, Star, ArrowRight, BookOpen, DollarSign } from 'lucide-react';
 import { api } from '../api';
 
-function UniCoverImg({ website, coverImage, name }: { website?: string; coverImage?: string; name: string }) {
-  const thumbUrl = website ? `https://image.thum.io/get/width/1280/crop/640/${website}` : null;
-  const [src, setSrc] = useState<string | null>(thumbUrl || coverImage || null);
-  const [usedThumb, setUsedThumb] = useState(!!thumbUrl);
-
-  const handleError = () => {
-    if (usedThumb && coverImage) { setSrc(coverImage); setUsedThumb(false); }
-    else setSrc(null);
-  };
-
-  if (!src) return null;
-  return <img src={src} alt={name} className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-300" onError={handleError} />;
-}
-
 export default function Universities() {
   const [universities, setUniversities] = useState<any[]>([]);
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -50,7 +36,7 @@ export default function Universities() {
             <div key={uni.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all hover:-translate-y-1 overflow-hidden group flex flex-col">
               <Link to={`/university/${uni.id}`} className="block">
                 <div className="relative h-44 overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-600">
-                  <UniCoverImg website={uni.website} coverImage={uni.coverImage} name={uni.name} />
+                  <img src={uni.coverImage} alt={uni.name} className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute top-3 left-3 flex gap-2">
                     <span className="bg-white/90 text-xs font-bold text-blue-800 px-2.5 py-1 rounded-full">#{uni.ranking} World</span>
