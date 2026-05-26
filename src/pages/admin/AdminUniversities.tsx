@@ -274,7 +274,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
         type: data.type || f.type,
         founded: String(data.founded || f.founded),
         website: data.website || f.website,
-        logo: data.logo || data.logoFallback || data.logoFallback2 || f.logo,
+        logo: data.logo || f.logo,
         coverImage: data.coverImage || f.coverImage,
         description: data.description || f.description,
         avgCurrency: data.avgCurrency || f.avgCurrency,
@@ -291,7 +291,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
       if (data.type) filledFields.push('Type');
       if (data.founded) filledFields.push('Founded');
       if (data.website) filledFields.push('Website');
-      if (data.logo || data.logoFallback || data.logoFallback2) filledFields.push('Logo');
+      if (data.logo) filledFields.push('Logo');
       if (data.coverImage) filledFields.push('Cover Image');
       if (data.description) filledFields.push('Description');
       if (data.totalStudents) filledFields.push('Enrollment');
@@ -561,7 +561,7 @@ function UniLogoImg({ name, logo, website }: { name: string; logo?: string; webs
 
   const src = stage === 'logo'
     ? logo!
-    : `https://www.google.com/s2/favicons?domain=${website}&sz=256`;
+    : `https://www.google.com/s2/favicons?domain=${website}&sz=64`;
 
   return (
     <img

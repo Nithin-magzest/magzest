@@ -129,7 +129,7 @@ function UniLogoImg({ name, website }: { name: string; website?: string }) {
   }
   return (
     <img
-      src={`https://www.google.com/s2/favicons?domain=${website}&sz=256`}
+      src={`https://www.google.com/s2/favicons?domain=${website}&sz=64`}
       alt={name}
       className="w-full h-full object-contain"
       onError={() => setErr(true)}

@@ -376,11 +376,9 @@ async function fetchEnrichmentData(name) {
     }
   }
 
-  // Step 12: Logo — Wikidata logo first, then Clearbit, then Google favicon
-  let logo = wikidata.logoFromWikidata || '';
-  const logoFallback = domain ? `https://logo.clearbit.com/${domain}` : '';
-  const logoFallback2 = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : '';
-  if (!logo) logo = logoFallback;
+  // Step 12: Logo — Wikidata logo only (frontend falls back to Google favicon via UniLogoImg)
+  const logo = wikidata.logoFromWikidata || '';
+  const logoFallback2 = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=64` : '';
 
   const currency = COUNTRY_CURRENCY[country] || 'USD';
 
@@ -388,7 +386,7 @@ async function fetchEnrichmentData(name) {
     name: hipo?.name || name,
     country, city, type, founded,
     website: finalWebsite,
-    logo, logoFallback, logoFallback2,
+    logo, logoFallback2,
     coverImage,
     description: description.trim(),
     avgCurrency: currency,
