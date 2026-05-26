@@ -7,6 +7,27 @@ const router = express.Router();
 
 const WIKI_HEADERS = { 'User-Agent': 'EduAbroad/1.0 (university-info-fetcher; contact@eduabroad.com)' };
 
+// Returns true for URLs that are SVG files or Wikipedia thumbnails of SVG originals
+function isSvgUrl(url) {
+  return /\.svg(\?|$)/i.test(url) || /\.svg\//i.test(url);
+}
+
+const KNOWN_COUNTRIES = [
+  'India', 'United States', 'United Kingdom', 'Canada', 'Australia',
+  'Germany', 'France', 'Singapore', 'China', 'Japan', 'South Korea',
+  'New Zealand', 'Sweden', 'Switzerland', 'Netherlands', 'Ireland',
+  'Malaysia', 'Pakistan', 'Bangladesh', 'Sri Lanka', 'Nepal',
+];
+
+const COUNTRY_CURRENCY = {
+  'United States': 'USD', 'United Kingdom': 'GBP', 'Canada': 'CAD',
+  'Australia': 'AUD', 'Germany': 'EUR', 'Netherlands': 'EUR',
+  'France': 'EUR', 'Singapore': 'SGD', 'New Zealand': 'NZD',
+  'Sweden': 'SEK', 'Switzerland': 'CHF', 'Japan': 'JPY',
+  'India': 'INR', 'South Korea': 'KRW', 'China': 'CNY',
+  'Malaysia': 'MYR', 'Ireland': 'EUR',
+};
+
 // Auto-fill university details by name using Wikipedia + Hipolabs
 router.get('/autofill', async (req, res) => {
   const name = (req.query.name || '').trim();
@@ -22,21 +43,32 @@ router.get('/autofill', async (req, res) => {
     const hipoList = hipoRes?.data || [];
     const hipo = hipoList.find(u => u.name.toLowerCase() === name.toLowerCase()) || hipoList[0] || null;
 
-    // 2. Wikipedia summary for description
+    // 2. Wikipedia summary for description + short description
     const wikiRes = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${wikiTitle}`, {
       timeout: 8000, headers: WIKI_HEADERS,
     }).catch(() => null);
     const wiki = wikiRes?.data;
     const description = (wiki?.extract || '').slice(0, 400);
+    // wiki.description is the short Wikidata tagline, e.g. "private university in Andhra Pradesh, India"
+    const wikiShort = wiki?.description || '';
 
-    // 3. Wikipedia media-list — find a real campus photo (skip SVG coats of arms)
+    // 3. Determine country — Hipolabs first, then detect from Wikipedia description
+    let country = hipo?.country || '';
+    if (!country) {
+      const searchText = (wikiShort + ' ' + description).toLowerCase();
+      for (const c of KNOWN_COUNTRIES) {
+        if (searchText.includes(c.toLowerCase())) { country = c; break; }
+      }
+    }
+
+    // 4. Wikipedia media-list — find a real campus photo (not logos/coats of arms/SVGs)
     let coverImage = '';
     const mediaRes = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/media-list/${wikiTitle}`, {
       timeout: 8000, headers: WIKI_HEADERS,
     }).catch(() => null);
 
     if (mediaRes?.data?.items) {
-      const skipWords = ['coat', 'seal', 'logo', 'flag', 'badge', 'emblem', 'crest', 'shield', 'arms'];
+      const skipWords = ['coat', 'seal', 'logo', 'flag', 'badge', 'emblem', 'crest', 'shield', 'arms', 'map', 'location'];
       for (const item of mediaRes.data.items) {
         if (item.type !== 'image') continue;
         const titleLower = (item.title || item.caption || '').toLowerCase();
@@ -44,26 +76,26 @@ router.get('/autofill', async (req, res) => {
         const srcs = item.srcset || [];
         const src = srcs[srcs.length - 1]?.src || srcs[0]?.src || '';
         const fullSrc = src.startsWith('//') ? 'https:' + src : src;
-        if (!fullSrc || /\.svg(\?|$)/i.test(fullSrc)) continue;
+        // Skip SVGs and Wikipedia thumbnails of SVG originals (e.g. file.svg.png pattern)
+        if (!fullSrc || isSvgUrl(fullSrc)) continue;
         coverImage = fullSrc;
         break;
       }
     }
 
-    // Fallback: Wikipedia summary thumbnail (skip SVG)
+    // Fallback: Wikipedia summary thumbnail — only if it's not SVG-based
     if (!coverImage) {
       const thumb = wiki?.originalimage?.source || wiki?.thumbnail?.source || '';
-      if (thumb && !/\.svg(\?|$)/i.test(thumb)) coverImage = thumb;
+      if (thumb && !isSvgUrl(thumb)) coverImage = thumb;
     }
 
-    // 4. Build domain — try Hipolabs first, then Wikipedia external links
+    // 5. Build domain — Hipolabs first, then Wikipedia external links
     const website = hipo?.web_pages?.[0]?.replace(/\/$/, '') || '';
     let domain = hipo?.domains?.[0] || '';
     if (!domain && website) {
       try { domain = new URL(website).hostname.replace('www.', ''); } catch {}
     }
 
-    // If still no domain, scan Wikipedia external links for the official site
     if (!domain) {
       const extRes = await axios.get('https://en.wikipedia.org/w/api.php', {
         params: { action: 'query', titles: wikiTitle, prop: 'extlinks', ellimit: 30, format: 'json' },
@@ -76,7 +108,7 @@ router.get('/autofill', async (req, res) => {
       for (const link of links) {
         try {
           const h = new URL(link).hostname.replace('www.', '');
-          if (!skipDomains.some(s => h.includes(s)) && (h.includes('.edu') || h.includes('.ac.') || h.endsWith('.in'))) {
+          if (!skipDomains.some(s => h.includes(s)) && (h.includes('.edu') || h.includes('.ac.') || h.endsWith('.in') || h.endsWith('.org'))) {
             domain = h;
             break;
           }
@@ -86,16 +118,7 @@ router.get('/autofill', async (req, res) => {
 
     const logo = domain ? `https://logo.clearbit.com/${domain}` : '';
     const logoFallback = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : '';
-
-    const countryCurrency = {
-      'United States': 'USD', 'United Kingdom': 'GBP', 'Canada': 'CAD',
-      'Australia': 'AUD', 'Germany': 'EUR', 'Netherlands': 'EUR',
-      'France': 'EUR', 'Singapore': 'SGD', 'New Zealand': 'NZD',
-      'Sweden': 'SEK', 'Switzerland': 'CHF', 'Japan': 'JPY',
-      'India': 'INR', 'South Korea': 'KRW', 'China': 'CNY',
-    };
-    const country = hipo?.country || '';
-    const currency = countryCurrency[country] || 'USD';
+    const currency = COUNTRY_CURRENCY[country] || 'USD';
 
     res.json({
       name: hipo?.name || name,
