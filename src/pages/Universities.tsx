@@ -42,7 +42,7 @@ function UniCard({ uni }: { uni: any }) {
   const logoSrc = !logoErr && uni.logo
     ? uni.logo
     : faviconDomain
-    ? `https://www.google.com/s2/favicons?domain=${faviconDomain}&sz=128`
+    ? `/api/favicon/${faviconDomain}`
     : null;
 
   return (

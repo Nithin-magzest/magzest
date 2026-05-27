@@ -276,14 +276,49 @@ router.post('/universities', authMiddleware, adminOnly, async (req, res) => {
             acceptanceRate, totalStudents, internationalStudents, rating, tags,
             averageFees, courses, facilities, scholarships, applicationDeadlines } = req.body;
     if (!name || !country) return res.status(400).json({ message: 'Name and country are required' });
+
+    // Run enrichment inline so courses + details are populated on creation
+    let enriched = {};
+    try {
+      clearCache(name);
+      enriched = await fetchEnrichmentData(name);
+    } catch (enrichErr) {
+      console.error('Inline enrichment failed for', name, ':', enrichErr.message);
+    }
+
     const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+
+    // Merge: values the admin typed take priority; enriched data fills gaps
+    const mergedCourses = (() => {
+      const base = courses || [];
+      const extra = enriched.courses || [];
+      if (!extra.length) return base;
+      const seen = new Set(base.map(c => c.name?.toLowerCase()));
+      return [...base, ...extra.filter(c => !seen.has(c.name?.toLowerCase()))];
+    })();
+
     const uni = new University({
-      id, name, country, city, ranking, type, founded, website, description,
-      logo: logo || '', coverImage: coverImage || '',
-      acceptanceRate, totalStudents, internationalStudents, rating,
-      tags: tags || [], facilities: facilities || [],
-      averageFees: averageFees || {}, courses: courses || [],
-      scholarships: scholarships || [], applicationDeadlines: applicationDeadlines || [],
+      id, name,
+      country: country || enriched.country || '',
+      city: city || enriched.city || '',
+      ranking,
+      type: type || enriched.type || '',
+      founded: founded || enriched.founded || '',
+      website: website || enriched.website || '',
+      description: description || enriched.description || '',
+      logo: logo || enriched.logo || '',
+      coverImage: coverImage || enriched.coverImage || '',
+      acceptanceRate, totalStudents: totalStudents || enriched.totalStudents,
+      internationalStudents, rating,
+      tags: tags || [],
+      facilities: facilities || [],
+      averageFees: averageFees || {},
+      courses: mergedCourses,
+      scholarships: scholarships || [],
+      applicationDeadlines: applicationDeadlines || [],
+      socialLinks: enriched.socialLinks || {},
+      enrichedAt: Object.keys(enriched).length ? new Date() : undefined,
+      enrichmentStatus: Object.keys(enriched).length ? 'done' : undefined,
     });
     await uni.save();
     res.status(201).json(uni);

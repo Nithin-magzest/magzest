@@ -6,14 +6,25 @@ import { CountryFlag } from '../../components/CountryFlag';
 function UniMiniCard({ uni }: { uni: any }) {
   return (
     <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm min-w-0">
-      {uni.logo ? (
-        <img src={uni.logo} alt="" className="w-8 h-8 rounded-lg object-contain bg-gray-50 border border-gray-100 flex-shrink-0"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-      ) : (
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center flex-shrink-0">
-          <span className="text-xs font-bold text-blue-600">{uni.name?.charAt(0) || '?'}</span>
-        </div>
-      )}
+      <img
+        src={uni.logo || (uni.website ? `/api/favicon/${uni.website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}` : '')}
+        alt=""
+        className="w-8 h-8 rounded-lg object-contain bg-gray-50 border border-gray-100 flex-shrink-0"
+        onError={(e) => {
+          const el = e.currentTarget;
+          const domain = uni.website?.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0];
+          if (domain && !el.src.includes('/api/favicon/')) {
+            el.src = `/api/favicon/${domain}`;
+          } else {
+            el.style.display = 'none';
+            const fb = el.nextElementSibling as HTMLElement | null;
+            if (fb) fb.style.display = 'flex';
+          }
+        }}
+      />
+      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 items-center justify-center flex-shrink-0 hidden">
+        <span className="text-xs font-bold text-blue-600">{uni.name?.charAt(0) || '?'}</span>
+      </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold text-gray-800 truncate max-w-[130px]">{uni.name}</p>
         {uni.city && <p className="text-xs text-gray-400 truncate">{uni.city}</p>}

@@ -102,22 +102,28 @@ function CourseCard({ course, uni, student }: { course: any; uni: any; student: 
 }
 
 function UniLogoImg({ name, website, logo }: { name: string; website?: string; logo?: string }) {
-  const [err, setErr] = useState(false);
-  const src = logo || (website ? `/api/favicon/${website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}` : null);
-  if (!src || (err && !logo)) {
+  const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
+  const initial: 'logo' | 'favicon' | 'letter' = logo ? 'logo' : domain ? 'favicon' : 'letter';
+  const [stage, setStage] = useState(initial);
+
+  if (stage === 'letter') {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
         {name?.charAt(0) || '?'}
       </span>
     );
   }
-  if (err && logo) return null;
+
+  const src = stage === 'logo' ? logo! : `/api/favicon/${domain}`;
   return (
     <img
       src={src}
       alt={name}
       className="w-full h-full object-contain"
-      onError={() => setErr(true)}
+      onError={() => {
+        if (stage === 'logo' && domain) setStage('favicon');
+        else setStage('letter');
+      }}
     />
   );
 }

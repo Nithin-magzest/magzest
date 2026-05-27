@@ -536,7 +536,10 @@ function UniversityModal({ uni, onClose, onSaved }: {
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
             <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-semibold hover:bg-[#152258] disabled:opacity-60 flex items-center justify-center gap-2">
-              {saving ? <><Spinner white />Saving…</> : <><Check className="w-4 h-4" />{editing ? 'Update University' : 'Add University'}</>}
+              {saving
+                ? <><Spinner white />{editing ? 'Saving…' : 'Creating & discovering courses…'}</>
+                : <><Check className="w-4 h-4" />{editing ? 'Update University' : 'Add University'}</>
+              }
             </button>
           </div>
         </form>
@@ -902,10 +905,6 @@ export default function AdminUniversities() {
     });
     setShowAdd(false);
     setEditingUni(null);
-    if (isNew) {
-      // Auto-fetch logo + cover image from Wikipedia/Google after create
-      handleEnrich(normalId(saved)).catch(() => {});
-    }
   };
 
   const handleEnrich = async (id: string) => {
