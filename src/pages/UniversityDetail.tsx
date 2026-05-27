@@ -121,10 +121,10 @@ export default function UniversityDetail() {
           <div className="lg:col-span-2 space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { icon: Users, label: 'Total Students', value: uni.totalStudents.toLocaleString() },
-                { icon: Globe, label: 'Intl. Students', value: uni.internationalStudents.toLocaleString() },
-                { icon: BookOpen, label: 'Courses Offered', value: uni.courses.length.toString() },
-                { icon: TrendingUp, label: 'Acceptance Rate', value: `${uni.acceptanceRate}%` },
+                { icon: Users, label: 'Total Students', value: uni.totalStudents != null ? uni.totalStudents.toLocaleString() : '—' },
+                { icon: Globe, label: 'Intl. Students', value: uni.internationalStudents != null ? uni.internationalStudents.toLocaleString() : '—' },
+                { icon: BookOpen, label: 'Courses Offered', value: (uni.courses?.length ?? 0).toString() },
+                { icon: TrendingUp, label: 'Acceptance Rate', value: uni.acceptanceRate != null ? `${uni.acceptanceRate}%` : '—' },
               ].map(stat => (
                 <div key={stat.label} className="bg-white rounded-2xl p-4 text-center border border-gray-100 shadow-sm">
                   <stat.icon className="w-6 h-6 text-blue-600 mx-auto mb-2" />
@@ -145,8 +145,8 @@ export default function UniversityDetail() {
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 mb-5">Available Courses</h2>
               <div className="space-y-4">
-                {uni.courses.map((course: any) => (
-                  <div key={course.id} className="border border-gray-100 rounded-xl p-5 hover:border-blue-200 hover:shadow-sm transition-all">
+                {uni.courses.map((course: any, idx: number) => (
+                  <div key={course._id || course.id || idx} className="border border-gray-100 rounded-xl p-5 hover:border-blue-200 hover:shadow-sm transition-all">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -156,17 +156,17 @@ export default function UniversityDetail() {
                         <h3 className="font-bold text-gray-900 text-lg">{course.name}</h3>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-blue-700">{course.currency} {course.tuitionFee.toLocaleString()}</p>
+                        <p className="font-bold text-blue-700">{course.currency} {course.tuitionFee != null ? course.tuitionFee.toLocaleString() : '—'}</p>
                         <p className="text-xs text-gray-400">per year</p>
                       </div>
                     </div>
                     <p className="text-gray-600 text-sm mb-3">{course.description}</p>
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                       <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {course.duration}</span>
-                      <span>Intake: {course.intake.join(', ')}</span>
+                      {course.intake?.length > 0 && <span>Intake: {course.intake.join(', ')}</span>}
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {course.requirements.map((req: string) => (
+                      {course.requirements?.map((req: string) => (
                         <span key={req} className="flex items-center gap-1 text-xs bg-gray-50 text-gray-600 px-2.5 py-1 rounded-full border border-gray-200">
                           <CheckCircle className="w-3 h-3 text-green-500" /> {req}
                         </span>

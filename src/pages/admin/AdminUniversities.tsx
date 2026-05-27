@@ -551,7 +551,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
 // ── University Row (expandable) ───────────────────────────────────────────────
 
 function UniLogoImg({ name, logo, website }: { name: string; logo?: string; website?: string }) {
-  const initial = logo ? 'logo' : website ? 'favicon' : 'letter';
+  const initial = (logo && !logo.includes('clearbit.com')) ? 'logo' : website ? 'favicon' : 'letter';
   const [stage, setStage] = useState<'logo' | 'favicon' | 'letter'>(initial as any);
 
   if (stage === 'letter') {

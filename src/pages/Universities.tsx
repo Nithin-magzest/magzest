@@ -39,8 +39,9 @@ function UniCard({ uni }: { uni: any }) {
     if (uni.website) faviconDomain = new URL(uni.website).hostname;
   } catch {}
 
-  const logoSrc = !logoErr && uni.logo
-    ? uni.logo
+  const validLogo = uni.logo && !uni.logo.includes('clearbit.com') ? uni.logo : null;
+  const logoSrc = !logoErr && validLogo
+    ? validLogo
     : faviconDomain
     ? `/api/favicon/${faviconDomain}`
     : null;

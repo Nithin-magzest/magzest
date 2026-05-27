@@ -23,7 +23,7 @@ const FLAG_CODES: Record<string, string> = {
   'Japan': 'jp', 'South Korea': 'kr', 'Austria': 'at', 'Denmark': 'dk',
 };
 
-const G = (d: string) => `https://www.google.com/s2/favicons?domain=${d}&sz=256`;
+const G = (d: string) => `/api/favicon/${d}`;
 const W = (f: string) => `https://en.wikipedia.org/wiki/Special:FilePath/${encodeURIComponent(f)}?width=200`;
 
 interface MarqueeUni {
@@ -41,7 +41,7 @@ const MARQUEE_UNIS: MarqueeUni[] = [
   { name: "King's College London",            logo: W("King's_College_London_logo.svg"),      country: 'United Kingdom', city: 'London',         ranking: 40,  website: 'kcl.ac.uk',      description: 'A leading research university in the heart of London, renowned for health sciences, law, social science, humanities, and the arts.',                                                                                                                                                 acceptanceRate: 17, rating: 4.7, type: 'Public Research University' },
   { name: 'McGill University',                logo: W('McGill_University_CoA.svg'),           country: 'Canada',         city: 'Montreal',       ranking: 46,  website: 'mcgill.ca',      description: "Canada's top-ranked university, celebrated for research excellence, a diverse student body, and alumni including Nobel Prize winners and world leaders.",                                                                                                                          acceptanceRate: 46, rating: 4.8, type: 'Public Research University' },
   { name: 'ETH Zurich',                       logo: W('ETH_Zürich_Logo_black.svg'),           country: 'Switzerland',    city: 'Zurich',         ranking: 7,   website: 'ethz.ch',        description: "Europe's leading science and technology university, home to 21 Nobel Prize winners. Exceptional research in engineering, natural sciences, architecture, and mathematics.",                                                                                                         acceptanceRate: 27, rating: 4.9, type: 'Public Technical University' },
-  { name: 'University of Cambridge',          logo: 'https://www.cam.ac.uk/sites/www.cam.ac.uk/files/inner-images/logo.jpg', country: 'United Kingdom', city: 'Cambridge', ranking: 2, website: 'cam.ac.uk', description: "One of the world's oldest and most prestigious universities, with 121 Nobel Prize winners. Excellence across sciences, engineering, law, humanities, and medicine.", acceptanceRate: 21, rating: 4.9, type: 'Public Collegiate Research University' },
+  { name: 'University of Cambridge',          logo: G('cam.ac.uk'),                          country: 'United Kingdom', city: 'Cambridge', ranking: 2, website: 'cam.ac.uk', description: "One of the world's oldest and most prestigious universities, with 121 Nobel Prize winners. Excellence across sciences, engineering, law, humanities, and medicine.", acceptanceRate: 21, rating: 4.9, type: 'Public Collegiate Research University' },
   { name: 'University of Oxford',             logo: G('ox.ac.uk'),                           country: 'United Kingdom', city: 'Oxford',         ranking: 3,   website: 'ox.ac.uk',       description: 'The oldest university in the English-speaking world, consistently ranked in the top 3 globally. Famous for its tutorial system, research excellence, and distinguished alumni.',                                                                                                  acceptanceRate: 18, rating: 4.9, type: 'Public Collegiate Research University' },
   { name: 'Stanford University',              logo: G('stanford.edu'),                        country: 'United States',  city: 'Stanford, CA',   ranking: 5,   website: 'stanford.edu',   description: "Silicon Valley's top research university, birthplace of Google and HP. World-leading in computer science, engineering, medicine, and business (GSB).",                                                                                                                            acceptanceRate: 4,  rating: 4.9, type: 'Private Research University' },
   { name: 'MIT',                              logo: G('mit.edu'),                             country: 'United States',  city: 'Cambridge, MA',  ranking: 1,   website: 'mit.edu',        description: "The world's #1 university for 12 consecutive years (QS). A global leader in science, technology, engineering, and math, with 97 Nobel laureates and groundbreaking innovation.",                                                                                              acceptanceRate: 4,  rating: 4.9, type: 'Private Research University' },
@@ -139,7 +139,7 @@ function getUniLogoUrl(name: string, website?: string): string | null {
   const found = MARQUEE_UNIS.find(u => u.name.toLowerCase() === name.toLowerCase());
   if (found) return found.logo;
   if (website) {
-    const domain = website.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    const domain = website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0];
     return G(domain);
   }
   return null;

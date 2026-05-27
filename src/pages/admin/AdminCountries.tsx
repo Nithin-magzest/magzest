@@ -552,7 +552,7 @@ function UniMiniCard({ uni }: { uni: any }) {
   return (
     <div className="flex items-center gap-2.5 bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm min-w-0 hover:border-sky-200 hover:shadow-md transition-all">
       <img
-        src={uni.logo || (uni.website ? `/api/favicon/${uni.website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}` : '')}
+        src={(uni.logo && !uni.logo.includes('clearbit.com') ? uni.logo : null) || (uni.website ? `/api/favicon/${uni.website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}` : '')}
         alt=""
         className="w-9 h-9 rounded-lg object-contain bg-gray-50 border border-gray-100 flex-shrink-0"
         onError={(e) => {

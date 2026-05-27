@@ -103,7 +103,7 @@ function CourseCard({ course, uni, student }: { course: any; uni: any; student: 
 
 function UniLogoImg({ name, website, logo }: { name: string; website?: string; logo?: string }) {
   const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
-  const initial: 'logo' | 'favicon' | 'letter' = logo ? 'logo' : domain ? 'favicon' : 'letter';
+  const initial: 'logo' | 'favicon' | 'letter' = (logo && !logo.includes('clearbit.com')) ? 'logo' : domain ? 'favicon' : 'letter';
   const [stage, setStage] = useState(initial);
 
   if (stage === 'letter') {
