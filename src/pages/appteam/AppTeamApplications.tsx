@@ -1,10 +1,12 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 import {
   Search, X, ChevronRight, Download, FileText, FileDown,
   User, UserCog, Layers, Calendar, Clock, CheckCircle,
-  AlertCircle, BookOpen, Globe, DollarSign,
+  AlertCircle, BookOpen, Globe, DollarSign, MessageSquare,
+  Send, ChevronDown, ChevronUp,
 } from 'lucide-react';
 
 const STATUSES = [
@@ -58,14 +60,22 @@ function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value
   );
 }
 
-function DrawerSection({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
+function DrawerSection({ title, icon: Icon, children, collapsible = false, defaultOpen = true }: {
+  title: string; icon: any; children: React.ReactNode; collapsible?: boolean; defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50">
+      <button
+        type="button"
+        onClick={() => collapsible && setOpen(o => !o)}
+        className={`w-full flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50 text-left ${collapsible ? 'cursor-pointer hover:bg-gray-100 transition-colors' : ''}`}
+      >
         <Icon className="w-4 h-4 text-orange-500" />
-        <h4 className="text-sm font-bold text-gray-800">{title}</h4>
-      </div>
-      <div className="p-4 bg-white">{children}</div>
+        <h4 className="text-sm font-bold text-gray-800 flex-1">{title}</h4>
+        {collapsible && (open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />)}
+      </button>
+      {(!collapsible || open) && <div className="p-4 bg-white">{children}</div>}
     </div>
   );
 }
@@ -85,7 +95,6 @@ function exportApplicationsToExcel(apps: any[]) {
     'Updated Date':    a.updatedDate  || a.updatedAt   || '',
     'Notes':           a.notes || a.processingNotes    || '',
   }));
-
   const ws = XLSX.utils.json_to_sheet(rows);
   ws['!cols'] = [
     { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 32 },
@@ -97,7 +106,172 @@ function exportApplicationsToExcel(apps: any[]) {
   XLSX.writeFile(wb, `applications_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
+function exportSingleApp(app: any) {
+  const rows = [{
+    'Student Name':    app._student?.name        || '',
+    'Student Email':   app._student?.email       || '',
+    'Nationality':     app._student?.nationality || '',
+    'University':      app.universityName        || '',
+    'Course':          app.courseName            || '',
+    'Intake':          app.intake                || '',
+    'Status':          app.status                || '',
+    'Counselor':       app._counselor?.name      || '',
+    'Counselor Email': app._counselor?.email     || '',
+    'Submitted Date':  app.submittedDate || app.createdAt  || '',
+    'Updated Date':    app.updatedDate  || app.updatedAt   || '',
+    'Notes':           app.notes || app.processingNotes    || '',
+  }];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [
+    { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 32 },
+    { wch: 32 }, { wch: 14 }, { wch: 16 }, { wch: 24 },
+    { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 40 },
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Application');
+  const studentName = (app._student?.name || 'application').replace(/\s+/g, '_').toLowerCase();
+  XLSX.writeFile(wb, `${studentName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+const formatTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+function ChatPanel({ counselor, currentUser }: { counselor: any; currentUser: any }) {
+  const [room, setRoom] = useState<any>(null);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [loadingRoom, setLoadingRoom] = useState(true);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const counselorId = String(counselor._id || counselor.id);
+  const userId = String(currentUser.id || currentUser._id);
+
+  useEffect(() => {
+    setLoadingRoom(true);
+    setRoom(null);
+    api.chat.rooms().then(roomList => {
+      const existing = roomList.find((r: any) =>
+        r.participants?.map(String).includes(counselorId)
+      );
+      if (existing) {
+        setRoom(existing);
+      } else {
+        api.chat.createRoom(
+          [userId, counselorId],
+          [currentUser.name || 'Applications', counselor.name]
+        ).then(newRoom => setRoom(newRoom)).catch(() => setRoom(null));
+      }
+    }).catch(() => setRoom(null))
+      .finally(() => setLoadingRoom(false));
+  }, [counselorId]);
+
+  // Poll for new messages every 10s
+  useEffect(() => {
+    if (!room?.id) return;
+    const id = setInterval(() => {
+      api.chat.room(room.id).then(updated => setRoom(updated)).catch(() => {});
+    }, 10000);
+    return () => clearInterval(id);
+  }, [room?.id]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [room?.messages?.length]);
+
+  useEffect(() => {
+    if (room?.id) api.chat.markRead(room.id).catch(() => {});
+  }, [room?.id]);
+
+  const handleSend = async () => {
+    if (!input.trim() || !room?.id) return;
+    setSending(true);
+    const text = input.trim();
+    setInput('');
+    try {
+      const updated = await api.chat.send(room.id, text, currentUser.name || 'Applications');
+      setRoom(updated);
+    } catch {
+      setInput(text);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (loadingRoom) {
+    return (
+      <div className="flex items-center justify-center py-6 gap-2 text-xs text-gray-400">
+        <div className="w-4 h-4 border-2 border-orange-300 border-t-orange-500 rounded-full animate-spin" />
+        Opening chat...
+      </div>
+    );
+  }
+
+  if (!room) {
+    return <p className="text-sm text-gray-400 italic">Could not open chat room.</p>;
+  }
+
+  const messages: any[] = room.messages || [];
+
+  return (
+    <div className="flex flex-col gap-0">
+      {/* Messages */}
+      <div className="h-56 overflow-y-auto space-y-2 px-1 py-1 bg-gray-50 rounded-lg mb-2">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <MessageSquare className="w-8 h-8 text-gray-200 mb-1" />
+            <p className="text-xs text-gray-400">No messages yet. Say hello!</p>
+          </div>
+        ) : (
+          messages.map((msg: any, i: number) => {
+            const isMe = String(msg.senderId) === userId;
+            return (
+              <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[78%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
+                  {!isMe && (
+                    <span className="text-[10px] text-gray-400 mb-0.5 ml-1">{msg.senderName}</span>
+                  )}
+                  <div className={`px-3 py-2 rounded-2xl text-xs leading-relaxed ${
+                    isMe
+                      ? 'bg-orange-500 text-white rounded-tr-sm'
+                      : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'
+                  }`}>
+                    {msg.content}
+                  </div>
+                  <span className="text-[10px] text-gray-300 mt-0.5 mx-1">{formatTime(msg.timestamp)}</span>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="flex items-center gap-2">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+          placeholder={`Message ${counselor.name}...`}
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400"
+          disabled={sending}
+        />
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={!input.trim() || sending}
+          className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+          title="Send message"
+        >
+          <Send className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AppTeamApplications() {
+  const { user } = useAuth();
   const [apps, setApps] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [counselors, setCounselors] = useState<any[]>([]);
@@ -206,8 +380,7 @@ export default function AppTeamApplications() {
         {/* Top: stat tabs */}
         <div className="px-5 pt-4 pb-0 bg-white border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-1 overflow-x-auto pb-0">
-            {/* All tab */}
-            <button
+            <button type="button"
               onClick={() => setStatusFilter('all')}
               className={`flex-shrink-0 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
                 statusFilter === 'all'
@@ -218,7 +391,7 @@ export default function AppTeamApplications() {
               All <span className="ml-1 text-xs font-bold">{stats.all}</span>
             </button>
             {STATUSES.map(s => (
-              <button key={s.key}
+              <button key={s.key} type="button"
                 onClick={() => setStatusFilter(statusFilter === s.key ? 'all' : s.key)}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
                   statusFilter === s.key
@@ -242,7 +415,12 @@ export default function AppTeamApplications() {
               placeholder="Search student, university, course..."
               className="w-full pl-9 pr-8 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
-            {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-gray-400" /></button>}
+            {search && (
+              <button type="button" onClick={() => setSearch('')} title="Clear search"
+                className="absolute right-2 top-1/2 -translate-y-1/2">
+                <X className="w-3.5 h-3.5 text-gray-400" />
+              </button>
+            )}
           </div>
           <select value={counselorFilter} onChange={e => setCounselorFilter(e.target.value)}
             className="border border-gray-200 rounded-lg text-sm px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
@@ -256,8 +434,7 @@ export default function AppTeamApplications() {
               <X className="w-3 h-3" /> Clear
             </button>
           )}
-          <button
-            type="button"
+          <button type="button"
             onClick={() => exportApplicationsToExcel(filtered)}
             disabled={filtered.length === 0}
             title="Download filtered applications as Excel"
@@ -329,9 +506,10 @@ export default function AppTeamApplications() {
 
       {/* Right: detail drawer */}
       {selected && (
-        <div className="flex flex-col w-full lg:w-[420px] flex-shrink-0 border-l border-gray-200 bg-white overflow-hidden">
+        <div className="flex flex-col w-full lg:w-[440px] flex-shrink-0 border-l border-gray-200 bg-white overflow-hidden">
+          {/* Drawer header */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 bg-white flex-shrink-0">
-            <button onClick={() => setSelected(null)} className="p-1.5 hover:bg-gray-100 rounded-lg">
+            <button type="button" onClick={() => setSelected(null)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Back to list">
               <X className="w-4 h-4 text-gray-500" />
             </button>
             <div className="flex-1 min-w-0">
@@ -339,6 +517,15 @@ export default function AppTeamApplications() {
               <p className="text-xs text-gray-400 truncate">{selected.courseName}</p>
             </div>
             <StatusBadge status={selected.status} />
+            <button
+              type="button"
+              onClick={() => exportSingleApp(selected)}
+              title="Download this application as Excel"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold transition-colors flex-shrink-0"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              Download
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -385,7 +572,7 @@ export default function AppTeamApplications() {
               {selected._counselor ? (
                 <div className="flex items-center gap-3">
                   <Avi name={selected._counselor.name} bg="bg-teal-600" />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="font-semibold text-gray-900">{selected._counselor.name}</p>
                     <p className="text-xs text-gray-400">{selected._counselor.email}</p>
                     {selected._counselor.specialty && (
@@ -395,6 +582,21 @@ export default function AppTeamApplications() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-400 italic">No counselor assigned</p>
+              )}
+            </DrawerSection>
+
+            {/* Chat with counselor */}
+            <DrawerSection title="Chat with Counselor" icon={MessageSquare} collapsible defaultOpen={false}>
+              {selected._counselor && user ? (
+                <ChatPanel
+                  key={selected._counselor._id}
+                  counselor={selected._counselor}
+                  currentUser={user}
+                />
+              ) : (
+                <p className="text-sm text-gray-400 italic">
+                  {selected._counselor ? 'Loading…' : 'No counselor assigned to this student.'}
+                </p>
               )}
             </DrawerSection>
 
@@ -420,7 +622,7 @@ export default function AppTeamApplications() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-1.5">
                   {STATUSES.map(s => (
-                    <button key={s.key} onClick={() => setDraftStatus(s.key)}
+                    <button key={s.key} type="button" onClick={() => setDraftStatus(s.key)}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
                         draftStatus === s.key
                           ? `${s.bg} ${s.color} ${s.border} ring-2 ${s.ring}`
@@ -435,7 +637,7 @@ export default function AppTeamApplications() {
                   placeholder="Add processing notes..."
                   className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none" />
                 <div className="flex items-center gap-3">
-                  <button onClick={handleSave} disabled={saving}
+                  <button type="button" onClick={handleSave} disabled={saving}
                     className="flex-1 bg-orange-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors disabled:opacity-60">
                     {saving ? 'Saving…' : 'Save Changes'}
                   </button>
@@ -476,7 +678,7 @@ export default function AppTeamApplications() {
                           <a href={doc.url} download target="_blank" rel="noopener noreferrer"
                             onClick={e => e.stopPropagation()}
                             className="flex items-center gap-1 px-2.5 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-xs font-semibold flex-shrink-0">
-                            <Download className="w-3 h-3" /> Get
+                            <Download className="w-3 h-3" /> Download
                           </a>
                         ) : (
                           <span className="text-xs text-gray-300 italic flex-shrink-0">No file</span>
