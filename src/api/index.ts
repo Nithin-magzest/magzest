@@ -221,5 +221,6 @@ export const api = {
     deleteCountry: (id: string) => req<any>(`/admin/countries/${id}`, {
       method: 'DELETE', headers: authHeaders(),
     }),
+    analytics: (period: string) => req<any>(`/admin/analytics?period=${period}`, { headers: authHeaders() }),
   },
 };

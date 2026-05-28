@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Layers, Users, UserCog, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, Layers, Users, UserCog, FolderOpen, CalendarDays } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
 
@@ -10,6 +10,7 @@ const navItems: { to: string; label: string; icon: React.ComponentType<{ classNa
   { to: '/board/students', label: 'Students', icon: Users },
   { to: '/board/counselors', label: 'Counselors', icon: UserCog },
   { to: '/board/documents', label: 'Documents', icon: FolderOpen },
+  { to: '/board/activities', label: 'Activities', icon: CalendarDays },
 ];
 
 export default function BoardLayout() {

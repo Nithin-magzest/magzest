@@ -13,7 +13,7 @@ const navItems: { to: string; label: string; icon: NavIcon; end?: boolean; mobil
   { to: '/counselor/countries', label: 'Countries', icon: '🌍' },
   { to: '/counselor/universities', label: 'Universities', icon: GraduationCap },
   { to: '/counselor/courses', label: 'Courses', icon: BookOpen, mobileHide: true },
-  { to: '/counselor/meetings', label: 'Meetings', icon: CalendarDays },
+  { to: '/counselor/activities', label: 'Activities', icon: CalendarDays },
   { to: '/counselor/chat', label: 'Chat', icon: MessageSquare },
   { to: '/counselor/profile', label: 'My Profile', icon: User },
 ];

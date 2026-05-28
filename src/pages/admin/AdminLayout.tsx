@@ -14,7 +14,7 @@ const navItems: { to: string; label: string; icon: NavIcon; end?: boolean }[] = 
   { to: '/admin/countries', label: 'Countries & Visa', icon: '🌍' },
   { to: '/admin/universities', label: 'Universities', icon: GraduationCap },
   { to: '/admin/courses', label: 'Courses', icon: BookOpen },
-  { to: '/admin/meetings', label: 'Meetings', icon: CalendarDays },
+  { to: '/admin/activities', label: 'Activities', icon: CalendarDays },
   { to: '/admin/chat', label: 'Chat', icon: MessageSquare },
 ];
 
