@@ -1,7 +1,8 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
+import * as XLSX from 'xlsx';
 import {
   FileText, RefreshCw, Search, X, ChevronDown, AlertTriangle,
-  CheckCircle, Clock, Send, Award, XCircle, BookOpen, Edit2,
+  CheckCircle, Clock, Send, Award, XCircle, BookOpen, Edit2, FileDown,
 } from 'lucide-react';
 import { api } from '../../api';
 import StatusBadge from '../../components/StatusBadge';
@@ -35,6 +36,30 @@ const STATUS_COLORS: Record<string, string> = {
   rejected:       'bg-red-100 text-red-700 border-red-200',
   enrolled:       'bg-purple-100 text-purple-700 border-purple-200',
 };
+
+function exportApplicationsToExcel(apps: any[]) {
+  const rows = apps.map(a => ({
+    'Student Name':    a.studentName        || '',
+    'Student Email':   a.studentEmail       || '',
+    'Nationality':     a.studentNationality || '',
+    'University':      a.universityName     || '',
+    'Course':          a.courseName         || '',
+    'Intake':          a.intake             || '',
+    'Status':          a.status             || '',
+    'Submitted Date':  a.submittedDate      || '',
+    'Updated Date':    a.updatedDate        || '',
+    'Notes':           a.notes              || '',
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [
+    { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 32 },
+    { wch: 32 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 40 },
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Applications');
+  XLSX.writeFile(wb, `applications_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
 
 function Spinner({ size = 4, white = false }: { size?: number; white?: boolean }) {
   return (
@@ -72,8 +97,8 @@ function UpdateStatusModal({
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+      <div className="bg-white rounded-xl w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
           <div>
             <h2 className="text-base font-bold text-gray-900">Update Application Stage</h2>
             <p className="text-xs text-gray-500 mt-0.5">{app.studentName} · {app.universityName}</p>
@@ -197,7 +222,7 @@ export default function AdminApplications() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="bg-[#3b0764] rounded-xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -232,7 +257,7 @@ export default function AdminApplications() {
         </div>
 
         {loadError && (
-          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-5">
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-5">
             <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-red-800">Failed to load</p>
@@ -247,9 +272,9 @@ export default function AdminApplications() {
 
         {/* Table */}
         {!loadError && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             {/* Toolbar */}
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gray-50/60 flex-wrap">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 bg-gray-50/60 flex-wrap">
               <div className="relative flex-1 min-w-0 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
@@ -282,6 +307,16 @@ export default function AdminApplications() {
                 </button>
               )}
               <p className="text-xs text-gray-400 ml-auto">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</p>
+              <button
+                type="button"
+                onClick={() => exportApplicationsToExcel(filtered)}
+                disabled={filtered.length === 0}
+                title="Download filtered applications as Excel"
+                className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                Download Excel
+              </button>
             </div>
 
             {loading ? (

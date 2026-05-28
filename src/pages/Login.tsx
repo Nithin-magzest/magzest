@@ -121,19 +121,28 @@ export default function Login() {
     setSubmitting(true);
     const result = await login(email, password);
     setSubmitting(false);
-    if (result.success) redirectAfterLogin(result.role!);
-    else setError('Invalid email or password. Try the demo accounts below.');
+    if (result.success) {
+      const redirectTo = searchParams.get('redirect');
+      if (redirectTo) navigate(redirectTo);
+      else redirectAfterLogin(result.role!);
+    } else {
+      setError('Invalid email or password. Try the demo accounts below.');
+    }
   };
 
-  const loginAs = async (demoEmail: string, demoPassword: string) => {
+  const loginAs = async (demoEmail: string, demoPassword: string, redirectTo?: string) => {
     setEmail(demoEmail);
     setPassword(demoPassword);
     setError('');
     setSubmitting(true);
     const result = await login(demoEmail, demoPassword);
     setSubmitting(false);
-    if (result.success) redirectAfterLogin(result.role!);
-    else setError('Login failed. Please make sure the server is running and the database is seeded.');
+    if (result.success) {
+      if (redirectTo) navigate(redirectTo);
+      else redirectAfterLogin(result.role!);
+    } else {
+      setError('Login failed. Please make sure the server is running and the database is seeded.');
+    }
   };
 
   // Google handler — called by GoogleLoginButton child component
@@ -221,11 +230,11 @@ export default function Login() {
   const anyLoading = submitting || !!socialLoading;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-3xl shadow-xl p-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex flex-col items-center justify-center bg-[#0d1b4b] rounded-2xl shadow-lg px-8 py-5 mb-4">
+            <div className="inline-flex flex-col items-center justify-center bg-[#0d1b4b] rounded-xl shadow-md px-8 py-5 mb-4">
               <GraduationCap className="w-10 h-10 text-white mb-1.5" />
               <span className="font-bold text-white text-xl tracking-tight">GradZest</span>
             </div>
@@ -335,6 +344,22 @@ export default function Login() {
                         <p className="text-xs text-gray-400 truncate">{a.email}</p>
                       </div>
                       <span className="text-xs text-purple-600 font-medium whitespace-nowrap">Click to login →</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-orange-600 mb-2">Application Team</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {demoAccounts.admin.map(a => (
+                    <button key={`appteam-${a.email}`} type="button" onClick={() => loginAs(a.email, a.password, '/appteam')} disabled={anyLoading}
+                      className="flex items-center gap-3 p-3 border border-orange-200 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed">
+                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-orange-700 font-bold text-xs flex-shrink-0">AT</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-800">App Team Portal</p>
+                        <p className="text-xs text-gray-400 truncate">{a.email}</p>
+                      </div>
+                      <span className="text-xs text-orange-600 font-medium whitespace-nowrap">Click to login →</span>
                     </button>
                   ))}
                 </div>
