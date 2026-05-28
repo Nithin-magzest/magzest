@@ -456,16 +456,16 @@ function NewApplicationModal({ student, onClose, onCreated }: {
   );
 }
 
-// ── Dark status pill ─────────────────────────────────────────────────────────
+// ── Status pill ──────────────────────────────────────────────────────────────
 function StatusPill({ status }: { status: string }) {
   const s = status?.toLowerCase() ?? '';
-  let cls = 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
-  if (s === 'active') cls = 'bg-green-500/20 text-green-400 border border-green-500/30';
-  else if (s === 'inactive') cls = 'bg-gray-600/40 text-gray-400 border border-gray-500/30';
-  else if (s === 'enrolled') cls = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
-  else if (s === 'registered') cls = 'bg-slate-500/20 text-slate-300 border border-slate-400/30';
-  else if (s === 'under_review' || s === 'under review') cls = 'bg-blue-500/20 text-blue-300 border border-blue-500/30';
-  else if (s === 'pending' || s === 'incomplete') cls = 'bg-amber-500/20 text-amber-300 border border-amber-500/30';
+  let cls = 'bg-purple-100 text-purple-700 border border-purple-200';
+  if (s === 'active') cls = 'bg-green-100 text-green-700 border border-green-200';
+  else if (s === 'inactive') cls = 'bg-gray-100 text-gray-600 border border-gray-200';
+  else if (s === 'enrolled') cls = 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+  else if (s === 'registered') cls = 'bg-slate-100 text-slate-600 border border-slate-200';
+  else if (s === 'under_review' || s === 'under review') cls = 'bg-blue-100 text-blue-700 border border-blue-200';
+  else if (s === 'pending' || s === 'incomplete') cls = 'bg-amber-100 text-amber-700 border border-amber-200';
   const label = (status || 'Unknown').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   return <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${cls}`}>{label}</span>;
 }
@@ -593,8 +593,8 @@ export default function AdminStudents() {
   const today = new Date().toLocaleDateString('en-GB');
   const avatarPalette = ['from-blue-500 to-indigo-600', 'from-green-500 to-emerald-600', 'from-purple-500 to-pink-600', 'from-amber-500 to-orange-600', 'from-cyan-500 to-blue-600', 'from-rose-500 to-red-600'];
 
-  // shared dark select style
-  const dSel = 'appearance-none px-3 py-2 bg-[#1e2d50] border border-white/10 rounded-xl text-sm text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer';
+  // shared select style
+  const dSel = 'appearance-none px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer';
 
   return (
     <>
@@ -606,14 +606,14 @@ export default function AdminStudents() {
       )}
       {newAppStudent && <NewApplicationModal student={newAppStudent} onClose={() => setNewAppStudent(null)} onCreated={() => loadData()} />}
 
-      {/* Dark full-bleed wrapper */}
-      <div className="min-h-[calc(100vh-64px)] bg-[#0d1421] -m-6 px-6 py-6 text-white">
+      {/* Page wrapper */}
+      <div className="space-y-6">
 
         {/* ── Header ── */}
-        <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-white">Students</h1>
-            <p className="text-gray-400 text-sm mt-1">Manage all students and their profiles</p>
+            <h1 className="text-2xl font-bold text-gray-900">Students</h1>
+            <p className="text-gray-500 text-sm mt-1">Manage all students and their profiles</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {[
@@ -622,7 +622,7 @@ export default function AdminStudents() {
               { label: 'Register student', icon: <GraduationCap className="w-4 h-4" />, onClick: () => setShowNewStudent(true) },
             ].map(btn => (
               <button key={btn.label} type="button" onClick={btn.onClick}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1e2d50] hover:bg-[#263660] text-gray-300 hover:text-white rounded-xl text-sm font-medium border border-white/10 transition-colors">
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium border border-gray-200 shadow-sm transition-colors">
                 {btn.icon}{btn.label}
               </button>
             ))}
@@ -631,27 +631,27 @@ export default function AdminStudents() {
 
         {/* ── Error ── */}
         {loadError && (
-          <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-2xl p-5 mb-6">
-            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1"><p className="text-sm font-semibold text-red-300">Failed to load data</p><p className="text-xs text-red-400 mt-0.5">{loadError}</p></div>
-            <button type="button" onClick={loadData} className="text-xs font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg border border-red-500/20 transition-colors">Retry</button>
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-5">
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1"><p className="text-sm font-semibold text-red-800">Failed to load data</p><p className="text-xs text-red-600 mt-0.5">{loadError}</p></div>
+            <button type="button" onClick={loadData} className="text-xs font-semibold text-red-700 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors">Retry</button>
           </div>
         )}
 
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           {[
-            { label: 'Total', value: counts.total, trend: '+12%', trendCls: 'text-green-400', icon: <Users className="w-5 h-5 text-blue-400" />, iconBg: 'bg-blue-500/20' },
-            { label: 'Active', value: counts.active, trend: pct(counts.active), trendCls: 'text-green-400', icon: <Activity className="w-5 h-5 text-green-400" />, iconBg: 'bg-green-500/20' },
-            { label: 'Inactive', value: counts.inactive, trend: pct(counts.inactive), trendCls: 'text-gray-500', icon: <UserX className="w-5 h-5 text-gray-400" />, iconBg: 'bg-gray-500/20' },
-            { label: 'Enrolled', value: counts.enrolled, trend: '+5 this week', trendCls: 'text-green-400', icon: <GraduationCap className="w-5 h-5 text-purple-400" />, iconBg: 'bg-purple-500/20' },
-            { label: 'Unassigned', value: counts.unassigned, trend: counts.unassigned > 0 ? 'Needs action' : 'All assigned', trendCls: counts.unassigned > 0 ? 'text-red-400' : 'text-green-400', icon: <UserCog className="w-5 h-5 text-red-400" />, iconBg: 'bg-red-500/20' },
+            { label: 'Total', value: counts.total, trend: '+12%', trendCls: 'text-green-600', icon: <Users className="w-5 h-5 text-blue-600" />, iconBg: 'bg-blue-100' },
+            { label: 'Active', value: counts.active, trend: pct(counts.active), trendCls: 'text-green-600', icon: <Activity className="w-5 h-5 text-green-600" />, iconBg: 'bg-green-100' },
+            { label: 'Inactive', value: counts.inactive, trend: pct(counts.inactive), trendCls: 'text-gray-500', icon: <UserX className="w-5 h-5 text-gray-500" />, iconBg: 'bg-gray-100' },
+            { label: 'Enrolled', value: counts.enrolled, trend: '+5 this week', trendCls: 'text-green-600', icon: <GraduationCap className="w-5 h-5 text-purple-600" />, iconBg: 'bg-purple-100' },
+            { label: 'Unassigned', value: counts.unassigned, trend: counts.unassigned > 0 ? 'Needs action' : 'All assigned', trendCls: counts.unassigned > 0 ? 'text-red-600' : 'text-green-600', icon: <UserCog className="w-5 h-5 text-red-500" />, iconBg: 'bg-red-100' },
           ].map(card => (
-            <div key={card.label} className="bg-[#162038] rounded-2xl p-4 border border-white/[0.06] flex items-start gap-3">
+            <div key={card.label} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-start gap-3">
               <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center flex-shrink-0`}>{card.icon}</div>
               <div>
-                <p className="text-gray-400 text-xs mb-1">{card.label}</p>
-                <p className="text-2xl font-bold text-white">{loading ? '…' : card.value.toLocaleString()}</p>
+                <p className="text-gray-500 text-xs mb-1">{card.label}</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '…' : card.value.toLocaleString()}</p>
                 <p className={`text-xs mt-1 ${card.trendCls}`}>{loading ? '' : card.trend}</p>
               </div>
             </div>
@@ -659,13 +659,13 @@ export default function AdminStudents() {
         </div>
 
         {/* ── Filter bar ── */}
-        <div className="bg-[#162038] rounded-2xl p-4 mb-6 border border-white/[0.06] space-y-3">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3">
           {/* Row 1 */}
           <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex items-center gap-2 px-3 py-2 bg-[#1e2d50] border border-white/10 rounded-xl text-xs text-gray-400 font-medium whitespace-nowrap">
-              <span className="w-3 h-3 border border-gray-600 rounded-sm" />
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-500 font-medium whitespace-nowrap">
+              <span className="w-3 h-3 border border-gray-300 rounded-sm" />
               01/01/2025 – {today}
-              <span className="w-3 h-3 border border-gray-600 rounded-sm" />
+              <span className="w-3 h-3 border border-gray-300 rounded-sm" />
             </div>
             {/* Country */}
             <div className="relative">
@@ -706,26 +706,26 @@ export default function AdminStudents() {
           {/* Row 2 */}
           <div className="flex flex-wrap gap-3 items-center">
             <div className="relative flex-1 min-w-[220px]">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 border border-gray-500 rounded-sm" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input value={searchInput} onChange={e => setSearchInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') setSearch(searchInput); }}
                 placeholder="Search by name, email, nationality..."
-                className="w-full pl-9 pr-3 py-2 bg-[#1e2d50] border border-white/10 rounded-xl text-sm text-gray-300 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50" />
+                className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <button type="button" onClick={() => setSearch(searchInput)}
-              className="px-5 py-2 bg-white text-gray-900 hover:bg-gray-100 rounded-xl text-sm font-semibold transition-colors">
+              className="px-5 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-sm font-semibold transition-colors shadow-sm">
               Search
             </button>
             {activeTags.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-gray-500 text-xs">Active filters:</span>
                 {activeTags.map(tag => (
-                  <span key={tag.label} className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full text-xs font-medium">
+                  <span key={tag.label} className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-medium">
                     {tag.label}
-                    <button type="button" onClick={tag.clear} className="hover:text-white leading-none"><X className="w-3 h-3" /></button>
+                    <button type="button" onClick={tag.clear} className="hover:text-blue-900 leading-none"><X className="w-3 h-3" /></button>
                   </span>
                 ))}
-                <button type="button" onClick={clearAll} className="text-xs text-blue-400 hover:text-blue-300 underline">Clear all</button>
+                <button type="button" onClick={clearAll} className="text-xs text-blue-600 hover:text-blue-800 underline">Clear all</button>
               </div>
             )}
           </div>
@@ -733,15 +733,15 @@ export default function AdminStudents() {
 
         {/* ── Table ── */}
         {loading ? (
-          <div className="bg-[#162038] rounded-2xl border border-white/[0.06] p-12 flex items-center justify-center gap-3 text-gray-400">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 flex items-center justify-center gap-3 text-gray-400">
             <Spinner size={5} /><span className="text-sm">Loading students…</span>
           </div>
         ) : (
-          <div className="bg-[#162038] rounded-2xl border border-white/[0.06] overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[#0f1a30] border-b border-white/[0.06]">
+                  <tr className="bg-gray-50 border-b border-gray-100">
                     <th className="w-10 px-4 py-3.5">
                       <input type="checkbox" checked={allPageSelected} onChange={toggleAll} className="w-4 h-4 rounded cursor-pointer accent-blue-500" />
                     </th>
@@ -765,9 +765,9 @@ export default function AdminStudents() {
                     const isAssigning = assigningIds.has(id);
                     const isDeleting = deletingId === id;
                     return (
-                      <tr key={id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
+                      <tr key={id} className="border-b border-gray-50 hover:bg-sky-50/30 transition-colors">
                         <td className="px-4 py-3.5">
-                          <input type="checkbox" checked={selectedIds.has(id)} onChange={() => toggleOne(id)} className="w-4 h-4 rounded cursor-pointer accent-blue-500" />
+                          <input type="checkbox" checked={selectedIds.has(id)} onChange={() => toggleOne(id)} className="w-4 h-4 rounded cursor-pointer accent-blue-600" />
                         </td>
                         {/* Student */}
                         <td className="px-4 py-3.5">
@@ -776,27 +776,27 @@ export default function AdminStudents() {
                               {initials}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold text-white truncate">{s.name}</p>
-                              <p className="text-xs text-blue-400 truncate">{s.email}</p>
+                              <p className="text-sm font-semibold text-gray-900 truncate">{s.name}</p>
+                              <p className="text-xs text-blue-500 truncate">{s.email}</p>
                             </div>
                           </div>
                         </td>
                         {/* Joined */}
-                        <td className="px-4 py-3.5 text-sm text-gray-300 whitespace-nowrap">{s.joinedDate || '—'}</td>
+                        <td className="px-4 py-3.5 text-sm text-gray-600 whitespace-nowrap">{s.joinedDate || '—'}</td>
                         {/* Email */}
-                        <td className="px-4 py-3.5 text-sm text-blue-400 whitespace-nowrap max-w-[160px] truncate">{s.email || '—'}</td>
+                        <td className="px-4 py-3.5 text-sm text-blue-500 whitespace-nowrap max-w-[160px] truncate">{s.email || '—'}</td>
                         {/* Nationality */}
-                        <td className="px-4 py-3.5 text-sm text-gray-300 whitespace-nowrap">{s.nationality || '—'}</td>
+                        <td className="px-4 py-3.5 text-sm text-gray-600 whitespace-nowrap">{s.nationality || '—'}</td>
                         {/* Assigned To */}
                         <td className="px-4 py-3.5">
                           <div className="relative inline-block">
                             <select value={s.counselorId?.toString() || ''} disabled={isAssigning}
                               onChange={e => handleInlineAssign(id, e.target.value)} title="Assign counselor"
-                              className="appearance-none pl-3 pr-7 py-1.5 bg-[#1e2d50] border border-white/10 rounded-lg text-xs text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50 disabled:opacity-50 min-w-[100px] max-w-[130px] cursor-pointer">
+                              className="appearance-none pl-3 pr-7 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 min-w-[100px] max-w-[130px] cursor-pointer">
                               <option value="">Unassigned</option>
                               {counselors.map(c => <option key={normalId(c)} value={normalId(c)}>{c.name}</option>)}
                             </select>
-                            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 pointer-events-none" />
+                            <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                           </div>
                         </td>
                         {/* Status */}
@@ -805,19 +805,19 @@ export default function AdminStudents() {
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-1.5 justify-end">
                             <button type="button" onClick={() => setSelectedStudent(s)} title="View details"
-                              className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#1e2d50] border border-white/10 text-gray-400 hover:text-blue-300 hover:border-blue-500/30 transition-colors">
+                              className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 transition-colors">
                               <Info className="w-3.5 h-3.5" />
                             </button>
                             <button type="button" onClick={() => navigate('/admin/chat', { state: { openChatWith: { _id: id, name: s.name } } })} title="Chat"
-                              className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#1e2d50] border border-white/10 text-gray-400 hover:text-sky-300 hover:border-sky-500/30 transition-colors">
+                              className="w-8 h-8 flex items-center justify-center rounded-lg bg-sky-50 border border-sky-200 text-sky-600 hover:bg-sky-100 transition-colors">
                               <MessageSquare className="w-3.5 h-3.5" />
                             </button>
                             <button type="button" onClick={() => handleToggle(s)} disabled={isToggling} title={isActive ? 'Deactivate' : 'Activate'}
-                              className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#1e2d50] border border-white/10 text-gray-400 hover:text-amber-300 hover:border-amber-500/30 transition-colors disabled:opacity-40">
+                              className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors disabled:opacity-50 ${isActive ? 'bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100' : 'bg-green-50 border-green-200 text-green-600 hover:bg-green-100'}`}>
                               {isToggling ? <Spinner size={3} /> : isActive ? <ToggleLeft className="w-3.5 h-3.5" /> : <ToggleRight className="w-3.5 h-3.5" />}
                             </button>
                             <button type="button" onClick={() => handleDelete(id)} disabled={isDeleting} title="Delete"
-                              className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-400/40 transition-colors disabled:opacity-40">
+                              className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 border border-red-200 text-red-500 hover:bg-red-100 transition-colors disabled:opacity-50">
                               {isDeleting ? <Spinner size={3} /> : <Trash2 className="w-3.5 h-3.5" />}
                             </button>
                           </div>
@@ -830,47 +830,47 @@ export default function AdminStudents() {
             </div>
 
             {/* ── Table footer ── */}
-            <div className="flex items-center justify-between px-5 py-4 border-t border-white/[0.06] bg-[#0f1a30]/50 flex-wrap gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-400">
+            <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 bg-gray-50/40 flex-wrap gap-3">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
                 <span>Show</span>
                 <div className="relative">
                   <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }} title="Entries per page"
-                    className="appearance-none pl-3 pr-7 py-1.5 bg-[#1e2d50] border border-white/10 rounded-lg text-sm text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer">
+                    className="appearance-none pl-3 pr-7 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
                     {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
                 </div>
                 <span>entries</span>
-                <span className="hidden sm:inline text-gray-600 mx-1">·</span>
-                <span className="hidden sm:inline text-gray-500 text-xs">
+                <span className="hidden sm:inline text-gray-300 mx-1">·</span>
+                <span className="hidden sm:inline text-gray-400 text-xs">
                   Showing {filtered.length === 0 ? '0' : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filtered.length)}`} of {filtered.length.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-1">
                 <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#1e2d50] border border-white/10 text-gray-400 hover:text-white hover:bg-[#263660] disabled:opacity-30 transition-colors">
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-40 transition-colors">
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 {pageNums.map((p, i) =>
                   p === '...' ? (
-                    <span key={`d${i}`} className="w-8 h-8 flex items-center justify-center text-gray-500 text-sm select-none">…</span>
+                    <span key={`d${i}`} className="w-8 h-8 flex items-center justify-center text-gray-400 text-sm select-none">…</span>
                   ) : (
                     <button key={p} type="button" onClick={() => setPage(p as number)}
                       className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
-                        ${page === p ? 'bg-blue-600 text-white shadow-md' : 'bg-[#1e2d50] border border-white/10 text-gray-400 hover:text-white hover:bg-[#263660]'}`}>
+                        ${page === p ? 'bg-blue-600 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
                       {p}
                     </button>
                   )
                 )}
                 <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#1e2d50] border border-white/10 text-gray-400 hover:text-white hover:bg-[#263660] disabled:opacity-30 transition-colors">
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-40 transition-colors">
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
         )}
-      </div>
+      </div>{/* end space-y-6 */}
     </>
   );
 }
