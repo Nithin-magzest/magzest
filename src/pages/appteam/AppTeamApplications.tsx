@@ -1,9 +1,8 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import * as XLSX from 'xlsx';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Search, X, ChevronRight, Download, FileText, FileDown,
+  Search, X, ChevronRight, Download, FileText,
   User, UserCog, Layers, Calendar, Clock, CheckCircle,
   AlertCircle, BookOpen, Globe, DollarSign, MessageSquare,
   Send, ChevronDown, ChevronUp,
@@ -80,58 +79,6 @@ function DrawerSection({ title, icon: Icon, children, collapsible = false, defau
   );
 }
 
-function exportApplicationsToExcel(apps: any[]) {
-  const rows = apps.map(a => ({
-    'Student Name':    a._student?.name        || '',
-    'Student Email':   a._student?.email       || '',
-    'Nationality':     a._student?.nationality || '',
-    'University':      a.universityName        || '',
-    'Course':          a.courseName            || '',
-    'Intake':          a.intake                || '',
-    'Status':          a.status                || '',
-    'Counselor':       a._counselor?.name      || '',
-    'Counselor Email': a._counselor?.email     || '',
-    'Submitted Date':  a.submittedDate || a.createdAt  || '',
-    'Updated Date':    a.updatedDate  || a.updatedAt   || '',
-    'Notes':           a.notes || a.processingNotes    || '',
-  }));
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [
-    { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 32 },
-    { wch: 32 }, { wch: 14 }, { wch: 16 }, { wch: 24 },
-    { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 40 },
-  ];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Applications');
-  XLSX.writeFile(wb, `applications_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-}
-
-function exportSingleApp(app: any) {
-  const rows = [{
-    'Student Name':    app._student?.name        || '',
-    'Student Email':   app._student?.email       || '',
-    'Nationality':     app._student?.nationality || '',
-    'University':      app.universityName        || '',
-    'Course':          app.courseName            || '',
-    'Intake':          app.intake                || '',
-    'Status':          app.status                || '',
-    'Counselor':       app._counselor?.name      || '',
-    'Counselor Email': app._counselor?.email     || '',
-    'Submitted Date':  app.submittedDate || app.createdAt  || '',
-    'Updated Date':    app.updatedDate  || app.updatedAt   || '',
-    'Notes':           app.notes || app.processingNotes    || '',
-  }];
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [
-    { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 32 },
-    { wch: 32 }, { wch: 14 }, { wch: 16 }, { wch: 24 },
-    { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 40 },
-  ];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Application');
-  const studentName = (app._student?.name || 'application').replace(/\s+/g, '_').toLowerCase();
-  XLSX.writeFile(wb, `${studentName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
-}
 
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -434,15 +381,6 @@ export default function AppTeamApplications() {
               <X className="w-3 h-3" /> Clear
             </button>
           )}
-          <button type="button"
-            onClick={() => exportApplicationsToExcel(filtered)}
-            disabled={filtered.length === 0}
-            title="Download filtered applications as Excel"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0"
-          >
-            <FileDown className="w-3.5 h-3.5" />
-            Download Excel
-          </button>
         </div>
 
         {/* Table */}
@@ -517,15 +455,6 @@ export default function AppTeamApplications() {
               <p className="text-xs text-gray-400 truncate">{selected.courseName}</p>
             </div>
             <StatusBadge status={selected.status} />
-            <button
-              type="button"
-              onClick={() => exportSingleApp(selected)}
-              title="Download this application as Excel"
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold transition-colors flex-shrink-0"
-            >
-              <FileDown className="w-3.5 h-3.5" />
-              Download
-            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">

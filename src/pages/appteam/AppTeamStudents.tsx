@@ -1,10 +1,9 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import * as XLSX from 'xlsx';
 import { api } from '../../api';
 import {
   Search, X, ChevronRight, Download, FileText,
   BookOpen, Globe, DollarSign, Phone, Mail, CheckCircle, Layers,
-  FileDown, Filter,
+  Filter,
 } from 'lucide-react';
 
 const STATUSES: Record<string, { label: string; color: string; bg: string; dot: string }> = {
@@ -60,44 +59,6 @@ function InfoItem({ icon: Icon, label, value }: { icon: any; label: string; valu
   );
 }
 
-function exportToExcel(students: any[], counselorMap: Record<string, any>, appsByStudent: Record<string, any[]>) {
-  const rows = students.map(s => {
-    const cid = s.counselorId?._id || s.counselorId;
-    const counselor = cid ? counselorMap[cid] : null;
-    const apps = appsByStudent[s._id] || [];
-    const appSummary = apps.map((a: any) => `${a.universityName} - ${a.courseName} (${a.status})`).join(' | ');
-    return {
-      'Name': s.name || '',
-      'Email': s.email || '',
-      'Phone': s.phone || '',
-      'Nationality': s.nationality || '',
-      'Status': s.status || '',
-      'Education Level': s.educationLevel || '',
-      'GPA': s.gpa || '',
-      'English Test Type': s.englishScore?.type || '',
-      'English Score': s.englishScore?.score || '',
-      'Budget (USD)': s.budget || '',
-      'Preferred Countries': (s.preferredCountries || []).join(', '),
-      'Counselor Name': counselor?.name || '',
-      'Counselor Email': counselor?.email || '',
-      'Total Applications': apps.length,
-      'Applications Summary': appSummary,
-      'Joined Date': s.joinedDate || s.createdAt || '',
-    };
-  });
-
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const colWidths = [
-    { wch: 24 }, { wch: 30 }, { wch: 16 }, { wch: 18 }, { wch: 12 },
-    { wch: 20 }, { wch: 8  }, { wch: 16 }, { wch: 14 }, { wch: 14 },
-    { wch: 28 }, { wch: 24 }, { wch: 30 }, { wch: 10 }, { wch: 60 }, { wch: 20 },
-  ];
-  ws['!cols'] = colWidths;
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Students');
-  XLSX.writeFile(wb, `students_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-}
 
 export default function AppTeamStudents() {
   const [students, setStudents] = useState<any[]>([]);
@@ -184,14 +145,6 @@ export default function AppTeamStudents() {
             <h1 className="text-base font-bold text-gray-900">Students</h1>
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{filtered.length}</span>
-              <button
-                onClick={() => exportToExcel(filtered, counselorMap, appsByStudent)}
-                title="Export filtered students to Excel"
-                className="flex items-center gap-1.5 px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors"
-              >
-                <FileDown className="w-3.5 h-3.5" />
-                Excel
-              </button>
             </div>
           </div>
 
@@ -356,15 +309,6 @@ export default function AppTeamStudents() {
                   'bg-gray-100 text-gray-600'
                 }`}>{selected.status}</span>
               )}
-              <button
-                type="button"
-                onClick={() => exportToExcel([selected], counselorMap, appsByStudent)}
-                title="Export this student to Excel"
-                className="flex items-center gap-1.5 px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors"
-              >
-                <FileDown className="w-3.5 h-3.5" />
-                Export
-              </button>
             </div>
           </div>
 
