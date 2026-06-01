@@ -289,16 +289,16 @@ export default function CounselorDashboard() {
         <p className="text-green-600 mt-1 text-sm capitalize">{counselor?.specialization?.join(' • ')}</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">
           {[
-            { label: 'My Students', value: stats.totalStudents, icon: Users },
-            { label: 'Active Apps', value: stats.activeApplications, icon: FileText },
-            { label: 'Pending Docs', value: stats.pendingDocs, icon: AlertCircle },
-            { label: 'Offers Out', value: stats.offers, icon: Star },
+            { label: 'My Students', value: stats.totalStudents, icon: Users, to: '/counselor/students' },
+            { label: 'Active Apps', value: stats.activeApplications, icon: FileText, to: '/counselor/applications' },
+            { label: 'Pending Docs', value: stats.pendingDocs, icon: AlertCircle, to: '/counselor/students' },
+            { label: 'Offers Out', value: stats.offers, icon: Star, to: '/counselor/applications' },
           ].map(s => (
-            <div key={s.label} className="bg-white border border-green-200 rounded-xl p-3">
+            <Link key={s.label} to={s.to} className="bg-white border border-green-200 rounded-xl p-3 hover:bg-green-50 transition-colors">
               <s.icon className="w-4 h-4 text-green-500 mb-1" />
               <div className="text-2xl font-bold text-green-800">{s.value}</div>
               <div className="text-xs text-green-600">{s.label}</div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Users, UserCog, FileText, Activity, Plus, Trash2, X, Shield,
   Eye, EyeOff, Check, UserPlus, Search, ExternalLink,
@@ -1586,16 +1586,16 @@ export default function AdminDashboard() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Total Students', value: stats?.totalStudents ?? '—', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-              { label: 'Counselors', value: stats?.totalCounselors ?? '—', icon: UserCog, color: 'text-green-600', bg: 'bg-green-50' },
-              { label: 'Applications', value: stats?.totalApplications ?? '—', icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50' },
-              { label: 'Active Students', value: stats?.activeStudents ?? '—', icon: Activity, color: 'text-purple-600', bg: 'bg-purple-50' },
+              { label: 'Total Students', value: stats?.totalStudents ?? '—', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', to: '/admin/students' },
+              { label: 'Counselors', value: stats?.totalCounselors ?? '—', icon: UserCog, color: 'text-green-600', bg: 'bg-green-50', to: '/admin/counselors' },
+              { label: 'Applications', value: stats?.totalApplications ?? '—', icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50', to: '/admin/applications' },
+              { label: 'Active Students', value: stats?.activeStudents ?? '—', icon: Activity, color: 'text-purple-600', bg: 'bg-purple-50', to: '/admin/students' },
             ].map(s => (
-              <div key={s.label} className={`${s.bg} border border-white rounded-xl p-4`}>
+              <Link key={s.label} to={s.to} className={`${s.bg} border border-white rounded-xl p-4 hover:opacity-80 transition-opacity`}>
                 <s.icon className={`w-4 h-4 ${s.color} mb-2`} />
                 <div className={`text-3xl font-bold tracking-tight ${s.color}`}>{loading ? '…' : s.value}</div>
                 <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
