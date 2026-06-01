@@ -1397,6 +1397,7 @@ export default function AdminDashboard() {
   const [assigningStudent, setAssigningStudent] = useState<any>(null);
   const [assigningCounselor, setAssigningCounselor] = useState<any>(null);
   const [studentSearch, setStudentSearch] = useState('');
+  const [studentDateFilter, setStudentDateFilter] = useState('');
   const [counselorSearch, setCounselorSearch] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [selectedCounselor, setSelectedCounselor] = useState<any>(null);
@@ -1474,11 +1475,17 @@ export default function AdminDashboard() {
 
   const counselorNameById = Object.fromEntries(counselors.map(c => [normalId(c), c.name]));
 
-  const filteredStudents = students.filter(s =>
-    s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
-    s.email?.toLowerCase().includes(studentSearch.toLowerCase()) ||
-    s.nationality?.toLowerCase().includes(studentSearch.toLowerCase())
-  );
+  const filteredStudents = students.filter(s => {
+    const matchesText = !studentSearch || (
+      s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+      s.email?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+      s.nationality?.toLowerCase().includes(studentSearch.toLowerCase())
+    );
+    const matchesDate = !studentDateFilter || (
+      s.joinedDate && s.joinedDate.slice(0, 10) === studentDateFilter
+    );
+    return matchesText && matchesDate;
+  });
 
   const filteredCounselors = counselors.filter(c =>
     c.name?.toLowerCase().includes(counselorSearch.toLowerCase()) ||
@@ -1717,11 +1724,26 @@ export default function AdminDashboard() {
         {!loading && activeTab === 'students' && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 gap-3 flex-wrap bg-gray-50/60">
-              <div className="relative flex-1 min-w-0 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input value={studentSearch} onChange={e => setStudentSearch(e.target.value)}
-                  placeholder="Search by name, email or nationality…"
-                  className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+              <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
+                <div className="relative flex-1 min-w-0 max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input value={studentSearch} onChange={e => setStudentSearch(e.target.value)}
+                    placeholder="Search by name, email or nationality…"
+                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                </div>
+                <input
+                  type="date"
+                  value={studentDateFilter}
+                  onChange={e => setStudentDateFilter(e.target.value)}
+                  title="Filter by join date"
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {studentDateFilter && (
+                  <button type="button" onClick={() => setStudentDateFilter('')}
+                    className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
+                    Clear
+                  </button>
+                )}
               </div>
               <BtnPrimary onClick={() => setShowNewStudent(true)} variant="blue">
                 <Plus className="w-4 h-4" />New Student

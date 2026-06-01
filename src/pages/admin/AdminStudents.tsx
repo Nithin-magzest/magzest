@@ -4,7 +4,7 @@ import {
   Users, UserCog, Plus, Trash2, X, GraduationCap,
   Eye, EyeOff, Check, Search, ExternalLink, ToggleLeft, ToggleRight,
   AlertTriangle, MessageSquare, ChevronDown, ChevronUp,
-  BookOpen, DollarSign, MapPin, CheckCircle, Download, Archive,
+  BookOpen, DollarSign, MapPin, CheckCircle, Download, RefreshCw,
   ChevronLeft, ChevronRight, Info, UserX, Activity,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -489,6 +489,8 @@ export default function AdminStudents() {
   const [filterCountry, setFilterCountry] = useState('');
   const [filterCounselorId, setFilterCounselorId] = useState('');
   const [filterIntake, setFilterIntake] = useState('');
+  const [filterDateStart, setFilterDateStart] = useState('2025-01-01');
+  const [filterDateEnd, setFilterDateEnd] = useState(new Date().toISOString().slice(0, 10));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -503,7 +505,7 @@ export default function AdminStudents() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
-  useEffect(() => { setPage(1); }, [search, filterStatus, filterCountry, filterCounselorId, filterIntake]);
+  useEffect(() => { setPage(1); }, [search, filterStatus, filterCountry, filterCounselorId, filterIntake, filterDateStart, filterDateEnd]);
 
   const counselorNameById = Object.fromEntries(counselors.map(c => [normalId(c), c.name]));
   const countryOptions = Array.from(new Set(students.flatMap(s => s.preferredCountries || []).filter(Boolean))).sort() as string[];
@@ -515,9 +517,12 @@ export default function AdminStudents() {
       if (filterCounselorId === '__unassigned__') { if (s.counselorId) return false; }
       else if (s.counselorId?.toString() !== filterCounselorId) return false;
     }
+    const jd = (s.joinedDate || '').slice(0, 10);
+    if (filterDateStart && jd < filterDateStart) return false;
+    if (filterDateEnd && jd > filterDateEnd) return false;
     if (search) {
       const q = search.toLowerCase();
-      if (!s.name?.toLowerCase().includes(q) && !s.email?.toLowerCase().includes(q) && !s.nationality?.toLowerCase().includes(q)) return false;
+      if (!s.name?.toLowerCase().includes(q) && !s.email?.toLowerCase().includes(q) && !s.phone?.toLowerCase().includes(q)) return false;
     }
     return true;
   });
@@ -560,8 +565,14 @@ export default function AdminStudents() {
   };
 
   const handleExport = () => {
-    const ws = XLSX.utils.json_to_sheet(filtered.map(s => ({ Name: s.name || '', Email: s.email || '', Nationality: s.nationality || '', Status: s.status || '', Counselor: counselorNameById[s.counselorId] || 'Unassigned', 'Joined Date': s.joinedDate || '' })));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Students'); XLSX.writeFile(wb, 'students.xlsx');
+    const ws = XLSX.utils.json_to_sheet(filtered.map(s => ({
+      Name: s.name || '', Email: s.email || '', Nationality: s.nationality || '',
+      Status: s.status || '', Counselor: counselorNameById[s.counselorId] || 'Unassigned',
+      'Joined Date': s.joinedDate || '',
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Students');
+    XLSX.writeFile(wb, 'students.xlsx');
   };
 
   const activeTags: { label: string; clear: () => void }[] = [];
@@ -590,7 +601,6 @@ export default function AdminStudents() {
   };
   const pageNums = buildPageNums();
 
-  const today = new Date().toLocaleDateString('en-GB');
   const avatarPalette = ['from-blue-500 to-indigo-600', 'from-green-500 to-emerald-600', 'from-purple-500 to-pink-600', 'from-amber-500 to-orange-600', 'from-cyan-500 to-blue-600', 'from-rose-500 to-red-600'];
 
   // shared select style
@@ -616,16 +626,18 @@ export default function AdminStudents() {
             <p className="text-gray-500 text-sm mt-1">Manage all students and their profiles</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {[
-              { label: 'Export CSV', icon: <Download className="w-4 h-4" />, onClick: handleExport },
-              { label: 'Archived', icon: <Archive className="w-4 h-4" />, onClick: undefined },
-              { label: 'Register student', icon: <GraduationCap className="w-4 h-4" />, onClick: () => setShowNewStudent(true) },
-            ].map(btn => (
-              <button key={btn.label} type="button" onClick={btn.onClick}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium border border-gray-200 shadow-sm transition-colors">
-                {btn.icon}{btn.label}
-              </button>
-            ))}
+            <button type="button" onClick={handleExport}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium border border-gray-200 shadow-sm transition-colors">
+              <Download className="w-4 h-4" />Export CSV
+            </button>
+            <button type="button" onClick={loadData} disabled={loading}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium border border-gray-200 shadow-sm transition-colors disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Refresh
+            </button>
+            <button type="button" onClick={() => setShowNewStudent(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium border border-gray-200 shadow-sm transition-colors">
+              <GraduationCap className="w-4 h-4" />Register student
+            </button>
           </div>
         </div>
 
@@ -662,10 +674,22 @@ export default function AdminStudents() {
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3">
           {/* Row 1 */}
           <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-500 font-medium whitespace-nowrap">
-              <span className="w-3 h-3 border border-gray-300 rounded-sm" />
-              01/01/2025 – {today}
-              <span className="w-3 h-3 border border-gray-300 rounded-sm" />
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={filterDateStart}
+                onChange={e => setFilterDateStart(e.target.value)}
+                title="From date"
+                className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <span className="text-gray-400 text-sm font-medium">–</span>
+              <input
+                type="date"
+                value={filterDateEnd}
+                onChange={e => setFilterDateEnd(e.target.value)}
+                title="To date"
+                className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
             {/* Country */}
             <div className="relative">
@@ -709,7 +733,7 @@ export default function AdminStudents() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input value={searchInput} onChange={e => setSearchInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') setSearch(searchInput); }}
-                placeholder="Search by name, email, nationality..."
+                placeholder="Search by name, email, phone..."
                 className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <button type="button" onClick={() => setSearch(searchInput)}
@@ -745,7 +769,7 @@ export default function AdminStudents() {
                     <th className="w-10 px-4 py-3.5">
                       <input type="checkbox" checked={allPageSelected} onChange={toggleAll} className="w-4 h-4 rounded cursor-pointer accent-blue-500" />
                     </th>
-                    {['STUDENT', 'JOINED', 'EMAIL', 'NATIONALITY', 'ASSIGNED TO', 'STATUS', 'ACTIONS'].map(h => (
+                    {['STUDENT', 'JOINED', 'EMAIL', 'PHONE', 'ASSIGNED TO', 'STATUS', 'ACTIONS'].map(h => (
                       <th key={h} className={`px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap ${h === 'ACTIONS' ? 'text-right' : 'text-left'}`}>{h}</th>
                     ))}
                   </tr>
@@ -785,8 +809,8 @@ export default function AdminStudents() {
                         <td className="px-4 py-3.5 text-sm text-gray-600 whitespace-nowrap">{s.joinedDate || '—'}</td>
                         {/* Email */}
                         <td className="px-4 py-3.5 text-sm text-blue-500 whitespace-nowrap max-w-[160px] truncate">{s.email || '—'}</td>
-                        {/* Nationality */}
-                        <td className="px-4 py-3.5 text-sm text-gray-600 whitespace-nowrap">{s.nationality || '—'}</td>
+                        {/* Phone */}
+                        <td className="px-4 py-3.5 text-sm text-gray-600 whitespace-nowrap">{s.phone || '—'}</td>
                         {/* Assigned To */}
                         <td className="px-4 py-3.5">
                           <div className="relative inline-block">
