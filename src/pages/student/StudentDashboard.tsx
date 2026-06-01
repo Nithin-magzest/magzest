@@ -230,15 +230,15 @@ export default function StudentDashboard() {
         </div>
         <div className="grid grid-cols-3 gap-4 mt-6">
           {[
-            { label: 'Applications', value: appStats.total, icon: FileText },
-            { label: 'Under Review', value: appStats.underReview, icon: Clock },
-            { label: 'Docs Verified', value: `${docStats.verified}/${docStats.total}`, icon: CheckCircle },
+            { label: 'Applications', value: appStats.total, icon: FileText, to: '/student/applications' },
+            { label: 'Under Review', value: appStats.underReview, icon: Clock, to: '/student/applications' },
+            { label: 'Docs Verified', value: `${docStats.verified}/${docStats.total}`, icon: CheckCircle, to: '/student/profile' },
           ].map(s => (
-            <div key={s.label} className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+            <Link key={s.label} to={s.to} className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm hover:bg-white/20 transition-colors">
               <s.icon className="w-5 h-5 mx-auto mb-1 text-blue-200" />
               <div className="text-xl font-bold">{s.value}</div>
               <div className="text-xs text-blue-200">{s.label}</div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

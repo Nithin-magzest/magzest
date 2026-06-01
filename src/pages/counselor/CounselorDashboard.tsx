@@ -289,16 +289,16 @@ export default function CounselorDashboard() {
         <p className="text-blue-200 mt-1 text-sm capitalize">{counselor?.specialization?.join(' • ')}</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">
           {[
-            { label: 'My Students', value: stats.totalStudents, icon: Users },
-            { label: 'Active Apps', value: stats.activeApplications, icon: FileText },
-            { label: 'Pending Docs', value: stats.pendingDocs, icon: AlertCircle },
-            { label: 'Offers Out', value: stats.offers, icon: Star },
+            { label: 'My Students', value: stats.totalStudents, icon: Users, to: '/counselor/students' },
+            { label: 'Active Apps', value: stats.activeApplications, icon: FileText, to: '/counselor/applications' },
+            { label: 'Pending Docs', value: stats.pendingDocs, icon: AlertCircle, to: '/counselor/students' },
+            { label: 'Offers Out', value: stats.offers, icon: Star, to: '/counselor/applications' },
           ].map(s => (
-            <div key={s.label} className="bg-white/15 rounded-xl p-3 backdrop-blur-sm">
+            <Link key={s.label} to={s.to} className="bg-white/15 rounded-xl p-3 backdrop-blur-sm hover:bg-white/25 transition-colors">
               <s.icon className="w-4 h-4 text-blue-200 mb-1" />
               <div className="text-2xl font-bold">{s.value}</div>
               <div className="text-xs text-blue-200">{s.label}</div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -306,10 +306,15 @@ export default function CounselorDashboard() {
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-gray-900">Application Pipeline</h2>
-          <Link to="/counselor/universities"
-            className="flex items-center gap-1.5 bg-[#0d1b4b] text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-[#152258] transition-colors">
-            <Plus className="w-4 h-4" /> New Application
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/counselor/applications" className="text-blue-600 text-sm font-medium hover:text-blue-700 flex items-center gap-1">
+              View All <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <Link to="/counselor/universities"
+              className="flex items-center gap-1.5 bg-[#0d1b4b] text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-[#152258] transition-colors">
+              <Plus className="w-4 h-4" /> New Application
+            </Link>
+          </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {appBreakdown.map(b => (
@@ -516,7 +521,12 @@ export default function CounselorDashboard() {
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900 mb-5">Recent Activity</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
+            <Link to="/counselor/applications" className="text-blue-600 text-sm font-medium hover:text-blue-700 flex items-center gap-1">
+              View All <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
           <div className="space-y-3">
             {recentActivity.map((a, i) => (
               <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">

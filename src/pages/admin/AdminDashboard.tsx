@@ -1,8 +1,8 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Users, UserCog, FileText, Activity, Plus, Trash2, X, Shield,
-  Eye, EyeOff, Check, UserPlus, Search, ExternalLink,
+  Eye, EyeOff, Check, UserPlus, Search, ExternalLink, ArrowRight,
   ToggleLeft, ToggleRight, Info, GraduationCap, RefreshCw, AlertTriangle, UserCheck, MessageSquare,
   ChevronDown, ChevronUp, BookOpen, DollarSign, MapPin, CheckCircle,
 } from 'lucide-react';
@@ -1586,16 +1586,19 @@ export default function AdminDashboard() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Total Students', value: stats?.totalStudents ?? '—', icon: Users, color: 'from-blue-400/30 to-blue-600/30' },
-              { label: 'Counselors', value: stats?.totalCounselors ?? '—', icon: UserCog, color: 'from-green-400/30 to-green-600/30' },
-              { label: 'Applications', value: stats?.totalApplications ?? '—', icon: FileText, color: 'from-orange-400/30 to-orange-600/30' },
-              { label: 'Active Students', value: stats?.activeStudents ?? '—', icon: Activity, color: 'from-pink-400/30 to-pink-600/30' },
+              { label: 'Total Students', value: stats?.totalStudents ?? '—', icon: Users, color: 'from-blue-400/30 to-blue-600/30', to: '/admin/students' },
+              { label: 'Counselors', value: stats?.totalCounselors ?? '—', icon: UserCog, color: 'from-green-400/30 to-green-600/30', to: '/admin/counselors' },
+              { label: 'Applications', value: stats?.totalApplications ?? '—', icon: FileText, color: 'from-orange-400/30 to-orange-600/30', to: '/admin/applications' },
+              { label: 'Active Students', value: stats?.activeStudents ?? '—', icon: Activity, color: 'from-pink-400/30 to-pink-600/30', to: '/admin/students' },
             ].map(s => (
-              <div key={s.label} className={`bg-gradient-to-br ${s.color} border border-white/20 rounded-xl p-4 backdrop-blur-sm`}>
+              <Link key={s.label} to={s.to} className={`bg-gradient-to-br ${s.color} border border-white/20 rounded-xl p-4 backdrop-blur-sm hover:border-white/40 hover:brightness-110 transition-all group`}>
                 <s.icon className="w-4 h-4 text-white/70 mb-2" />
                 <div className="text-3xl font-bold tracking-tight">{loading ? '…' : s.value}</div>
-                <div className="text-xs text-white/60 mt-0.5">{s.label}</div>
-              </div>
+                <div className="text-xs text-white/60 mt-0.5 flex items-center gap-1">
+                  {s.label}
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </Link>
             ))}
           </div>
         </div>

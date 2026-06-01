@@ -239,18 +239,21 @@ export default function AppTeamDashboard() {
       {/* Quick stats footer */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Accepted',    value: statusCounts.accepted || 0,  icon: CheckCircle, color: 'text-green-600',  bg: 'bg-green-50' },
-          { label: 'Enrolled',    value: statusCounts.enrolled || 0,  icon: CheckCircle, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          { label: 'Rejected',    value: statusCounts.rejected || 0,  icon: CheckCircle, color: 'text-red-600',    bg: 'bg-red-50' },
-          { label: 'Draft',       value: statusCounts.draft || 0,     icon: Clock,       color: 'text-gray-600',   bg: 'bg-gray-50' },
+          { label: 'Accepted',    value: statusCounts.accepted || 0,  icon: CheckCircle, color: 'text-green-600',  bg: 'bg-green-50',  to: '/appteam/applications' },
+          { label: 'Enrolled',    value: statusCounts.enrolled || 0,  icon: CheckCircle, color: 'text-indigo-600', bg: 'bg-indigo-50', to: '/appteam/applications' },
+          { label: 'Rejected',    value: statusCounts.rejected || 0,  icon: CheckCircle, color: 'text-red-600',    bg: 'bg-red-50',    to: '/appteam/applications' },
+          { label: 'Draft',       value: statusCounts.draft || 0,     icon: Clock,       color: 'text-gray-600',   bg: 'bg-gray-50',   to: '/appteam/applications' },
         ].map(item => (
-          <div key={item.label} className={`${item.bg} rounded-xl p-4 flex items-center gap-3`}>
+          <Link key={item.label} to={item.to} className={`${item.bg} rounded-xl p-4 flex items-center gap-3 hover:shadow-sm transition-all group`}>
             <item.icon className={`w-8 h-8 ${item.color} opacity-70`} />
             <div>
               <p className={`text-xl font-bold ${item.color}`}>{item.value}</p>
-              <p className="text-xs text-gray-500">{item.label}</p>
+              <p className="text-xs text-gray-500 flex items-center gap-1">
+                {item.label}
+                <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
