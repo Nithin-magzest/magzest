@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CallProvider } from './context/CallContext';
 import { AuthModalProvider } from './context/AuthModalContext';
@@ -73,6 +73,12 @@ const BoardCounselors   = lazy(() => import('./pages/board/BoardCounselors'));
 const BoardStudents     = lazy(() => import('./pages/board/BoardStudents'));
 const BoardDocuments    = lazy(() => import('./pages/board/BoardDocuments'));
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
+
 function PageSpinner() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -89,6 +95,7 @@ export default function App() {
       <NotificationProvider>
       <AuthModalProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ScrollToTop />
         <AuthModal />
         <Suspense fallback={<PageSpinner />}>
           <Routes>

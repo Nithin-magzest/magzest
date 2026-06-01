@@ -46,7 +46,7 @@ function BtnPrimary({ children, onClick, disabled, type = 'button', className = 
 }) {
   const colors = variant === 'blue'
     ? 'from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus-visible:ring-blue-500'
-    : 'from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus-visible:ring-purple-500';
+    : 'from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 focus-visible:ring-purple-400';
   return (
     <button type={type} onClick={onClick} disabled={disabled}
       className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white
@@ -92,7 +92,7 @@ function BtnDanger({ children, onClick, disabled, className = '' }: {
 
 function BtnView({ onClick, color = 'purple' }: { onClick: () => void; color?: 'purple' | 'blue' }) {
   const s = color === 'blue'
-    ? 'text-blue-600 bg-sky-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 focus-visible:ring-blue-400'
+    ? 'text-purple-600 bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 focus-visible:ring-purple-400'
     : 'text-purple-600 bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 focus-visible:ring-purple-400';
   return (
     <button type="button" onClick={onClick}
@@ -150,9 +150,9 @@ function counselorPerf(counselor: any, allStudents: any[]) {
 
   const score = Math.min(100, Math.round(offerRate * 45 + docRate * 30 + portfolioRate * 25));
   const tier = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Average' : 'Getting Started';
-  const color = score >= 80 ? 'text-green-600' : score >= 60 ? 'text-[#0d1b4b]' : score >= 40 ? 'text-yellow-600' : 'text-gray-500';
-  const bg = score >= 80 ? 'bg-green-50 border-green-200' : score >= 60 ? 'bg-[#f0f4ff] border-[#0d1b4b]/20' : score >= 40 ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200';
-  const bar = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-[#0d1b4b]' : score >= 40 ? 'bg-yellow-500' : 'bg-gray-400';
+  const color = score >= 80 ? 'text-green-600' : score >= 60 ? 'text-purple-700' : score >= 40 ? 'text-yellow-600' : 'text-gray-500';
+  const bg = score >= 80 ? 'bg-green-50 border-green-200' : score >= 60 ? 'bg-purple-50 border-purple-200' : score >= 40 ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200';
+  const bar = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-purple-600' : score >= 40 ? 'bg-yellow-500' : 'bg-gray-400';
 
   return {
     score, tier, color, bg, bar,
@@ -161,7 +161,7 @@ function counselorPerf(counselor: any, allStudents: any[]) {
     studentCount: myStudents.length,
     metrics: [
       { label: 'Offer & Acceptance Rate', value: Math.round(offerRate * 100), bar: 'bg-green-500' },
-      { label: 'Document Review Rate', value: Math.round(docRate * 100), bar: 'bg-[#0d1b4b]' },
+      { label: 'Document Review Rate', value: Math.round(docRate * 100), bar: 'bg-purple-600' },
       { label: 'Student Portfolio', value: Math.round(portfolioRate * 100), bar: 'bg-purple-500' },
     ],
   };
@@ -250,7 +250,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: { st
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Preferred Countries</p>
                   <div className="flex flex-wrap gap-2">
                     {student.preferredCountries.map((c: string) => (
-                      <span key={c} className="text-xs bg-sky-50 text-blue-700 px-3 py-1.5 rounded-full font-medium border border-blue-100">{c}</span>
+                      <span key={c} className="text-xs bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full font-medium border border-purple-100">{c}</span>
                     ))}
                   </div>
                 </div>
@@ -339,7 +339,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: { st
           {onNewApplication && (
             <button type="button" onClick={onNewApplication}
               className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
-                text-white bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700 shadow-md
+                text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-md
                 active:scale-[0.98] transition-all">
               <Plus className="w-4 h-4" />New Application
             </button>
@@ -365,7 +365,7 @@ function CounselorDetailModal({ counselor, students, onClose, onChat }: { counse
       <div className="bg-white rounded-2xl w-full max-w-5xl h-[93vh] flex flex-col shadow-2xl overflow-hidden">
 
         {/* Header banner */}
-        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 px-6 pt-6 pb-5 flex-shrink-0">
+        <div className="bg-gradient-to-r from-purple-500 via-purple-600 to-indigo-600 px-6 pt-6 pb-5 flex-shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-white/20 border border-white/30 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg flex-shrink-0">
@@ -519,7 +519,7 @@ function CounselorDetailModal({ counselor, students, onClose, onChat }: { counse
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Certifications</p>
                   <div className="flex flex-wrap gap-2">
                     {counselor.certifications.map((c: string) => (
-                      <span key={c} className="text-xs bg-sky-50 text-blue-700 px-3 py-1.5 rounded-full font-medium border border-blue-100">{c}</span>
+                      <span key={c} className="text-xs bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full font-medium border border-purple-100">{c}</span>
                     ))}
                   </div>
                 </div>
@@ -886,18 +886,18 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name <span className="text-red-500">*</span></label>
             <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Aryan Sharma"
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400" />
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Email <span className="text-red-500">*</span></label>
             <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="student@example.com"
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400" />
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Password <span className="text-red-500">*</span></label>
             <div className="relative">
               <input type={showPw ? 'text' : 'password'} value={form.password} onChange={e => set('password', e.target.value)} placeholder="Set a password"
-                className="w-full px-3.5 py-2.5 pr-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400" />
+                className="w-full px-3.5 py-2.5 pr-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
               <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -910,12 +910,12 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
               <input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+91 9999999999"
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400" />
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Nationality</label>
               <input value={form.nationality} onChange={e => set('nationality', e.target.value)} placeholder="e.g. Indian"
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400" />
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
             </div>
           </div>
 
@@ -923,7 +923,7 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Education Level</label>
             <select value={form.educationLevel} onChange={e => set('educationLevel', e.target.value)} title="Education Level"
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-700">
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-700">
               <option value="">Select level…</option>
               {EDUCATION_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
@@ -932,19 +932,19 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">GPA</label>
               <input type="number" step="0.01" min="0" max="10" value={form.gpa} onChange={e => set('gpa', e.target.value)} placeholder="e.g. 3.8"
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400" />
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Budget (USD)</label>
               <input type="number" min="0" value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="e.g. 50000"
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400" />
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">English Test</label>
               <select value={form.englishType} onChange={e => set('englishType', e.target.value)} title="English Test Type"
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-700">
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-700">
                 <option value="">Select…</option>
                 {ENGLISH_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
@@ -952,7 +952,7 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Score</label>
               <input type="number" step="0.5" value={form.englishScore} onChange={e => set('englishScore', e.target.value)} placeholder="e.g. 7.5"
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400" />
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400" />
             </div>
           </div>
 
@@ -964,7 +964,7 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
                 return (
                   <button key={c} type="button" onClick={() => toggleArr('preferredCountries', c)}
                     className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium transition-all duration-150 active:scale-95
-                      ${sel ? 'bg-[#0d1b4b] text-white border-[#0d1b4b] shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-[#0d1b4b]/40 hover:text-[#0d1b4b]'}`}>
+                      ${sel ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-purple-400 hover:text-purple-600'}`}>
                     {sel && <Check className="w-3 h-3" />}{c}
                   </button>
                 );
@@ -992,7 +992,7 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Assign to Counselor</label>
               <select value={form.counselorId} onChange={e => set('counselorId', e.target.value)} title="Assign to Counselor"
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-700">
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-700">
                 <option value="">Unassigned</option>
                 {counselors.map(c => <option key={normalId(c)} value={normalId(c)}>{c.name}</option>)}
               </select>
@@ -1233,12 +1233,12 @@ function NewApplicationModal({ student, onClose, onCreated }: {
       <div className="bg-white rounded-2xl w-full max-w-2xl h-[90vh] flex flex-col shadow-2xl overflow-hidden">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-sky-500 to-cyan-600 px-6 py-5 flex-shrink-0">
+        <div className="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-5 flex-shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sky-200 text-xs font-medium uppercase tracking-wide">New Application</p>
+              <p className="text-purple-200 text-xs font-medium uppercase tracking-wide">New Application</p>
               <h2 className="text-xl font-bold text-white mt-0.5">Select University & Course</h2>
-              <p className="text-sky-100 text-sm mt-1">for <span className="font-semibold">{student.name}</span></p>
+              <p className="text-purple-100 text-sm mt-1">for <span className="font-semibold">{student.name}</span></p>
             </div>
             <button type="button" onClick={onClose} aria-label="Close"
               className="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:bg-white/20 hover:text-white transition-all flex-shrink-0">
@@ -1253,7 +1253,7 @@ function NewApplicationModal({ student, onClose, onCreated }: {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search universities or countries…"
-              className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
           </div>
         </div>
 
@@ -1327,7 +1327,7 @@ function NewApplicationModal({ student, onClose, onCreated }: {
                       const isApplied = appliedIds.has(key);
                       const isApplying = applying === key;
                       return (
-                        <div key={cid} className="flex items-center gap-4 px-4 py-3 bg-white hover:bg-sky-50/30 transition-colors">
+                        <div key={cid} className="flex items-center gap-4 px-4 py-3 bg-white hover:bg-purple-50/30 transition-colors">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-800">{course.name}</p>
                             <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
@@ -1349,7 +1349,7 @@ function NewApplicationModal({ student, onClose, onCreated }: {
                             className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all active:scale-95
                               ${isApplied
                                 ? 'bg-green-50 text-green-700 border-green-200 cursor-default'
-                                : 'bg-[#0d1b4b] text-white border-[#0d1b4b] hover:bg-[#152258] hover:border-[#152258] shadow-sm disabled:opacity-60'}`}>
+                                : 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700 hover:border-purple-700 shadow-sm disabled:opacity-60'}`}>
                             {isApplying ? (
                               <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
                             ) : isApplied ? (
@@ -1567,34 +1567,34 @@ export default function AdminDashboard() {
       <div className="space-y-6">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <Shield className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Shield className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-purple-200 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
-                <h1 className="text-2xl font-bold leading-tight">Dashboard</h1>
+                <p className="text-purple-500 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
+                <h1 className="text-2xl font-bold text-purple-900 leading-tight">Dashboard</h1>
               </div>
             </div>
             <button type="button" onClick={loadData} disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors disabled:opacity-50">
+              className="flex items-center gap-2 px-3 py-2 bg-white border border-purple-200 hover:bg-purple-50 rounded-xl text-sm font-medium text-purple-700 transition-colors disabled:opacity-50">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Total Students', value: stats?.totalStudents ?? '—', icon: Users, color: 'from-blue-400/30 to-blue-600/30' },
-              { label: 'Counselors', value: stats?.totalCounselors ?? '—', icon: UserCog, color: 'from-green-400/30 to-green-600/30' },
-              { label: 'Applications', value: stats?.totalApplications ?? '—', icon: FileText, color: 'from-orange-400/30 to-orange-600/30' },
-              { label: 'Active Students', value: stats?.activeStudents ?? '—', icon: Activity, color: 'from-pink-400/30 to-pink-600/30' },
+              { label: 'Total Students', value: stats?.totalStudents ?? '—', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+              { label: 'Counselors', value: stats?.totalCounselors ?? '—', icon: UserCog, color: 'text-green-600', bg: 'bg-green-50' },
+              { label: 'Applications', value: stats?.totalApplications ?? '—', icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50' },
+              { label: 'Active Students', value: stats?.activeStudents ?? '—', icon: Activity, color: 'text-purple-600', bg: 'bg-purple-50' },
             ].map(s => (
-              <div key={s.label} className={`bg-gradient-to-br ${s.color} border border-white/20 rounded-xl p-4 backdrop-blur-sm`}>
-                <s.icon className="w-4 h-4 text-white/70 mb-2" />
-                <div className="text-3xl font-bold tracking-tight">{loading ? '…' : s.value}</div>
-                <div className="text-xs text-white/60 mt-0.5">{s.label}</div>
+              <div key={s.label} className={`${s.bg} border border-white rounded-xl p-4`}>
+                <s.icon className={`w-4 h-4 ${s.color} mb-2`} />
+                <div className={`text-3xl font-bold tracking-tight ${s.color}`}>{loading ? '…' : s.value}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
@@ -1729,14 +1729,14 @@ export default function AdminDashboard() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   <input value={studentSearch} onChange={e => setStudentSearch(e.target.value)}
                     placeholder="Search by name, email or nationality…"
-                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
                 </div>
                 <input
                   type="date"
                   value={studentDateFilter}
                   onChange={e => setStudentDateFilter(e.target.value)}
                   title="Filter by join date"
-                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
                 {studentDateFilter && (
                   <button type="button" onClick={() => setStudentDateFilter('')}
@@ -1761,7 +1761,7 @@ export default function AdminDashboard() {
                 const isActive = s.status === 'active';
                 const isToggling = togglingId === id;
                 return (
-                  <div key={id} className="flex items-center gap-4 px-5 py-4 hover:bg-sky-50/30 transition-colors">
+                  <div key={id} className="flex items-center gap-4 px-5 py-4 hover:bg-purple-50/40 transition-colors">
                     <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm text-lg">
                       {s.name?.charAt(0)}
                     </div>
@@ -1771,7 +1771,7 @@ export default function AdminDashboard() {
                       <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                         {s.nationality && <span className="text-xs text-gray-400">{s.nationality}</span>}
                         {s.educationLevel && <span className="text-xs text-gray-400">{s.educationLevel}</span>}
-                        {s.gpa && <span className="text-xs text-blue-600 font-semibold">GPA {s.gpa}</span>}
+                        {s.gpa && <span className="text-xs text-purple-600 font-semibold">GPA {s.gpa}</span>}
                         {s.englishScore?.score && (
                           <span className="text-xs text-indigo-600 font-semibold">{s.englishScore.type} {s.englishScore.score}</span>
                         )}
@@ -1789,8 +1789,8 @@ export default function AdminDashboard() {
                       <button type="button" title={`Chat with ${s.name}`}
                         onClick={() => navigate('/admin/chat', { state: { openChatWith: { _id: id, name: s.name } } })}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
-                          text-sky-700 bg-sky-50 border-sky-200 hover:bg-sky-100 hover:border-sky-300
-                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-1">
+                          text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300
+                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1">
                         <MessageSquare className="w-3.5 h-3.5" />Chat
                       </button>
                       <button type="button" onClick={() => setAssigningStudent(s)}

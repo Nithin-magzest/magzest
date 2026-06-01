@@ -34,7 +34,7 @@ export default function AdminLayout() {
   if (user?.role !== 'admin') return <Navigate to="/login" />;
 
   return (
-    <div className="min-h-screen bg-sky-50">
+    <div className="min-h-screen bg-purple-50">
       <Navbar />
       <div className="flex">
         <aside className="hidden md:flex flex-col w-64 min-h-[calc(100vh-64px)] bg-white border-r border-gray-200 sticky top-16 p-4 gap-1">

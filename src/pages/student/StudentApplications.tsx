@@ -335,9 +335,13 @@ export default function StudentApplications() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {Object.entries(counts).map(([key, val]) => (
           <button type="button" key={key} onClick={() => setFilter(key)}
-            className={`p-4 rounded-2xl text-center border-2 transition-all ${filter === key ? 'border-blue-500 bg-sky-50' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
-            <div className={`text-2xl font-bold ${filter === key ? 'text-blue-700' : 'text-gray-800'}`}>{val}</div>
-            <div className="text-xs text-gray-500 capitalize mt-0.5">{key.replace('_', ' ')}</div>
+            className={`py-7 px-4 rounded-3xl text-center border-2 flex flex-col items-center justify-center gap-1 transition-all ${
+              filter === key
+                ? 'border-[#0d1b4b] bg-[#f0f4ff] shadow-sm'
+                : 'border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-200'
+            }`}>
+            <div className={`text-3xl font-bold ${filter === key ? 'text-[#0d1b4b]' : 'text-gray-700'}`}>{val}</div>
+            <div className={`text-xs font-medium capitalize ${filter === key ? 'text-[#0d1b4b]/70' : 'text-gray-500'}`}>{key.replace('_', ' ')}</div>
           </button>
         ))}
       </div>

@@ -33,7 +33,7 @@ export default function StudentLayout() {
   if (user?.role !== 'student') return <Navigate to="/login" />;
 
   return (
-    <div className="min-h-screen bg-sky-50">
+    <div className="min-h-screen bg-blue-50">
       <Navbar />
       <div className="flex">
         {/* Sidebar */}

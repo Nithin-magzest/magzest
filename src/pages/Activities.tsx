@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Calendar, CheckSquare, Star, Phone, Plus, ChevronLeft, ChevronRight,
   Check, Clock, Video, PhoneCall, PhoneOff, Trash2, X, Bell, BellOff
@@ -69,7 +70,79 @@ const CALL_STATUS_BG: Record<string,string> = {
   scheduled: 'bg-blue-50',
 };
 
+type DashTheme = {
+  calHeader: string; calHeaderSub: string; todayBtnText: string;
+  selectedBg: string; selectedNumBg: string; selectedNumText: string;
+  todayHighlight: string; todayNumBg: string;
+  moreText: string; indicatorDot: string;
+  dayDetailBg: string; dayDetailSub: string;
+  eventTime: string; starIcon: string; eventsBadge: string;
+  reminderBtn: string; reminderLink: string;
+  tabBadgeActive: string;
+  actionBtn: string; actionBtnHover: string;
+  formBorder: string; hoverBorder: string;
+};
+
+const THEMES: Record<string, DashTheme> = {
+  admin: {
+    calHeader: 'from-purple-400 via-purple-500 to-indigo-500', calHeaderSub: 'text-purple-100', todayBtnText: 'text-purple-600',
+    selectedBg: 'bg-purple-500', selectedNumBg: 'bg-white', selectedNumText: 'text-purple-600',
+    todayHighlight: 'bg-purple-50', todayNumBg: 'bg-purple-500 text-white',
+    moreText: 'text-purple-100', indicatorDot: 'bg-white',
+    dayDetailBg: 'from-purple-400 to-indigo-500', dayDetailSub: 'text-purple-100',
+    eventTime: 'text-purple-600', starIcon: 'text-purple-500', eventsBadge: 'bg-purple-100 text-purple-700',
+    reminderBtn: 'text-purple-600 hover:text-purple-800', reminderLink: 'text-purple-600',
+    tabBadgeActive: 'bg-purple-100 text-purple-700',
+    actionBtn: 'bg-purple-600', actionBtnHover: 'hover:bg-purple-700',
+    formBorder: 'focus:border-purple-400', hoverBorder: 'hover:border-gray-200',
+  },
+  counselor: {
+    calHeader: 'from-green-400 to-emerald-500', calHeaderSub: 'text-green-100', todayBtnText: 'text-green-700',
+    selectedBg: 'bg-green-500', selectedNumBg: 'bg-white', selectedNumText: 'text-green-700',
+    todayHighlight: 'bg-green-50', todayNumBg: 'bg-green-500 text-white',
+    moreText: 'text-green-100', indicatorDot: 'bg-white',
+    dayDetailBg: 'from-green-400 to-emerald-500', dayDetailSub: 'text-green-100',
+    eventTime: 'text-green-600', starIcon: 'text-green-500', eventsBadge: 'bg-green-100 text-green-700',
+    reminderBtn: 'text-green-600 hover:text-green-800', reminderLink: 'text-green-600',
+    tabBadgeActive: 'bg-green-100 text-green-700',
+    actionBtn: 'bg-green-500', actionBtnHover: 'hover:bg-green-600',
+    formBorder: 'focus:border-green-400', hoverBorder: 'hover:border-green-100',
+  },
+  student: {
+    calHeader: 'from-blue-700 via-blue-600 to-blue-400', calHeaderSub: 'text-blue-100', todayBtnText: 'text-blue-700',
+    selectedBg: 'bg-blue-600', selectedNumBg: 'bg-white', selectedNumText: 'text-blue-700',
+    todayHighlight: 'bg-blue-50', todayNumBg: 'bg-blue-600 text-white',
+    moreText: 'text-blue-100', indicatorDot: 'bg-white',
+    dayDetailBg: 'from-blue-700 to-blue-500', dayDetailSub: 'text-blue-100',
+    eventTime: 'text-blue-600', starIcon: 'text-blue-500', eventsBadge: 'bg-blue-100 text-blue-700',
+    reminderBtn: 'text-blue-600 hover:text-blue-800', reminderLink: 'text-blue-600',
+    tabBadgeActive: 'bg-blue-100 text-blue-700',
+    actionBtn: 'bg-blue-600', actionBtnHover: 'hover:bg-blue-700',
+    formBorder: 'focus:border-blue-400', hoverBorder: 'hover:border-blue-100',
+  },
+  appteam: {
+    calHeader: 'from-orange-400 to-amber-400', calHeaderSub: 'text-orange-100', todayBtnText: 'text-orange-600',
+    selectedBg: 'bg-orange-400', selectedNumBg: 'bg-white', selectedNumText: 'text-orange-600',
+    todayHighlight: 'bg-orange-50', todayNumBg: 'bg-orange-400 text-white',
+    moreText: 'text-orange-100', indicatorDot: 'bg-white',
+    dayDetailBg: 'from-orange-400 to-amber-400', dayDetailSub: 'text-orange-100',
+    eventTime: 'text-orange-600', starIcon: 'text-orange-500', eventsBadge: 'bg-orange-100 text-orange-700',
+    reminderBtn: 'text-orange-600 hover:text-orange-800', reminderLink: 'text-orange-600',
+    tabBadgeActive: 'bg-orange-100 text-orange-700',
+    actionBtn: 'bg-orange-500', actionBtnHover: 'hover:bg-orange-600',
+    formBorder: 'focus:border-orange-400', hoverBorder: 'hover:border-orange-100',
+  },
+};
+
 export default function Activities() {
+  const { pathname } = useLocation();
+  const t: DashTheme =
+    pathname.includes('/admin')    ? THEMES.admin :
+    pathname.includes('/counselor') ? THEMES.counselor :
+    pathname.includes('/student')  ? THEMES.student :
+    pathname.includes('/appteam') || pathname.includes('/board') ? THEMES.appteam :
+    THEMES.admin;
+
   const today = new Date();
   const [tab, setTab]           = useState<Tab>('calendar');
   const [calYear, setCalYear]   = useState(today.getFullYear());
@@ -158,7 +231,7 @@ export default function Activities() {
             {t.label}
             {t.count !== undefined && t.count > 0 && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                tab === t.key ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-600'
+                tab === t.key ? t.tabBadgeActive : 'bg-gray-200 text-gray-600'
               }`}>{t.count}</span>
             )}
           </button>
@@ -172,15 +245,15 @@ export default function Activities() {
           {/* Left – big calendar */}
           <div className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Month nav */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-purple-600 to-indigo-600">
+            <div className={`flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gradient-to-r ${t.calHeader}`}>
               <div>
                 <h2 className="text-xl font-bold text-white">{MONTH_NAMES[calMonth]} {calYear}</h2>
-                <p className="text-purple-200 text-xs mt-0.5">{DAY_NAMES[today.getDay()]}, {today.getDate()} {MONTH_NAMES[today.getMonth()]}</p>
+                <p className={`${t.calHeaderSub} text-xs mt-0.5`}>{DAY_NAMES[today.getDay()]}, {today.getDate()} {MONTH_NAMES[today.getMonth()]}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDay(today.getDate()); }}
-                  className="px-3 py-1.5 text-xs font-semibold text-purple-700 bg-white rounded-lg hover:bg-purple-50 transition-colors">
+                  className={`px-3 py-1.5 text-xs font-semibold ${t.todayBtnText} bg-white rounded-lg hover:bg-gray-50 transition-colors`}>
                   Today
                 </button>
                 <button onClick={prevMonth} className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
@@ -216,32 +289,28 @@ export default function Activities() {
                 return (
                   <button key={day} onClick={() => setSelectedDay(day)}
                     className={`h-20 flex flex-col items-start justify-start p-2 text-left transition-all duration-150 relative group ${
-                      isSelected
-                        ? 'bg-purple-600 text-white'
-                        : isToday
-                        ? 'bg-purple-50'
-                        : 'hover:bg-gray-50'
+                      isSelected ? `${t.selectedBg} text-white` : isToday ? t.todayHighlight : 'hover:bg-gray-50'
                     }`}>
                     <span className={`text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full mb-1 ${
-                      isSelected ? 'bg-white text-purple-700' : isToday ? 'bg-purple-600 text-white' : 'text-gray-700'
+                      isSelected ? `${t.selectedNumBg} ${t.selectedNumText}` : isToday ? t.todayNumBg : 'text-gray-700'
                     }`}>{day}</span>
 
                     {/* Event dots / mini labels */}
                     <div className="flex flex-col gap-0.5 w-full overflow-hidden">
                       {dayEvs.slice(0, 2).map(e => (
                         <span key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded font-medium truncate leading-tight ${
-                          isSelected ? 'bg-white/20 text-white' : `${EVENT_TYPE_COLOR[e.type]}`
+                          isSelected ? 'bg-white/20 text-white' : EVENT_TYPE_COLOR[e.type]
                         }`}>{e.title}</span>
                       ))}
                       {dayEvs.length > 2 && (
-                        <span className={`text-[10px] font-medium ${isSelected ? 'text-purple-200' : 'text-gray-400'}`}>+{dayEvs.length - 2} more</span>
+                        <span className={`text-[10px] font-medium ${isSelected ? t.moreText : 'text-gray-400'}`}>+{dayEvs.length - 2} more</span>
                       )}
                     </div>
 
                     {/* Indicator dots */}
                     <div className="absolute bottom-1.5 right-2 flex gap-1">
                       {hasReminder && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-yellow-300' : 'bg-yellow-400'}`} />}
-                      {hasEvent && !dayEvs.length && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-purple-400'}`} />}
+                      {hasEvent && !dayEvs.length && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? t.indicatorDot : 'bg-gray-300'}`} />}
                     </div>
                   </button>
                 );
@@ -262,10 +331,10 @@ export default function Activities() {
           <div className="flex flex-col gap-4">
 
             {/* Selected day header */}
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-5 text-white">
-              <p className="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">{MONTH_NAMES[calMonth]} {calYear}</p>
+            <div className={`bg-gradient-to-br ${t.dayDetailBg} rounded-2xl p-5 text-white`}>
+              <p className={`${t.dayDetailSub} text-xs font-semibold uppercase tracking-widest mb-1`}>{MONTH_NAMES[calMonth]} {calYear}</p>
               <p className="text-4xl font-bold">{String(selectedDay).padStart(2, '0')}</p>
-              <p className="text-indigo-200 text-sm">{DAY_NAMES[new Date(calYear, calMonth, selectedDay).getDay()]}</p>
+              <p className={`${t.dayDetailSub} text-sm`}>{DAY_NAMES[new Date(calYear, calMonth, selectedDay).getDay()]}</p>
               <div className="mt-3 flex gap-3">
                 <div className="bg-white/20 rounded-xl px-3 py-1.5 text-center">
                   <p className="text-lg font-bold">{dayEvents.length}</p>
@@ -282,10 +351,10 @@ export default function Activities() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                  <Star className="w-4 h-4 text-purple-500" /> Events
+                  <Star className={`w-4 h-4 ${t.starIcon}`} /> Events
                 </h3>
                 {dayEvents.length > 0 && (
-                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{dayEvents.length}</span>
+                  <span className={`text-xs ${t.eventsBadge} px-2 py-0.5 rounded-full font-medium`}>{dayEvents.length}</span>
                 )}
               </div>
               <div className="p-3 space-y-2 max-h-52 overflow-y-auto">
@@ -294,7 +363,7 @@ export default function Activities() {
                     <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${EVENT_TYPE_DOT[e.type] || 'bg-gray-400'}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-gray-900 leading-tight">{e.title}</p>
-                      <p className="text-[11px] text-purple-600 font-medium mt-0.5">{e.time}</p>
+                      <p className={`text-[11px] ${t.eventTime} font-medium mt-0.5`}>{e.time}</p>
                     </div>
                   </div>
                 )) : (
@@ -313,7 +382,7 @@ export default function Activities() {
                   <Bell className="w-4 h-4 text-amber-500" /> Reminders
                 </h3>
                 <button onClick={() => setShowAddReminder(true)}
-                  className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-800 transition-colors">
+                  className={`flex items-center gap-1 text-xs font-medium ${t.reminderBtn} transition-colors`}>
                   <Plus className="w-3.5 h-3.5" /> Add
                 </button>
               </div>
@@ -350,7 +419,7 @@ export default function Activities() {
                     <BellOff className="w-7 h-7 text-gray-200 mx-auto mb-1.5" />
                     <p className="text-xs text-gray-400">No reminders for this day</p>
                     <button onClick={() => setShowAddReminder(true)}
-                      className="mt-2 text-xs text-purple-600 font-medium hover:underline">+ Add a reminder</button>
+                      className={`mt-2 text-xs ${t.reminderLink} font-medium hover:underline`}>+ Add a reminder</button>
                   </div>
                 )}
               </div>
@@ -368,29 +437,29 @@ export default function Activities() {
               <span className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{tasks.filter(t => t.done).length}</span> completed</span>
             </div>
             <button onClick={() => setShowAddTask(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 transition-colors shadow-sm">
+              className={`flex items-center gap-2 px-4 py-2 ${t.actionBtn} text-white text-sm font-medium rounded-xl ${t.actionBtnHover} transition-colors shadow-sm`}>
               <Plus className="w-4 h-4" /> Add Task
             </button>
           </div>
 
           {showAddTask && (
-            <div className="bg-white rounded-2xl border border-purple-200 p-4 shadow-md mb-4">
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-md mb-4">
               <input value={newTask} onChange={e => setNewTask(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addTask()}
                 placeholder="What needs to be done?" autoFocus
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-900 placeholder-gray-400 mb-3" />
+                className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none ${t.formBorder} text-gray-900 placeholder-gray-400 mb-3`} />
               <div className="flex gap-2 justify-end">
                 <button onClick={() => setShowAddTask(false)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><X className="w-3 h-3" /> Cancel</button>
-                <button onClick={addTask} className="px-4 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700">Add</button>
+                <button onClick={addTask} className={`px-4 py-1.5 ${t.actionBtn} text-white text-sm rounded-lg ${t.actionBtnHover}`}>Add</button>
               </div>
             </div>
           )}
 
           <div className="space-y-2">
             {tasks.filter(t => !t.done).map(task => (
-              <div key={task.id} className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-4 py-3.5 shadow-sm hover:border-purple-100 transition-all">
+              <div key={task.id} className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-4 py-3.5 shadow-sm hover:border-gray-200 transition-all">
                 <button onClick={() => toggleTask(task.id)}
-                  className="w-5 h-5 rounded-md border-2 border-gray-300 flex items-center justify-center flex-shrink-0 hover:border-purple-500 transition-colors" />
+                  className="w-5 h-5 rounded-md border-2 border-gray-300 flex items-center justify-center flex-shrink-0 hover:border-gray-500 transition-colors" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">{task.title}</p>
                   {task.due && <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1"><Clock className="w-3 h-3" />Due {task.due}</p>}
@@ -424,7 +493,7 @@ export default function Activities() {
           <div className="flex items-center justify-between mb-5">
             <span className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{events.length}</span> upcoming events</span>
             <button onClick={() => setShowAddEvent(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 transition-colors shadow-sm">
+              className={`flex items-center gap-2 px-4 py-2 ${t.actionBtn} text-white text-sm font-medium rounded-xl ${t.actionBtnHover} transition-colors shadow-sm`}>
               <Plus className="w-4 h-4" /> Add Event
             </button>
           </div>
@@ -434,7 +503,7 @@ export default function Activities() {
               <h3 className="text-sm font-semibold text-gray-800 mb-4">New Event</h3>
               <div className="grid grid-cols-1 gap-3">
                 <input value={newEvent.title} onChange={e => setNewEvent(n => ({ ...n, title: e.target.value }))}
-                  placeholder="Event title" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-900 placeholder-gray-400" />
+                  placeholder="Event title" className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none ${t.formBorder} text-gray-900 placeholder-gray-400`} />
                 <div className="grid grid-cols-2 gap-3">
                   <input type="date" value={newEvent.date} onChange={e => setNewEvent(n => ({ ...n, date: e.target.value }))}
                     className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700" />
@@ -454,14 +523,14 @@ export default function Activities() {
               </div>
               <div className="flex gap-2 justify-end mt-4">
                 <button onClick={() => setShowAddEvent(false)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><X className="w-3 h-3" /> Cancel</button>
-                <button onClick={addEvent} className="px-4 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700">Save Event</button>
+                <button onClick={addEvent} className={`px-4 py-1.5 ${t.actionBtn} text-white text-sm rounded-lg ${t.actionBtnHover}`}>Save Event</button>
               </div>
             </div>
           )}
 
           <div className="space-y-3">
             {events.map(ev => (
-              <div key={ev.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-purple-100 transition-all overflow-hidden">
+              <div key={ev.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all overflow-hidden">
                 <div className="flex">
                   <div className={`w-1.5 flex-shrink-0 ${EVENT_TYPE_DOT[ev.type] || 'bg-gray-400'}`} />
                   <div className="flex-1 p-4">
@@ -474,7 +543,7 @@ export default function Activities() {
                         <p className="text-xs text-gray-500">{ev.desc}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-semibold text-purple-600">{ev.time}</p>
+                        <p className="text-sm font-semibold text-gray-600">{ev.time}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{ev.date}</p>
                       </div>
                     </div>
@@ -495,7 +564,7 @@ export default function Activities() {
               <span className="text-sm text-gray-500"><span className="font-semibold text-red-500">{calls.filter(c => c.status === 'missed').length}</span> missed</span>
             </div>
             <button onClick={() => setShowScheduleCall(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 transition-colors shadow-sm">
+              className={`flex items-center gap-2 px-4 py-2 ${t.actionBtn} text-white text-sm font-medium rounded-xl ${t.actionBtnHover} transition-colors shadow-sm`}>
               <Plus className="w-4 h-4" /> Schedule Call
             </button>
           </div>
@@ -524,7 +593,7 @@ export default function Activities() {
               </div>
               <div className="flex gap-2 justify-end mt-4">
                 <button onClick={() => setShowScheduleCall(false)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><X className="w-3 h-3" /> Cancel</button>
-                <button onClick={addCall} className="px-4 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700">Schedule</button>
+                <button onClick={addCall} className={`px-4 py-1.5 ${t.actionBtn} text-white text-sm rounded-lg ${t.actionBtnHover}`}>Schedule</button>
               </div>
             </div>
           )}
@@ -537,7 +606,7 @@ export default function Activities() {
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{group}</p>
                 <div className="space-y-2">
                   {groupCalls.map(call => (
-                    <div key={call.id} className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 px-4 py-3.5 shadow-sm hover:border-purple-100 transition-all">
+                    <div key={call.id} className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 px-4 py-3.5 shadow-sm hover:border-gray-200 transition-all">
                       <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${CALL_STATUS_BG[call.status]}`}>
                         {call.type === 'video'
                           ? <Video className={`w-5 h-5 ${CALL_STATUS_COLOR[call.status]}`} />

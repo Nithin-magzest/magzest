@@ -91,26 +91,27 @@ export default function AppTeamDashboard() {
   return (
     <div className="space-y-6 max-w-7xl">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Application Team Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Overview of all applications, students, and counselor assignments</p>
+      <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-6">
+        <p className="text-gray-900 text-sm mb-1">Application Team Portal</p>
+        <h1 className="text-3xl font-bold text-gray-900">Application Dashboard</h1>
+        <p className="text-gray-600 mt-1 text-sm">Overview of all applications, students, and counselor assignments</p>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Applications', value: apps.length,       icon: Layers,    color: 'text-orange-600', bg: 'bg-orange-50',  to: '/appteam/applications' },
-          { label: 'Total Students',     value: students.length,   icon: Users,     color: 'text-blue-600',   bg: 'bg-blue-50',    to: '/appteam/students' },
-          { label: 'Total Counselors',   value: counselors.length, icon: UserCog,   color: 'text-teal-600',   bg: 'bg-teal-50',    to: '/appteam/counselors' },
+          { label: 'Total Students',     value: students.length,   icon: Users,     color: 'text-orange-600', bg: 'bg-orange-50',  to: '/appteam/students' },
+          { label: 'Total Counselors',   value: counselors.length, icon: UserCog,   color: 'text-orange-600', bg: 'bg-orange-50',  to: '/appteam/counselors' },
           { label: 'Active (In Progress)', value: (statusCounts.submitted || 0) + (statusCounts.under_review || 0) + (statusCounts.offer_received || 0),
-            icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50', to: '/appteam/applications' },
+            icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50', to: '/appteam/applications' },
         ].map(card => (
           <Link key={card.label} to={card.to}
             className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-orange-200 transition-all group">
             <div className={`w-10 h-10 ${card.bg} rounded-xl flex items-center justify-center mb-3`}>
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>
-            <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
+            <p className="text-2xl font-bold text-gray-900">{card.value}</p>
             <p className="text-sm text-gray-500 mt-0.5">{card.label}</p>
             <p className="text-xs text-orange-500 font-medium mt-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
               View all <ArrowRight className="w-3 h-3" />
@@ -160,7 +161,7 @@ export default function AppTeamDashboard() {
           <div className="space-y-3">
             {counselorStats.slice(0, 6).map(c => (
               <div key={c._id} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                   {c.name?.[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -169,7 +170,7 @@ export default function AppTeamDashboard() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0 text-right">
                   <div>
-                    <p className="text-sm font-bold text-blue-600">{c.studentCount}</p>
+                    <p className="text-sm font-bold text-orange-600">{c.studentCount}</p>
                     <p className="text-[10px] text-gray-400">students</p>
                   </div>
                   <div>
@@ -221,7 +222,7 @@ export default function AppTeamDashboard() {
                 <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                   {counselor && (
                     <div className="flex items-center gap-1.5">
-                      <div className="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                         {counselor.name?.[0]?.toUpperCase()}
                       </div>
                       <span className="text-xs text-gray-500 hidden lg:block">{counselor.name}</span>

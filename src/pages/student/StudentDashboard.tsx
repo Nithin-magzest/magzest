@@ -75,12 +75,12 @@ function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onU
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Document Name</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. IELTS Score Card"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-700" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Document Type</label>
             <select aria-label="Document type" value={type} onChange={e => setType(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-700 bg-white">
               {DOC_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
           </div>
@@ -91,7 +91,7 @@ function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onU
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors disabled:opacity-60">
+              className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-60">
               {saving ? 'Uploading…' : 'Upload'}
             </button>
           </div>
@@ -216,14 +216,14 @@ export default function StudentDashboard() {
       )}
 
       {/* Welcome header */}
-      <div className="bg-gradient-to-r from-sky-700 via-sky-600 to-indigo-900 rounded-2xl p-6 text-white">
+      <div className="bg-gradient-to-r from-[#0d1b4b] via-blue-700 to-blue-500 rounded-2xl p-6 text-white">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-blue-200 text-sm mb-1">Welcome back,</p>
             <h1 className="text-2xl font-bold">{student.name}</h1>
             <p className="text-blue-200 mt-2 text-sm">Track your applications and explore universities</p>
           </div>
-          <div className="hidden md:block bg-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
+          <div className="hidden md:block bg-white/15 border border-white/20 rounded-xl p-4 text-center">
             <div className="text-2xl font-bold">{appStats.offers}</div>
             <div className="text-xs text-blue-200">Offer(s) Received</div>
           </div>
@@ -234,7 +234,7 @@ export default function StudentDashboard() {
             { label: 'Under Review', value: appStats.underReview, icon: Clock },
             { label: 'Docs Verified', value: `${docStats.verified}/${docStats.total}`, icon: CheckCircle },
           ].map(s => (
-            <div key={s.label} className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+            <div key={s.label} className="bg-white/15 border border-white/20 rounded-xl p-3 text-center">
               <s.icon className="w-5 h-5 mx-auto mb-1 text-blue-200" />
               <div className="text-xl font-bold">{s.value}</div>
               <div className="text-xs text-blue-200">{s.label}</div>
@@ -284,7 +284,7 @@ export default function StudentDashboard() {
           </div>
           {completion < 100 && (
             <Link to="/student/profile"
-              className="mt-4 w-full flex items-center justify-center gap-2 bg-[#0d1b4b] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#152258] transition-colors">
+              className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
               Complete Your Profile <ArrowRight className="w-4 h-4" />
             </Link>
           )}
@@ -324,7 +324,7 @@ export default function StudentDashboard() {
           <button
             type="button"
             onClick={() => setShowUpload(true)}
-            className="w-full flex items-center justify-center gap-2 bg-[#0d1b4b] text-white py-3 rounded-xl text-sm font-semibold hover:bg-[#152258] active:scale-[0.98] transition-all shadow-sm">
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-sm">
             <Upload className="w-4 h-4" /> Upload Document
           </button>
           {docs.length > 0 && (
@@ -340,7 +340,7 @@ export default function StudentDashboard() {
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-bold text-gray-900">My Applications</h2>
-            <Link to="/student/applications" className="text-blue-600 text-sm font-medium hover:text-blue-700 flex items-center gap-1">
+            <Link to="/student/applications" className="text-[#0d1b4b] text-sm font-medium hover:text-[#152258] flex items-center gap-1">
               View all <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -348,13 +348,13 @@ export default function StudentDashboard() {
             <div className="text-center py-8">
               <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500 text-sm">No applications yet</p>
-              <Link to="/student/universities" className="text-blue-600 text-sm hover:underline mt-1 inline-block">Browse universities</Link>
+              <Link to="/student/universities" className="text-[#0d1b4b] text-sm hover:underline mt-1 inline-block">Browse universities</Link>
             </div>
           ) : (
             <div className="space-y-3">
               {apps.map((app: any) => (
                 <div key={app._id || app.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+                  <div className="w-10 h-10 bg-[#f0f4ff] rounded-lg flex items-center justify-center text-[#0d1b4b] font-bold text-sm flex-shrink-0">
                     {app.universityName.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -371,7 +371,7 @@ export default function StudentDashboard() {
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-bold text-gray-900">Profile Snapshot</h2>
-            <Link to="/student/profile" className="text-blue-600 text-sm font-medium hover:text-blue-700">Edit Profile</Link>
+            <Link to="/student/profile" className="text-[#0d1b4b] text-sm font-medium hover:text-[#152258]">Edit Profile</Link>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
@@ -380,9 +380,9 @@ export default function StudentDashboard() {
               { label: 'English', value: student.englishScore ? `${student.englishScore.type} ${student.englishScore.score}` : '—' },
               { label: 'Budget', value: student.budget ? `$${student.budget.toLocaleString()}/yr` : '—' },
             ].map(item => (
-              <div key={item.label} className="bg-sky-50 rounded-xl p-3 text-center">
-                <p className="text-xs text-blue-500 mb-1">{item.label}</p>
-                <p className="font-bold text-blue-800 text-sm">{item.value}</p>
+              <div key={item.label} className="bg-[#f0f4ff] rounded-xl p-3 text-center">
+                <p className="text-xs text-[#0d1b4b]/70 mb-1">{item.label}</p>
+                <p className="font-bold text-[#0d1b4b] text-sm">{item.value}</p>
               </div>
             ))}
           </div>
@@ -395,7 +395,7 @@ export default function StudentDashboard() {
             <h2 className="text-lg font-bold text-gray-900">Recommended For You</h2>
             <p className="text-xs text-gray-400 mt-0.5">Matched to your profile, preferences & budget</p>
           </div>
-          <Link to="/student/universities" className="text-blue-600 text-sm font-medium hover:text-blue-700 flex items-center gap-1">
+          <Link to="/student/universities" className="text-[#0d1b4b] text-sm font-medium hover:text-[#152258] flex items-center gap-1">
             Explore all <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -429,7 +429,7 @@ export default function StudentDashboard() {
                 : 'Try updating your preferred countries or interested courses'}
             </p>
             <Link to="/student/profile"
-              className="inline-flex items-center gap-1.5 text-sm text-white bg-[#0d1b4b] hover:bg-[#152258] px-4 py-2 rounded-xl font-medium transition-colors">
+              className="inline-flex items-center gap-1.5 text-sm text-white bg-[#0d1b4b] hover:bg-blue-700 px-4 py-2 rounded-xl font-medium transition-colors">
               Complete Profile <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -444,15 +444,15 @@ export default function StudentDashboard() {
               const barColor = matchPct >= 70 ? 'bg-green-500' : matchPct >= 45 ? 'bg-blue-500' : 'bg-amber-500';
               return (
                 <Link key={uni.id} to={`/university/${uni.id}`}
-                  className="flex flex-col gap-3 p-4 border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-md transition-all group">
+                  className="flex flex-col gap-3 p-4 border border-gray-100 rounded-xl hover:border-[#0d1b4b]/30 hover:shadow-md transition-all group">
 
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center font-bold text-blue-700 flex-shrink-0 text-sm">
+                      <div className="w-10 h-10 bg-[#f0f4ff] rounded-xl flex items-center justify-center font-bold text-[#0d1b4b] flex-shrink-0 text-sm">
                         {uni.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm group-hover:text-blue-700 truncate">{uni.name}</p>
+                        <p className="font-semibold text-gray-900 text-sm group-hover:text-[#0d1b4b] truncate">{uni.name}</p>
                         <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
                           <MapPin className="w-3 h-3 flex-shrink-0" />
                           <span className="truncate">{uni.city}, {uni.country}</span>
@@ -470,7 +470,7 @@ export default function StudentDashboard() {
 
                   {matchedCourse && (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded-lg px-2 py-0.5 font-medium">
+                      <span className="text-xs bg-[#f0f4ff] text-[#0d1b4b] border border-[#0d1b4b]/20 rounded-lg px-2 py-0.5 font-medium">
                         {matchedCourse.name}
                       </span>
                       <span className="text-xs text-gray-400">
