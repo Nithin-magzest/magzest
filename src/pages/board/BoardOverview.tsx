@@ -98,7 +98,12 @@ export default function BoardOverview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status breakdown */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Application Status Breakdown</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Application Status Breakdown</h2>
+            <Link to="/board/applications" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
           <div className="space-y-3">
             {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
               const count = statusCounts[status] || 0;
