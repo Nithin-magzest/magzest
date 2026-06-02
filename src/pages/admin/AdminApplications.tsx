@@ -531,7 +531,10 @@ export default function AdminApplications() {
                     {/* Email */}
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                       <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <p className="text-sm text-gray-700 truncate">{sub.email}</p>
+                      <a href={`mailto:${sub.email}`}
+                        className="text-sm text-purple-600 hover:text-purple-800 hover:underline truncate transition-colors">
+                        {sub.email}
+                      </a>
                     </div>
 
                     {/* Phone */}

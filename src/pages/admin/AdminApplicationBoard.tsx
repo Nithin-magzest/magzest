@@ -827,7 +827,10 @@ export default function AdminApplicationBoard() {
                     <div className="space-y-1.5 text-xs text-gray-600">
                       <div className="flex items-center gap-2">
                         <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{s.email}</span>
+                        <a href={`mailto:${s.email}`}
+                          className="truncate text-purple-600 hover:text-purple-800 hover:underline transition-colors">
+                          {s.email}
+                        </a>
                       </div>
                       {s.phone && (
                         <div className="flex items-center gap-2">
