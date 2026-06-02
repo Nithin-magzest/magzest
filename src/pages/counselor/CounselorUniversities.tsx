@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, MapPin, Star, BookOpen, ChevronDown, ChevronUp, DollarSign, Calendar, CheckCircle, ExternalLink, Users, Award, X, Plus } from 'lucide-react';
+import { Search, MapPin, Star, BookOpen, ChevronDown, ChevronUp, DollarSign, Calendar, CheckCircle, ExternalLink, Users, Award, X, Plus, GraduationCap } from 'lucide-react';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -116,7 +116,7 @@ function ApplyModal({ course, universityName, universityId, students, onClose, o
               Cancel
             </button>
             <button type="button" onClick={handleApply} disabled={saving || success}
-              className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              className="flex-1 py-2.5 bg-white hover:bg-green-50 text-green-700 border-2 border-gray-300 rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
               {saving
                 ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
                 : <><Plus className="w-4 h-4" />Apply</>}
@@ -148,12 +148,12 @@ function CourseRow({ course, universityName, universityId, onApply }: {
         <div className="flex items-start gap-2 flex-shrink-0">
           {course.tuitionFee > 0 && (
             <div className="text-right">
-              <p className="font-bold text-green-700 text-sm">{course.currency || 'USD'} {Number(course.tuitionFee).toLocaleString()}</p>
+              <p className="font-bold text-[#0d1b4b] text-sm">{course.currency || 'USD'} {Number(course.tuitionFee).toLocaleString()}</p>
               <p className="text-xs text-gray-400">per year</p>
             </div>
           )}
           <button type="button" onClick={() => onApply(course, universityName, universityId)}
-            className="flex items-center gap-1 bg-[#0d1b4b] hover:bg-[#152258] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+            className="flex items-center gap-1 bg-white hover:bg-green-50 text-green-700 border-2 border-gray-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
             <Plus className="w-3.5 h-3.5" />Apply
           </button>
         </div>
@@ -271,7 +271,7 @@ function UniversityCard({ uni, onApply }: {
       {/* Actions */}
       <div className="px-5 pb-4 flex gap-2">
         <button type="button" onClick={() => { setExpanded(!expanded); if (!expanded) setTab('courses'); }}
-          className="flex-1 flex items-center justify-center gap-2 bg-[#0d1b4b] text-white py-2 rounded-xl text-sm font-semibold hover:bg-[#152258] transition-colors">
+          className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-green-50 text-green-700 border-2 border-gray-300 py-2 rounded-xl text-sm font-semibold transition-colors">
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           {expanded ? 'Collapse' : 'View Courses & Info'}
         </button>
@@ -423,9 +423,16 @@ export default function CounselorUniversities() {
         />
       )}
 
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Partner Universities</h1>
-        <p className="text-gray-500 mt-1">Browse universities and apply courses on behalf of students</p>
+      <div className="bg-gradient-to-r from-green-600 via-green-700 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <GraduationCap className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-green-200 text-xs font-medium uppercase tracking-wide">Counselor Portal</p>
+            <h1 className="text-2xl font-bold leading-tight">Partner Universities</h1>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">

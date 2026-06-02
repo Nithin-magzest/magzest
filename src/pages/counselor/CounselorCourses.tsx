@@ -176,9 +176,16 @@ export default function CounselorCourses() {
         />
       )}
 
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Available Courses</h1>
-        <p className="text-gray-500 mt-1">Browse courses and apply on behalf of your students</p>
+      <div className="bg-gradient-to-r from-green-600 via-green-700 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <BookOpen className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-green-200 text-xs font-medium uppercase tracking-wide">Counselor Portal</p>
+            <h1 className="text-2xl font-bold leading-tight">Available Courses</h1>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
@@ -224,11 +231,11 @@ export default function CounselorCourses() {
                   {course.department && <span className="text-xs text-gray-400">{course.department}</span>}
                 </div>
                 <p className="font-bold text-gray-900">{course.name}</p>
-                <p className="text-xs text-blue-600 mt-0.5">{course.uniName} · {course.city}, {course.country}</p>
+                <p className="text-xs text-[#0d1b4b] mt-0.5">{course.uniName} · {course.city}, {course.country}</p>
               </div>
               {course.tuitionFee > 0 && (
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-green-700 text-sm">{course.currency || 'USD'} {Number(course.tuitionFee).toLocaleString()}</p>
+                  <p className="font-bold text-[#0d1b4b] text-sm">{course.currency || 'USD'} {Number(course.tuitionFee).toLocaleString()}</p>
                   <p className="text-xs text-gray-400">per year</p>
                 </div>
               )}

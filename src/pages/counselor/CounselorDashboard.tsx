@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X, Award, Edit3, CheckCircle2, Target, ClipboardList, MessageCircle, Send } from 'lucide-react';
+import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X, Award, Edit3, CheckCircle2, Target, ClipboardList, MessageCircle, Send, UserCog } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -283,21 +283,28 @@ export default function CounselorDashboard() {
       />
     )}
     <div className="space-y-6">
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6">
-        <p className="text-green-600 text-sm mb-1">Welcome back,</p>
-        <h1 className="text-2xl font-bold text-green-900">{counselor?.name || 'Counselor'}</h1>
-        <p className="text-green-600 mt-1 text-sm capitalize">{counselor?.specialization?.join(' • ')}</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">
+      <div className="bg-gradient-to-r from-green-600 via-green-700 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <UserCog className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-green-200 text-xs font-medium uppercase tracking-wide">Counselor Portal</p>
+            <h1 className="text-2xl font-bold leading-tight">{counselor?.name || 'Counselor'}</h1>
+            <p className="text-green-200 text-xs mt-0.5 capitalize">{counselor?.specialization?.join(' • ')}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'My Students', value: stats.totalStudents, icon: Users, to: '/counselor/students' },
             { label: 'Active Apps', value: stats.activeApplications, icon: FileText, to: '/counselor/applications' },
             { label: 'Pending Docs', value: stats.pendingDocs, icon: AlertCircle, to: '/counselor/students' },
             { label: 'Offers Out', value: stats.offers, icon: Star, to: '/counselor/applications' },
           ].map(s => (
-            <Link key={s.label} to={s.to} className="bg-green-50 border border-green-300 rounded-xl p-3 hover:bg-green-100 transition-colors">
+            <Link key={s.label} to={s.to} className="bg-white rounded-xl p-3 hover:bg-green-50 transition-colors shadow-sm">
               <s.icon className="w-4 h-4 text-green-600 mb-1" />
               <div className="text-2xl font-extrabold text-gray-900">{s.value}</div>
-              <div className="text-xs font-bold text-gray-900">{s.label}</div>
+              <div className="text-xs font-bold text-gray-600">{s.label}</div>
             </Link>
           ))}
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, ChevronUp, Clock, DollarSign, FileCheck2, CreditCard, Check, GraduationCap } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Clock, DollarSign, FileCheck2, CreditCard, Check, GraduationCap, Globe } from 'lucide-react';
 import { api } from '../../api';
 import { CountryFlag } from '../../components/CountryFlag';
 
@@ -22,8 +22,8 @@ function UniMiniCard({ uni }: { uni: any }) {
           }
         }}
       />
-      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 items-center justify-center flex-shrink-0 hidden">
-        <span className="text-xs font-bold text-blue-600">{uni.name?.charAt(0) || '?'}</span>
+      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-100 to-teal-100 items-center justify-center flex-shrink-0 hidden">
+        <span className="text-xs font-bold text-green-600">{uni.name?.charAt(0) || '?'}</span>
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold text-gray-800 truncate max-w-[130px]">{uni.name}</p>
@@ -65,7 +65,7 @@ function CountryCard({ country, unis }: { country: any; unis: any[] }) {
               </span>
             )}
             {country.costs?.tuitionRange && (
-              <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+              <span className="text-xs text-amber-800 font-medium flex items-center gap-1">
                 <DollarSign className="w-3 h-3" /> {country.costs.tuitionRange}
               </span>
             )}
@@ -216,9 +216,16 @@ export default function CounselorCountries() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Study Destinations</h1>
-        <p className="text-gray-500 mt-1">Visa requirements, costs, and universities by country</p>
+      <div className="bg-gradient-to-r from-green-600 via-green-700 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <Globe className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-green-200 text-xs font-medium uppercase tracking-wide">Counselor Portal</p>
+            <h1 className="text-2xl font-bold leading-tight">Study Destinations</h1>
+          </div>
+        </div>
       </div>
 
       <div className="flex gap-3 flex-wrap">
@@ -226,10 +233,10 @@ export default function CounselorCountries() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search countries, capitals or regions…"
-            className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
+            className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm" />
         </div>
         <select aria-label="Filter by region" value={regionFilter} onChange={e => setRegionFilter(e.target.value)}
-          className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-gray-700">
+          className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm text-gray-700">
           <option value="">All Regions</option>
           {regions.map(r => <option key={r}>{r}</option>)}
         </select>
@@ -237,7 +244,7 @@ export default function CounselorCountries() {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <span className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <>

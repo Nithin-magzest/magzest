@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, Routes, Route, useParams, useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus } from 'lucide-react';
+import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -40,19 +40,19 @@ function RequestDocumentModal({ studentId, onClose, onRequested }: { studentId: 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Document Name</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. IELTS Score Card"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Document Type</label>
             <select aria-label="Document type" value={type} onChange={e => setType(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
               {DOC_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
           </div>
           {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#0d1b4b] text-white rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors disabled:opacity-60">
+            <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-60">
               {saving ? 'Requesting…' : 'Request Document'}
             </button>
           </div>
@@ -146,22 +146,22 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
             <div className="col-span-2">
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">Full Name *</label>
               <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Student's full name"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
             <div className="col-span-2">
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">Email Address *</label>
               <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="student@email.com"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">Phone</label>
               <input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+91 98765 43210"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">Nationality</label>
               <input value={form.nationality} onChange={e => set('nationality', e.target.value)} placeholder="e.g. Indian"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
           </div>
 
@@ -171,7 +171,7 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">Education Level</label>
               <select value={form.educationLevel} onChange={e => set('educationLevel', e.target.value)}
                 aria-label="Education level"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                 <option value="">Select...</option>
                 {EDUCATION_LEVELS.map(l => <option key={l}>{l}</option>)}
               </select>
@@ -181,7 +181,7 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
               <input type="number" value={form.gpa} onChange={e => set('gpa', e.target.value)}
                 placeholder="e.g. 8.5" min="0" max="10" step="0.1"
                 title="GPA score"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
           </div>
 
@@ -191,13 +191,13 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
             <div className="grid grid-cols-2 gap-3">
               <select value={form.englishType} onChange={e => set('englishType', e.target.value)}
                 aria-label="English test type"
-                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
                 {ENGLISH_TYPES.map(t => <option key={t}>{t}</option>)}
               </select>
               <input value={form.englishScore} onChange={e => set('englishScore', e.target.value)}
                 placeholder="Score (e.g. 7.5)"
                 title="English test score"
-                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
           </div>
 
@@ -207,7 +207,7 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
             <input type="number" value={form.budget} onChange={e => set('budget', e.target.value)}
               placeholder="e.g. 30000" min="0" step="1000"
               title="Annual budget in USD"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
           </div>
 
           {/* Preferred countries */}
@@ -225,7 +225,7 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
                 const sel = form.preferredCountries.includes(c);
                 return (
                   <button key={c} type="button" onClick={() => toggleCountry(c)}
-                    className={`text-xs px-2.5 py-1 rounded-full font-medium border transition-colors ${sel ? 'bg-[#0d1b4b] text-white border-[#0d1b4b]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#0d1b4b]/40'}`}>
+                    className={`text-xs px-2.5 py-1 rounded-full font-medium border transition-colors ${sel ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:border-green-600/40'}`}>
                     {c}
                   </button>
                 );
@@ -239,7 +239,7 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-md disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold shadow-md disabled:opacity-60 transition-all flex items-center justify-center gap-2">
               {saving
                 ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Creating…</>
                 : <><UserPlus className="w-4 h-4" /> Create Student</>}
@@ -292,15 +292,22 @@ function StudentsList() {
           onCreated={() => { loadStudents(); setTab('mine'); }}
         />
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Students</h1>
-          <p className="text-gray-500 mt-1">Manage students and their application journey</p>
+      <div className="bg-gradient-to-r from-green-600 via-green-700 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-green-200 text-xs font-medium uppercase tracking-wide">Counselor Portal</p>
+              <h1 className="text-2xl font-bold leading-tight">Students</h1>
+            </div>
+          </div>
+          <button type="button" onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-white text-green-700 rounded-xl text-sm font-bold hover:bg-green-50 transition-colors shadow-sm">
+            <UserPlus className="w-4 h-4" />Add Student
+          </button>
         </div>
-        <button type="button" onClick={() => setShowCreate(true)}
-          className="inline-flex items-center gap-2 bg-[#0d1b4b] hover:bg-[#152258] text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors">
-          <UserPlus className="w-4 h-4" /> Add Student
-        </button>
       </div>
 
       <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-fit">
@@ -313,9 +320,9 @@ function StudentsList() {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by name, email, nationality..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
           </div>
-          <select aria-label="Filter by status" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          <select aria-label="Filter by status" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -344,7 +351,7 @@ function StudentsList() {
                           type="button"
                           onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${student.phone.replace(/\s/g, '')}`; }}
                           title={`Call ${student.phone}`}
-                          className="w-8 h-8 bg-[#0d1b4b] hover:bg-[#152258] active:scale-95 text-white rounded-full flex items-center justify-center shadow-sm transition-all flex-shrink-0"
+                          className="w-8 h-8 bg-green-600 hover:bg-green-700 active:scale-95 text-white rounded-full flex items-center justify-center shadow-sm transition-all flex-shrink-0"
                         >
                           <Phone className="w-3.5 h-3.5" />
                         </button>
@@ -453,10 +460,10 @@ function StudentDetail() {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Link to="/counselor/chat" className="flex items-center gap-2 bg-[#0d1b4b] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors">
+            <Link to="/counselor/chat" className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-green-700 transition-colors">
               <MessageSquare className="w-4 h-4" /> Chat
             </Link>
-            <Link to="/counselor/universities" className="flex items-center gap-2 bg-[#0d1b4b] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#152258] transition-colors">
+            <Link to="/counselor/universities" className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-green-700 transition-colors">
               <Plus className="w-4 h-4" /> New Application
             </Link>
           </div>
@@ -503,7 +510,7 @@ function StudentDetail() {
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">{apps.length} application{apps.length !== 1 ? 's' : ''}</p>
             <Link to="/counselor/universities"
-              className="flex items-center gap-1.5 bg-[#0d1b4b] text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-[#152258] transition-colors shadow-sm">
+              className="flex items-center gap-1.5 bg-green-600 text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-green-700 transition-colors shadow-sm">
               <Plus className="w-4 h-4" /> New Application
             </Link>
           </div>
@@ -527,7 +534,7 @@ function StudentDetail() {
                   </div>
                   <select aria-label="Update application status" defaultValue={app.status} disabled={updating}
                     onChange={e => updateAppStatus(appId, e.target.value)}
-                    className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60">
+                    className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-60">
                     {['draft', 'submitted', 'under_review', 'offer_received', 'accepted', 'rejected', 'enrolled'].map(s => (
                       <option key={s} value={s} className="capitalize">{s.replace('_', ' ')}</option>
                     ))}
