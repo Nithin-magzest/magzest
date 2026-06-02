@@ -3,6 +3,8 @@ import { io, Socket } from 'socket.io-client';
 import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { api } from '../api';
+import { createCallRingtone } from '../utils/pirateTone';
+import './call.css';
 
 export type CallState = 'idle' | 'calling' | 'incoming' | 'active';
 export type CallType = 'audio' | 'video';
@@ -11,6 +13,7 @@ interface CallContextType {
   callState: CallState;
   callType: CallType;
   remoteName: string;
+  remoteRole: string;
   muted: boolean;
   cameraOff: boolean;
   timer: string;
@@ -28,6 +31,14 @@ const CallContext = createContext<CallContextType | undefined>(undefined);
 
 const ICE_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
+const ROLE_LABEL: Record<string, string> = {
+  admin: 'Admin',
+  counselor: 'Counselor',
+  student: 'Student',
+  appteam: 'App Team',
+  board: 'Board',
+};
+
 export function CallProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
@@ -40,6 +51,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const setCT = (t: CallType) => { callTypeRef.current = t; setCallType(t); };
 
   const [remoteName, setRemoteName] = useState('');
+  const [remoteRole, setRemoteRole] = useState('');
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [muted, setMuted] = useState(false);
@@ -59,6 +71,20 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const callStartedAtRef = useRef(0);
   const stopRef = useRef<() => void>(() => {});
   const logCallRef = useRef<(status: string, duration: number, remoteId: string) => void>(() => {});
+  const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
+
+  const ringtoneRef = useRef<ReturnType<typeof createPirateTone> | null>(null);
+
+  useEffect(() => {
+    if (callState === 'incoming' || callState === 'calling') {
+      const tone = createCallRingtone();
+      ringtoneRef.current = tone;
+      tone.start();
+    } else {
+      ringtoneRef.current?.stop();
+      ringtoneRef.current = null;
+    }
+  }, [callState]);
 
   const logCall = async (status: string, duration: number, remoteId: string) => {
     if (!user?.id || !remoteId) return;
@@ -66,13 +92,10 @@ export function CallProvider({ children }: { children: ReactNode }) {
       await api.chat.logCall([user.id, remoteId], status, duration, user.name || '');
       setLastMessageTime(Date.now());
       socketRef.current?.emit('chat:call-logged', { to: remoteId });
-    } catch (e) {
-      console.error('[CallContext] logCall failed:', e);
-    }
+    } catch {}
   };
   logCallRef.current = logCall;
 
-  // Attach remote stream to the right output element
   useEffect(() => {
     if (!remoteStream) return;
     if (callType === 'video' && remoteVideoRef.current) {
@@ -82,7 +105,6 @@ export function CallProvider({ children }: { children: ReactNode }) {
     }
   }, [remoteStream, callState, callType]);
 
-  // Attach local video stream once the video overlay is mounted
   useEffect(() => {
     if (localStream && callType === 'video' && callState === 'active' && localVideoRef.current) {
       (localVideoRef.current as any).srcObject = localStream;
@@ -91,10 +113,12 @@ export function CallProvider({ children }: { children: ReactNode }) {
 
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(''), 3000);
+    setTimeout(() => setToast(''), 3500);
   };
 
   const stop = useCallback(() => {
+    ringtoneRef.current?.stop();
+    ringtoneRef.current = null;
     pcRef.current?.close();
     pcRef.current = null;
     localStreamRef.current?.getTracks().forEach(t => t.stop());
@@ -108,13 +132,62 @@ export function CallProvider({ children }: { children: ReactNode }) {
     callTypeRef.current = 'audio';
     setCallType('audio');
     setRemoteName('');
+    setRemoteRole('');
     setElapsed(0);
     remoteIdRef.current = '';
     isCallerRef.current = false;
     callStartedAtRef.current = 0;
+    pendingIceRef.current = [];
   }, []);
 
   stopRef.current = stop;
+
+  // Ref so socket handlers always get the latest closure without re-registering
+  const getMediaRef = useRef<(wantVideo: boolean) => Promise<{ stream: MediaStream; actualType: CallType }>>(
+    () => Promise.reject(new Error('not ready'))
+  );
+  getMediaRef.current = async (wantVideo: boolean) => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Camera/mic access not supported on this page. Use HTTPS or a modern browser.');
+    }
+    if (wantVideo) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        return { stream, actualType: 'video' as CallType };
+      } catch (err: any) {
+        const msg =
+          err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError'
+            ? 'No camera found — switching to audio call'
+            : err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'
+            ? 'Camera permission denied — switching to audio call'
+            : err.name === 'NotReadableError' || err.name === 'TrackStartError'
+            ? 'Camera in use by another app — switching to audio call'
+            : 'Camera unavailable — switching to audio call';
+        showToast(msg);
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          return { stream, actualType: 'audio' as CallType };
+        } catch (audioErr: any) {
+          throw new Error(
+            audioErr.name === 'NotAllowedError' || audioErr.name === 'PermissionDeniedError'
+              ? 'Microphone access denied. Allow it in browser settings and try again.'
+              : 'No microphone found. Cannot make calls.'
+          );
+        }
+      }
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        return { stream, actualType: 'audio' as CallType };
+      } catch (err: any) {
+        throw new Error(
+          err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'
+            ? 'Microphone access denied. Allow it in browser settings and try again.'
+            : 'No microphone found. Cannot make calls.'
+        );
+      }
+    }
+  };
 
   useEffect(() => {
     if (callState !== 'active') { setElapsed(0); return; }
@@ -139,9 +212,12 @@ export function CallProvider({ children }: { children: ReactNode }) {
       return pc;
     };
 
-    socket.on('call:incoming', ({ from, fromName, callType: ct }: { from: string; fromName: string; callType?: string }) => {
+    socket.on('call:incoming', ({ from, fromName, fromRole, callType: ct }: {
+      from: string; fromName: string; fromRole?: string; callType?: string;
+    }) => {
       remoteIdRef.current = from;
       setRemoteName(fromName);
+      setRemoteRole(fromRole || '');
       const t: CallType = ct === 'video' ? 'video' : 'audio';
       callTypeRef.current = t;
       setCallType(t);
@@ -150,20 +226,26 @@ export function CallProvider({ children }: { children: ReactNode }) {
 
     socket.on('call:accepted', async ({ from }: { from: string }) => {
       try {
-        const isVideo = callTypeRef.current === 'video';
-        const stream = await navigator.mediaDevices.getUserMedia(
-          isVideo ? { audio: true, video: true } : { audio: true }
-        );
+        const { stream, actualType } = await getMediaRef.current(callTypeRef.current === 'video');
+        if (actualType !== callTypeRef.current) setCT(actualType);
         localStreamRef.current = stream;
-        if (isVideo) setLocalStream(stream);
+        if (actualType === 'video') setLocalStream(stream);
         const pc = buildPC(from);
         stream.getTracks().forEach(t => pc.addTrack(t, stream));
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         socket.emit('call:offer', { to: from, offer });
+        // Flush any ICE candidates that arrived before the offer was sent
+        for (const c of pendingIceRef.current) {
+          try { await pc.addIceCandidate(c); } catch {}
+        }
+        pendingIceRef.current = [];
         callStartedAtRef.current = Date.now();
         setCS('active');
-      } catch { stopRef.current(); }
+      } catch (err: any) {
+        showToast(err.message || 'Could not access microphone');
+        stopRef.current();
+      }
     });
 
     socket.on('call:rejected', () => {
@@ -186,28 +268,47 @@ export function CallProvider({ children }: { children: ReactNode }) {
 
     socket.on('call:offer', async ({ offer, from }: { offer: RTCSessionDescriptionInit; from: string }) => {
       try {
-        const isVideo = callTypeRef.current === 'video';
-        const stream = await navigator.mediaDevices.getUserMedia(
-          isVideo ? { audio: true, video: true } : { audio: true }
-        );
+        const { stream, actualType } = await getMediaRef.current(callTypeRef.current === 'video');
+        if (actualType !== callTypeRef.current) setCT(actualType);
         localStreamRef.current = stream;
-        if (isVideo) setLocalStream(stream);
+        if (actualType === 'video') setLocalStream(stream);
         const pc = buildPC(from);
         stream.getTracks().forEach(t => pc.addTrack(t, stream));
         await pc.setRemoteDescription(offer);
+        // Flush ICE candidates that arrived before remote description was set
+        for (const c of pendingIceRef.current) {
+          try { await pc.addIceCandidate(c); } catch {}
+        }
+        pendingIceRef.current = [];
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit('call:answer', { to: from, answer });
         callStartedAtRef.current = Date.now();
-      } catch { stopRef.current(); }
+      } catch (err: any) {
+        showToast(err.message || 'Could not access microphone');
+        stopRef.current();
+      }
     });
 
     socket.on('call:answer', async ({ answer }: { answer: RTCSessionDescriptionInit }) => {
-      try { await pcRef.current?.setRemoteDescription(answer); } catch {}
+      try {
+        await pcRef.current?.setRemoteDescription(answer);
+        // Flush any ICE candidates queued before the answer arrived
+        for (const c of pendingIceRef.current) {
+          try { await pcRef.current?.addIceCandidate(c); } catch {}
+        }
+        pendingIceRef.current = [];
+      } catch {}
     });
 
     socket.on('call:ice', async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
-      try { await pcRef.current?.addIceCandidate(candidate); } catch {}
+      const pc = pcRef.current;
+      if (pc && pc.remoteDescription) {
+        try { await pc.addIceCandidate(candidate); } catch {}
+      } else {
+        // Queue until remote description is ready
+        pendingIceRef.current.push(candidate);
+      }
     });
 
     socket.on('chat:call-logged', () => { setLastMessageTime(Date.now()); });
@@ -216,23 +317,31 @@ export function CallProvider({ children }: { children: ReactNode }) {
     return () => { socket.disconnect(); socketRef.current = null; };
   }, [user?.id]);
 
-  const startCall = useCallback((targetId: string, targetName: string) => {
+  const startCall = useCallback((targetId: string, targetName: string, targetRole = '') => {
     setCT('audio');
     isCallerRef.current = true;
     remoteIdRef.current = targetId;
     setRemoteName(targetName);
+    setRemoteRole(targetRole);
     setCS('calling');
-    socketRef.current?.emit('call:invite', { to: targetId, from: user?.id, fromName: user?.name, callType: 'audio' });
-  }, [user?.id, user?.name]);
+    socketRef.current?.emit('call:invite', {
+      to: targetId, from: user?.id, fromName: user?.name,
+      fromRole: user?.role, callType: 'audio',
+    });
+  }, [user?.id, user?.name, user?.role]);
 
-  const startVideoCall = useCallback((targetId: string, targetName: string) => {
+  const startVideoCall = useCallback((targetId: string, targetName: string, targetRole = '') => {
     setCT('video');
     isCallerRef.current = true;
     remoteIdRef.current = targetId;
     setRemoteName(targetName);
+    setRemoteRole(targetRole);
     setCS('calling');
-    socketRef.current?.emit('call:invite', { to: targetId, from: user?.id, fromName: user?.name, callType: 'video' });
-  }, [user?.id, user?.name]);
+    socketRef.current?.emit('call:invite', {
+      to: targetId, from: user?.id, fromName: user?.name,
+      fromRole: user?.role, callType: 'video',
+    });
+  }, [user?.id, user?.name, user?.role]);
 
   const acceptCall = useCallback(() => {
     setCS('active');
@@ -269,116 +378,223 @@ export function CallProvider({ children }: { children: ReactNode }) {
 
   const timer = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
 
+  const callerRoleLabel = ROLE_LABEL[remoteRole] || remoteRole;
+  const avatarInitial = remoteName.charAt(0).toUpperCase() || '?';
+  const isVideo = callType === 'video';
+
   return (
     <CallContext.Provider value={{
-      callState, callType, remoteName, muted, cameraOff, timer, lastMessageTime,
+      callState, callType, remoteName, remoteRole, muted, cameraOff, timer, lastMessageTime,
       startCall, startVideoCall, acceptCall, rejectCall, endCall, toggleMute, toggleCamera,
     }}>
       {children}
       <audio ref={audioRef} autoPlay playsInline />
 
-      {/* Toast */}
+      {/* ── Toast notification ── */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-5 py-3 rounded-2xl shadow-xl z-[60]">
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] bg-gray-900/95 backdrop-blur text-white text-sm px-5 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-2">
+          <span className="w-2 h-2 bg-green-400 rounded-full" />
           {toast}
         </div>
       )}
 
-      {/* Incoming call */}
+      {/* ── INCOMING CALL — Instagram / WhatsApp style full-screen ── */}
       {callState === 'incoming' && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-8 text-center shadow-2xl w-72">
-            <div className={`w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold animate-pulse ${
-              callType === 'video' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'
+        <div className="call-overlay-bg fixed inset-0 z-[150] flex flex-col items-center justify-between select-none">
+          {/* Top: call type label */}
+          <div className="mt-16 flex flex-col items-center gap-1 text-center">
+            <span className={`inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest px-4 py-1.5 rounded-full ${
+              isVideo ? 'bg-blue-500/25 text-blue-300' : 'bg-green-500/25 text-green-300'
             }`}>
-              {callType === 'video' ? <Video className="w-9 h-9" /> : remoteName.charAt(0)}
+              {isVideo ? <Video className="w-3.5 h-3.5" /> : <Phone className="w-3.5 h-3.5" />}
+              Incoming {isVideo ? 'Video' : 'Audio'} Call
+            </span>
+            {callerRoleLabel && (
+              <span className="text-white/40 text-xs mt-1">{callerRoleLabel}</span>
+            )}
+          </div>
+
+          {/* Middle: pulsing avatar */}
+          <div className="relative flex items-center justify-center">
+            {/* Concentric pulsing rings */}
+            <span className="call-ring-1 absolute w-64 h-64 rounded-full bg-white/[0.04]" />
+            <span className="call-ring-2 absolute w-52 h-52 rounded-full bg-white/[0.06]" />
+            <span className="call-ring-3 absolute w-40 h-40 rounded-full bg-white/[0.09]" />
+
+            {/* Avatar */}
+            <div className={`relative z-10 w-28 h-28 rounded-full flex items-center justify-center text-white text-5xl font-bold shadow-2xl ring-4 ring-white/10 ${
+              isVideo
+                ? 'bg-gradient-to-br from-blue-500 to-indigo-700'
+                : 'bg-gradient-to-br from-green-500 to-emerald-700'
+            }`}>
+              {avatarInitial}
             </div>
-            <p className="text-gray-400 text-sm mb-1">Incoming {callType === 'video' ? 'video call' : 'call'}</p>
-            <h3 className="text-xl font-bold text-gray-900 mb-6">{remoteName}</h3>
-            <div className="flex gap-6 justify-center">
-              <button type="button" aria-label="Decline call" onClick={rejectCall}
-                className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-600 transition-colors">
-                <PhoneOff className="w-6 h-6" />
+
+            {/* Name below avatar */}
+            <div className="absolute -bottom-20 text-center w-80">
+              <h2 className="text-white text-3xl font-bold">{remoteName}</h2>
+              {callerRoleLabel && (
+                <p className="text-white/50 text-sm mt-1">{callerRoleLabel}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom: action buttons */}
+          <div className="mb-20 flex items-end justify-between w-full max-w-xs px-4">
+            {/* Decline */}
+            <div className="flex flex-col items-center gap-3">
+              <button
+                type="button"
+                onClick={rejectCall}
+                aria-label="Decline call"
+                className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center shadow-2xl hover:bg-red-600 active:scale-90 transition-all"
+              >
+                <PhoneOff className="w-7 h-7 text-white" />
               </button>
-              <button type="button" aria-label="Accept call" onClick={acceptCall}
-                className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-colors ${
-                  callType === 'video' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-green-500 hover:bg-green-600'
-                }`}>
-                {callType === 'video' ? <Video className="w-6 h-6" /> : <Phone className="w-6 h-6" />}
+              <span className="text-white/60 text-sm font-medium">Decline</span>
+            </div>
+
+            {/* Accept */}
+            <div className="flex flex-col items-center gap-3">
+              <button
+                type="button"
+                onClick={acceptCall}
+                aria-label="Accept call"
+                className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-all ${
+                  isVideo ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'
+                }`}
+              >
+                {isVideo ? <Video className="w-7 h-7 text-white" /> : <Phone className="w-7 h-7 text-white" />}
               </button>
+              <span className="text-white/60 text-sm font-medium">Accept</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Calling */}
+      {/* ── CALLING (outgoing) — full-screen overlay ── */}
       {callState === 'calling' && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-8 text-center shadow-2xl w-72">
-            <div className={`w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold ${
-              callType === 'video' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'
+        <div className="call-overlay-bg fixed inset-0 z-[150] flex flex-col items-center justify-between select-none">
+          {/* Top */}
+          <div className="mt-16 flex flex-col items-center gap-1 text-center">
+            <span className={`text-xs font-semibold uppercase tracking-widest ${
+              isVideo ? 'text-blue-300' : 'text-green-300'
             }`}>
-              {remoteName.charAt(0)}
+              {isVideo ? 'Video Call' : 'Audio Call'}
+            </span>
+          </div>
+
+          {/* Middle: avatar + name + animated dots */}
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative flex items-center justify-center">
+              <span className="call-ring-4 absolute w-52 h-52 rounded-full border border-white/10" />
+              <span className="call-ring-5 absolute w-40 h-40 rounded-full border border-white/15" />
+              <div className={`relative z-10 w-28 h-28 rounded-full flex items-center justify-center text-white text-5xl font-bold shadow-2xl ring-4 ring-white/10 ${
+                isVideo
+                  ? 'bg-gradient-to-br from-blue-500 to-indigo-700'
+                  : 'bg-gradient-to-br from-green-500 to-emerald-700'
+              }`}>
+                {avatarInitial}
+              </div>
             </div>
-            <p className="text-gray-400 text-sm mb-1">{callType === 'video' ? 'Starting video call…' : 'Calling…'}</p>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">{remoteName}</h3>
-            <div className="flex gap-1.5 justify-center mb-6">
-              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
-              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:150ms]" />
-              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:300ms]" />
+
+            <div className="text-center">
+              <h2 className="text-white text-3xl font-bold">{remoteName}</h2>
+              {callerRoleLabel && <p className="text-white/50 text-sm mt-1">{callerRoleLabel}</p>}
+              <div className="flex items-center justify-center gap-1.5 mt-4">
+                <span className="text-white/50 text-sm mr-1">Calling</span>
+                <span className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce" />
+                <span className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce [animation-delay:150ms]" />
+                <span className="w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce [animation-delay:300ms]" />
+              </div>
             </div>
-            <button type="button" aria-label="Cancel call" onClick={endCall}
-              className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-600 transition-colors mx-auto">
-              <PhoneOff className="w-6 h-6" />
+          </div>
+
+          {/* Cancel button */}
+          <div className="mb-20 flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={endCall}
+              aria-label="Cancel call"
+              className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center shadow-2xl hover:bg-red-600 active:scale-90 transition-all"
+            >
+              <PhoneOff className="w-7 h-7 text-white" />
             </button>
+            <span className="text-white/60 text-sm font-medium">Cancel</span>
           </div>
         </div>
       )}
 
-      {/* Active AUDIO call */}
+      {/* ── ACTIVE AUDIO CALL — compact floating bar ── */}
       {callState === 'active' && callType === 'audio' && (
-        <div className="fixed inset-0 bg-gray-900/95 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-3xl p-8 text-center shadow-2xl w-72">
-            <div className="w-20 h-20 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-blue-700">
-              {remoteName.charAt(0)}
-            </div>
-            <h3 className="text-xl font-bold text-gray-900">{remoteName}</h3>
-            <p className="text-green-600 text-sm font-mono mt-1 mb-6">{timer}</p>
-            <div className="flex gap-6 justify-center">
-              <button type="button" aria-label={muted ? 'Unmute' : 'Mute'} onClick={toggleMute}
-                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-colors ${
-                  muted ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}>
-                {muted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-              </button>
-              <button type="button" aria-label="End call" onClick={endCall}
-                className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-600 transition-colors">
-                <PhoneOff className="w-6 h-6" />
-              </button>
-            </div>
+        <div className="call-audio-bar-bg fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] flex items-center gap-4 px-5 py-3.5 rounded-2xl shadow-2xl border border-white/10 min-w-[320px] max-w-[420px]">
+
+          {/* Pulsing green dot */}
+          <span className="relative flex-shrink-0">
+            <span className="w-2.5 h-2.5 bg-green-400 rounded-full block animate-pulse" />
+          </span>
+
+          {/* Avatar */}
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+            {avatarInitial}
           </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-semibold text-sm truncate leading-tight">{remoteName}</p>
+            <p className="text-green-300 font-mono text-xs leading-tight">{timer}</p>
+          </div>
+
+          {/* Mute */}
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-label={muted ? 'Unmute' : 'Mute'}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+              muted ? 'bg-red-500/30 text-red-300 hover:bg-red-500/50' : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            {muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+
+          {/* End */}
+          <button
+            type="button"
+            onClick={endCall}
+            aria-label="End call"
+            className="w-9 h-9 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 active:scale-90 transition-all flex-shrink-0"
+          >
+            <PhoneOff className="w-4 h-4" />
+          </button>
         </div>
       )}
 
-      {/* Active VIDEO call — full-screen meeting room */}
+      {/* ── ACTIVE VIDEO CALL — full-screen meeting room ── */}
       {callState === 'active' && callType === 'video' && (
-        <div className="fixed inset-0 bg-gray-950 z-50 flex flex-col">
+        <div className="fixed inset-0 z-[150] flex flex-col bg-gray-950">
+
           {/* Remote video area */}
           <div className="relative flex-1 bg-gray-900 overflow-hidden">
             <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
-            {/* Fallback avatar shown behind video */}
+
+            {/* Fallback avatar (behind video) */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-28 h-28 bg-gray-700/60 rounded-full flex items-center justify-center text-white text-5xl font-bold select-none">
-                {remoteName.charAt(0)}
+              <div className="w-32 h-32 bg-gray-700/60 rounded-full flex items-center justify-center text-white text-6xl font-bold select-none">
+                {avatarInitial}
               </div>
             </div>
-            {/* Name + timer badge */}
+
+            {/* Name + timer badge — top center */}
             <div className="absolute top-5 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black/50 backdrop-blur-sm px-5 py-2.5 rounded-full">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
               <span className="text-white font-semibold text-sm">{remoteName}</span>
-              <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-              <span className="text-green-400 font-mono text-sm">{timer}</span>
+              {callerRoleLabel && (
+                <span className="text-white/50 text-xs">· {callerRoleLabel}</span>
+              )}
+              <span className="text-green-400 font-mono text-sm ml-1">{timer}</span>
             </div>
-            {/* Local video PIP */}
+
+            {/* Local video PIP — bottom right */}
             <div className="absolute bottom-5 right-5 w-36 h-28 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-gray-800">
               {cameraOff ? (
                 <div className="w-full h-full flex items-center justify-center bg-gray-700">
@@ -394,28 +610,45 @@ export function CallProvider({ children }: { children: ReactNode }) {
           </div>
 
           {/* Controls bar */}
-          <div className="flex items-center justify-center gap-6 py-6 bg-gray-950">
+          <div className="flex items-center justify-center gap-8 py-6 bg-gray-950">
+            {/* Mute */}
             <div className="flex flex-col items-center gap-1.5">
-              <button type="button" aria-label={muted ? 'Unmute' : 'Mute'} onClick={toggleMute}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+              <button
+                type="button"
+                aria-label={muted ? 'Unmute' : 'Mute'}
+                onClick={toggleMute}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
                   muted ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'
-                }`}>
+                }`}
+              >
                 {muted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
               </button>
               <span className="text-gray-400 text-[11px]">{muted ? 'Unmute' : 'Mute'}</span>
             </div>
+
+            {/* Camera */}
             <div className="flex flex-col items-center gap-1.5">
-              <button type="button" aria-label={cameraOff ? 'Turn camera on' : 'Turn camera off'} onClick={toggleCamera}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+              <button
+                type="button"
+                aria-label={cameraOff ? 'Start camera' : 'Stop camera'}
+                onClick={toggleCamera}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
                   cameraOff ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'
-                }`}>
+                }`}
+              >
                 {cameraOff ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
               </button>
               <span className="text-gray-400 text-[11px]">{cameraOff ? 'Start Video' : 'Stop Video'}</span>
             </div>
+
+            {/* End call */}
             <div className="flex flex-col items-center gap-1.5">
-              <button type="button" aria-label="End call" onClick={endCall}
-                className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-colors shadow-lg">
+              <button
+                type="button"
+                aria-label="End call"
+                onClick={endCall}
+                className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 active:scale-95 transition-all shadow-lg"
+              >
                 <PhoneOff className="w-6 h-6" />
               </button>
               <span className="text-gray-400 text-[11px]">End</span>

@@ -222,5 +222,13 @@ export const api = {
       method: 'DELETE', headers: authHeaders(),
     }),
     analytics: (period: string) => req<any>(`/admin/analytics?period=${period}`, { headers: authHeaders() }),
+    subscribers: () => req<any[]>('/admin/subscribers', { headers: authHeaders() }),
   },
+
+  subscribe: (email: string) =>
+    req<{ message: string }>('/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }),
 };

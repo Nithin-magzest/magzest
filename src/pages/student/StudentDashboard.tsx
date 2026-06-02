@@ -223,22 +223,22 @@ export default function StudentDashboard() {
             <h1 className="text-2xl font-bold">{student.name}</h1>
             <p className="text-blue-200 mt-2 text-sm">Track your applications and explore universities</p>
           </div>
-          <div className="hidden md:block bg-white/15 border border-white/20 rounded-xl p-4 text-center">
+          <Link to="/student/applications" className="hidden md:block bg-white/15 border border-white/20 rounded-xl p-4 text-center hover:bg-white/25 transition-colors">
             <div className="text-2xl font-bold">{appStats.offers}</div>
             <div className="text-xs text-blue-200">Offer(s) Received</div>
-          </div>
+          </Link>
         </div>
         <div className="grid grid-cols-3 gap-4 mt-6">
           {[
-            { label: 'Applications', value: appStats.total, icon: FileText },
-            { label: 'Under Review', value: appStats.underReview, icon: Clock },
-            { label: 'Docs Verified', value: `${docStats.verified}/${docStats.total}`, icon: CheckCircle },
+            { label: 'Applications', value: appStats.total, icon: FileText, to: '/student/applications' },
+            { label: 'Under Review', value: appStats.underReview, icon: Clock, to: '/student/applications' },
+            { label: 'Docs Verified', value: `${docStats.verified}/${docStats.total}`, icon: CheckCircle, to: '/student/profile' },
           ].map(s => (
-            <div key={s.label} className="bg-white/15 border border-white/20 rounded-xl p-3 text-center">
+            <Link key={s.label} to={s.to} className="bg-white/15 border border-white/20 rounded-xl p-3 text-center hover:bg-white/25 transition-colors">
               <s.icon className="w-5 h-5 mx-auto mb-1 text-blue-200" />
               <div className="text-xl font-bold">{s.value}</div>
               <div className="text-xs text-blue-200">{s.label}</div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
