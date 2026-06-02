@@ -343,7 +343,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
               <GraduationCap className="w-4 h-4 text-white" />
             </div>
             <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit University' : 'Add University'}</h2>
@@ -430,7 +430,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
               {/* Live preview of logo + cover image */}
               {(form.logo || form.coverImage || form.website) && (
                 <div className="rounded-xl overflow-hidden border border-gray-200">
-                  <div className="relative h-32 bg-gradient-to-br from-blue-400 to-indigo-600 overflow-hidden">
+                  <div className="relative h-32 bg-gradient-to-br from-purple-400 to-indigo-600 overflow-hidden">
                     {form.coverImage && (
                       <img src={form.coverImage} alt="cover" className="w-full h-full object-cover opacity-80"
                         onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
@@ -506,7 +506,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
                 placeholder="e.g. Scholarship Available"
                 className="flex-1 px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <button type="button" onClick={addTag} className="px-3 py-2 bg-sky-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100">Add</button>
+              <button type="button" onClick={addTag} className="px-3 py-2 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100">Add</button>
             </div>
             <div className="flex flex-wrap gap-2">
               {form.tags.map((t: string, i: number) => (
@@ -523,7 +523,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addFac(); } }}
                 placeholder="e.g. Library, Sports Complex"
                 className="flex-1 px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <button type="button" onClick={addFac} className="px-3 py-2 bg-sky-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100">Add</button>
+              <button type="button" onClick={addFac} className="px-3 py-2 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100">Add</button>
             </div>
             <div className="flex flex-wrap gap-2">
               {form.facilities.map((f: string, i: number) => (
@@ -649,7 +649,7 @@ function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply, onEnrich 
               Enrich
             </button>
             <button type="button" onClick={() => onEdit(uni)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 bg-sky-50 border border-blue-200 hover:bg-blue-100 transition-colors">
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 hover:bg-purple-100 transition-colors">
               <Edit2 className="w-3.5 h-3.5" />Edit
             </button>
             <button type="button" onClick={() => onDelete(mongoId)}
@@ -722,7 +722,7 @@ function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply, onEnrich 
                           <Plus className="w-3 h-3" />Apply
                         </button>
                         <button type="button" onClick={() => setEditingCourse(c)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors">
                           <Edit2 className="w-3 h-3" />Edit
                         </button>
                         <button type="button" onClick={() => handleDeleteCourse(cId)} disabled={deletingCourseId === cId}
@@ -746,7 +746,7 @@ function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply, onEnrich 
 // ── Apply Modal ───────────────────────────────────────────────────────────────
 
 const LEVEL_COLORS: Record<string, string> = {
-  "Bachelor's": 'bg-blue-100 text-blue-700',
+  "Bachelor's": 'bg-purple-100 text-purple-700',
   "Master's": 'bg-purple-100 text-purple-700',
   'PhD': 'bg-red-100 text-red-700',
   'Diploma': 'bg-green-100 text-green-700',
@@ -951,14 +951,14 @@ export default function AdminUniversities() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <GraduationCap className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-blue-200 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
+                <p className="text-purple-200 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
                 <h1 className="text-2xl font-bold leading-tight">Universities</h1>
               </div>
             </div>
@@ -973,7 +973,7 @@ export default function AdminUniversities() {
                 {enrichingAll ? <Spinner white /> : <Sparkles className="w-4 h-4" />}Enrich All
               </button>
               <button type="button" onClick={() => setShowAdd(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-blue-700 rounded-xl text-sm font-bold hover:bg-sky-50 transition-colors shadow-sm">
+                className="flex items-center gap-2 px-4 py-2 bg-white text-purple-700 rounded-xl text-sm font-bold hover:bg-purple-50 transition-colors shadow-sm">
                 <Plus className="w-4 h-4" />Add University
               </button>
             </div>

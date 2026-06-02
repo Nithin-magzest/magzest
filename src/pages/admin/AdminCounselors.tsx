@@ -1217,20 +1217,27 @@ return (
       <div className="space-y-6">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Counselors</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage counselors and their assigned students</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={loadData} disabled={loading}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium border border-gray-200 shadow-sm transition-colors disabled:opacity-50">
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Refresh
-            </button>
-            <button type="button" onClick={() => setShowCreate(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-md transition-colors">
-              <Plus className="w-4 h-4" />New counselor
-            </button>
+        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <UserCog className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-purple-200 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
+                <h1 className="text-2xl font-bold leading-tight">Counselors</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={loadData} disabled={loading}
+                className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors disabled:opacity-50">
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Refresh
+              </button>
+              <button type="button" onClick={() => setShowCreate(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-white text-purple-700 rounded-xl text-sm font-bold hover:bg-purple-50 transition-colors shadow-sm">
+                <Plus className="w-4 h-4" />New Counselor
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1255,31 +1262,31 @@ return (
                 subColor: 'text-green-600',
               },
               {
-                icon: <Users className="w-5 h-5 text-blue-600" />,
-                bg: 'bg-blue-50',
+                icon: <Users className="w-5 h-5 text-purple-600" />,
+                bg: 'bg-purple-50',
                 label: 'Avg students',
                 value: avgStudents,
                 sub: 'per counselor',
                 subColor: 'text-gray-500',
               },
               {
-                icon: <Star className="w-5 h-5 text-amber-500" />,
-                bg: 'bg-amber-50',
+                icon: <Star className="w-5 h-5 text-purple-500" />,
+                bg: 'bg-purple-50',
                 label: 'Top performer',
                 value: topPerformer?.name?.split(' ')[0] + (topPerformer?.name?.split(' ')[1] ? ' ' + topPerformer.name.split(' ')[1][0] + '.' : '') || '—',
                 sub: topPerformer ? `Score ${metricsMap[normalId(topPerformer)]?.score ?? 0}` : '—',
                 subColor: 'text-green-600',
               },
               {
-                icon: <TrendingUp className="w-5 h-5 text-rose-500" />,
-                bg: 'bg-rose-50',
+                icon: <TrendingUp className="w-5 h-5 text-purple-500" />,
+                bg: 'bg-purple-50',
                 label: 'Unassigned students',
                 value: unassignedStudents,
                 sub: unassignedStudents > 0 ? 'Needs action' : 'All assigned',
                 subColor: unassignedStudents > 0 ? 'text-rose-600' : 'text-green-600',
               },
             ].map(card => (
-              <div key={card.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-start gap-3">
+              <div key={card.label} className="bg-white rounded-2xl border border-purple-100 shadow-sm p-4 flex items-start gap-3 hover:border-purple-300 hover:shadow-md transition-all">
                 <div className={`w-10 h-10 ${card.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
                   {card.icon}
                 </div>

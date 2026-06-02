@@ -47,7 +47,7 @@ function BtnPrimary({ children, onClick, disabled, type = 'button', className = 
   type?: 'button' | 'submit'; className?: string; variant?: 'purple' | 'blue';
 }) {
   const colors = variant === 'blue'
-    ? 'from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus-visible:ring-blue-500'
+    ? 'from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 focus-visible:ring-purple-500'
     : 'from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 focus-visible:ring-purple-400';
   return (
     <button type={type} onClick={onClick} disabled={disabled}
@@ -179,7 +179,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: { st
       <div className="bg-white rounded-2xl w-full max-w-4xl h-[93vh] flex flex-col shadow-2xl overflow-hidden">
 
         {/* Header banner */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-6 pt-6 pb-5 flex-shrink-0">
+        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 px-6 pt-6 pb-5 flex-shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-white/20 border border-white/30 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg flex-shrink-0">
@@ -187,7 +187,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: { st
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">{student.name}</h2>
-                <p className="text-blue-200 text-sm mt-0.5">{student.email}</p>
+                <p className="text-purple-200 text-sm mt-0.5">{student.email}</p>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   <StatusBadge status={student.status} />
                   {student.nationality && (
@@ -213,7 +213,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: { st
             ].map(stat => (
               <div key={stat.label} className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-center">
                 <p className="text-lg font-bold text-white">{stat.value}</p>
-                <p className="text-xs text-blue-200 mt-0.5">{stat.label}</p>
+                <p className="text-xs text-purple-200 mt-0.5">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -333,7 +333,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: { st
           {onChat && (
             <button type="button" onClick={onChat}
               className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
-                text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md
+                text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-md
                 active:scale-[0.98] transition-all">
               <MessageSquare className="w-4 h-4" />Chat
             </button>
@@ -510,7 +510,7 @@ function CounselorDetailModal({ counselor, students, onClose, onChat }: { counse
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Languages</p>
                   <div className="flex flex-wrap gap-2">
                     {counselor.languages.map((l: string) => (
-                      <span key={l} className="text-xs bg-green-50 text-green-700 px-3 py-1.5 rounded-full font-medium border border-green-100">{l}</span>
+                      <span key={l} className="text-xs bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full font-medium border border-purple-100">{l}</span>
                     ))}
                   </div>
                 </div>
@@ -535,7 +535,7 @@ function CounselorDetailModal({ counselor, students, onClose, onChat }: { counse
                   <div className="space-y-2">
                     {assignedStudentDetails.map(s => (
                       <div key={normalId(s)} className="bg-gray-50 rounded-xl p-3 flex items-center gap-3 border border-gray-100">
-                        <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                        <div className="w-9 h-9 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                           {s.name?.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -876,7 +876,7 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
       <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+            <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shadow-sm">
               <GraduationCap className="w-4 h-4 text-white" />
             </div>
             <h2 className="text-lg font-bold text-gray-900">Add New Student</h2>
@@ -1005,7 +1005,7 @@ function NewStudentModal({ onClose, onCreated, counselors }: { onClose: () => vo
 
           <div className="flex gap-3 pt-2">
             <BtnGhost onClick={onClose} className="flex-1">Cancel</BtnGhost>
-            <BtnPrimary type="submit" disabled={saving} className="flex-1" variant="blue">
+            <BtnPrimary type="submit" disabled={saving} className="flex-1">
               {saving ? <><Spinner size={4} white />Adding…</> : <><GraduationCap className="w-4 h-4" />Add Student</>}
             </BtnPrimary>
           </div>
@@ -1569,34 +1569,34 @@ export default function AdminDashboard() {
       <div className="space-y-6">
 
         {/* Header */}
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-6 shadow-sm">
+        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Shield className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <Shield className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-purple-500 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
-                <h1 className="text-2xl font-bold text-purple-900 leading-tight">Dashboard</h1>
+                <p className="text-purple-200 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
+                <h1 className="text-2xl font-bold text-white leading-tight">Dashboard</h1>
               </div>
             </div>
             <button type="button" onClick={loadData} disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 bg-white border border-purple-200 hover:bg-purple-50 rounded-xl text-sm font-medium text-purple-700 transition-colors disabled:opacity-50">
+              className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-50">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Total Students', value: stats?.totalStudents ?? '—', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', to: '/admin/students' },
-              { label: 'Counselors', value: stats?.totalCounselors ?? '—', icon: UserCog, color: 'text-green-600', bg: 'bg-green-50', to: '/admin/counselors' },
-              { label: 'Applications', value: stats?.totalApplications ?? '—', icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50', to: '/admin/applications' },
-              { label: 'Active Students', value: stats?.activeStudents ?? '—', icon: Activity, color: 'text-purple-600', bg: 'bg-purple-50', to: '/admin/students' },
+              { label: 'Total Students', value: stats?.totalStudents ?? '—', icon: Users, to: '/admin/students' },
+              { label: 'Counselors', value: stats?.totalCounselors ?? '—', icon: UserCog, to: '/admin/counselors' },
+              { label: 'Applications', value: stats?.totalApplications ?? '—', icon: FileText, to: '/admin/applications' },
+              { label: 'Active Students', value: stats?.activeStudents ?? '—', icon: Activity, to: '/admin/students' },
             ].map(s => (
-              <Link key={s.label} to={s.to} className={`${s.bg} border border-white rounded-xl p-4 hover:opacity-80 transition-opacity`}>
-                <s.icon className={`w-4 h-4 ${s.color} mb-2`} />
-                <div className={`text-3xl font-bold tracking-tight ${s.color}`}>{loading ? '…' : s.value}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+              <Link key={s.label} to={s.to} className="bg-white rounded-xl p-4 hover:bg-purple-50 hover:shadow-md transition-all shadow-sm">
+                <s.icon className="w-5 h-5 text-purple-500 mb-2" />
+                <div className="text-3xl font-extrabold tracking-tight text-purple-700">{loading ? '…' : s.value}</div>
+                <div className="text-xs font-semibold text-gray-500 mt-0.5">{s.label}</div>
               </Link>
             ))}
           </div>
@@ -1700,14 +1700,14 @@ export default function AdminDashboard() {
                       <button type="button" title={`Chat with ${c.name}`}
                         onClick={() => navigate('/admin/chat', { state: { openChatWith: { _id: id, name: c.name } } })}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
-                          text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300
-                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1">
+                          text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300
+                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1">
                         <MessageSquare className="w-3.5 h-3.5" />Chat
                       </button>
                       <button type="button" onClick={() => setAssigningCounselor(c)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
-                          text-green-700 bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300
-                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-1">
+                          text-purple-700 bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300
+                          active:scale-[0.97] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1">
                         <UserCheck className="w-3.5 h-3.5" />Assign
                       </button>
                       <BtnView onClick={() => setSelectedCounselor(c)} color="purple" />
@@ -1759,7 +1759,7 @@ export default function AdminDashboard() {
                   </button>
                 )}
               </div>
-              <BtnPrimary onClick={() => setShowNewStudent(true)} variant="blue">
+              <BtnPrimary onClick={() => setShowNewStudent(true)}>
                 <Plus className="w-4 h-4" />New Student
               </BtnPrimary>
             </div>
@@ -1776,7 +1776,7 @@ export default function AdminDashboard() {
                 const isToggling = togglingId === id;
                 return (
                   <div key={id} className="flex items-center gap-4 px-5 py-4 hover:bg-purple-50/40 transition-colors">
-                    <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm text-lg">
+                    <div className="w-11 h-11 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm text-lg">
                       {s.name?.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">

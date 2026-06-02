@@ -620,24 +620,31 @@ export default function AdminStudents() {
       <div className="space-y-6">
 
         {/* ── Header ── */}
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Students</h1>
-            <p className="text-gray-500 text-sm mt-1">Manage all students and their profiles</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button type="button" onClick={handleExport}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium border border-gray-200 shadow-sm transition-colors">
-              <Download className="w-4 h-4" />Export CSV
-            </button>
-            <button type="button" onClick={loadData} disabled={loading}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium border border-gray-200 shadow-sm transition-colors disabled:opacity-50">
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Refresh
-            </button>
-            <button type="button" onClick={() => setShowNewStudent(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-xl text-sm font-medium border border-gray-200 shadow-sm transition-colors">
-              <GraduationCap className="w-4 h-4" />Register student
-            </button>
+        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-purple-200 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
+                <h1 className="text-2xl font-bold leading-tight">Students</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button type="button" onClick={handleExport}
+                className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors">
+                <Download className="w-4 h-4" />Export CSV
+              </button>
+              <button type="button" onClick={loadData} disabled={loading}
+                className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors disabled:opacity-50">
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Refresh
+              </button>
+              <button type="button" onClick={() => setShowNewStudent(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-white text-purple-700 rounded-xl text-sm font-bold hover:bg-purple-50 transition-colors shadow-sm">
+                <GraduationCap className="w-4 h-4" />Register Student
+              </button>
+            </div>
           </div>
         </div>
 
@@ -653,18 +660,18 @@ export default function AdminStudents() {
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           {[
-            { label: 'Total', value: counts.total, trend: '+12%', trendCls: 'text-green-600', icon: <Users className="w-5 h-5 text-blue-600" />, iconBg: 'bg-blue-100' },
-            { label: 'Active', value: counts.active, trend: pct(counts.active), trendCls: 'text-green-600', icon: <Activity className="w-5 h-5 text-green-600" />, iconBg: 'bg-green-100' },
-            { label: 'Inactive', value: counts.inactive, trend: pct(counts.inactive), trendCls: 'text-gray-500', icon: <UserX className="w-5 h-5 text-gray-500" />, iconBg: 'bg-gray-100' },
-            { label: 'Enrolled', value: counts.enrolled, trend: '+5 this week', trendCls: 'text-green-600', icon: <GraduationCap className="w-5 h-5 text-purple-600" />, iconBg: 'bg-purple-100' },
-            { label: 'Unassigned', value: counts.unassigned, trend: counts.unassigned > 0 ? 'Needs action' : 'All assigned', trendCls: counts.unassigned > 0 ? 'text-red-600' : 'text-green-600', icon: <UserCog className="w-5 h-5 text-red-500" />, iconBg: 'bg-red-100' },
+            { label: 'Total', value: counts.total, trend: '+12%', icon: <Users className="w-5 h-5 text-purple-600" />, iconBg: 'bg-purple-100' },
+            { label: 'Active', value: counts.active, trend: pct(counts.active), icon: <Activity className="w-5 h-5 text-purple-600" />, iconBg: 'bg-purple-100' },
+            { label: 'Inactive', value: counts.inactive, trend: pct(counts.inactive), icon: <UserX className="w-5 h-5 text-purple-400" />, iconBg: 'bg-purple-50' },
+            { label: 'Enrolled', value: counts.enrolled, trend: '+5 this week', icon: <GraduationCap className="w-5 h-5 text-purple-600" />, iconBg: 'bg-purple-100' },
+            { label: 'Unassigned', value: counts.unassigned, trend: counts.unassigned > 0 ? 'Needs action' : 'All assigned', icon: <UserCog className="w-5 h-5 text-purple-500" />, iconBg: 'bg-purple-100' },
           ].map(card => (
-            <div key={card.label} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-start gap-3">
+            <div key={card.label} className="bg-white rounded-2xl p-4 border border-purple-100 shadow-sm flex items-start gap-3 hover:border-purple-300 hover:shadow-md transition-all">
               <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center flex-shrink-0`}>{card.icon}</div>
               <div>
                 <p className="text-gray-500 text-xs mb-1">{card.label}</p>
                 <p className="text-2xl font-bold text-gray-900">{loading ? '…' : card.value.toLocaleString()}</p>
-                <p className={`text-xs mt-1 ${card.trendCls}`}>{loading ? '' : card.trend}</p>
+                <p className="text-xs mt-1 text-purple-500">{loading ? '' : card.trend}</p>
               </div>
             </div>
           ))}

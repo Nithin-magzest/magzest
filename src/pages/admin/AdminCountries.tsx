@@ -11,9 +11,9 @@ import { CountryFlag } from '../../components/CountryFlag';
 
 function TagChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 bg-sky-50 text-blue-700 text-xs px-2.5 py-1 rounded-full border border-blue-100">
+    <span className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-full border border-purple-100">
       {label}
-      <button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="text-blue-400 hover:text-blue-700 ml-0.5">
+      <button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="text-purple-400 hover:text-purple-700 ml-0.5">
         <X className="w-3 h-3" />
       </button>
     </span>
@@ -170,7 +170,7 @@ function CountryModal({ country, onClose, onSaved }: {
         <div className="sticky top-0 bg-white z-10">
           <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+              <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
                 <span className="text-lg leading-none">🌍</span>
               </div>
               <div>
@@ -276,7 +276,7 @@ function CountryModal({ country, onClose, onSaved }: {
                 placeholder="e.g. Bank statements (3 months)"
                 className="flex-1 px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <button type="button" onClick={addDoc}
-                className="px-3 py-2 bg-sky-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors">Add</button>
+                className="px-3 py-2 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100 transition-colors">Add</button>
             </div>
             <div className="flex flex-wrap gap-2">
               {form.visaDocs.map((d: string, i: number) => (
@@ -343,7 +343,7 @@ function CountryModal({ country, onClose, onSaved }: {
                 placeholder="e.g. Computer Science"
                 className="flex-1 px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <button type="button" onClick={addPop}
-                className="px-3 py-2 bg-sky-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100 transition-colors">Add</button>
+                className="px-3 py-2 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100 transition-colors">Add</button>
             </div>
             <div className="flex flex-wrap gap-2">
               {form.popular.map((p: string, i: number) => (
@@ -379,7 +379,7 @@ function CountryDetailModal({ country, unis, onClose }: { country: any; unis: an
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-2xl px-6 py-5 text-white">
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-t-2xl px-6 py-5 text-white">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               {country.code ? (
@@ -394,7 +394,7 @@ function CountryDetailModal({ country, unis, onClose }: { country: any; unis: an
               )}
               <div>
                 <h2 className="text-2xl font-bold leading-tight">{country.name}</h2>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-sm text-blue-100">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-sm text-purple-100">
                   {country.capital && <span className="flex items-center gap-1">🏛 {country.capital}</span>}
                   {country.region && <span className="flex items-center gap-1">📍 {country.region}</span>}
                 </div>
@@ -425,8 +425,8 @@ function CountryDetailModal({ country, unis, onClose }: { country: any; unis: an
         <div className="p-6 space-y-5">
 
           {/* Student Visa */}
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-            <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+            <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
               <FileCheck2 className="w-4 h-4" /> Student Visa
             </p>
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -434,7 +434,7 @@ function CountryDetailModal({ country, unis, onClose }: { country: any; unis: an
                 <div><span className="text-gray-400 text-xs">Visa Type</span><p className="font-semibold text-gray-800">{country.visa.type}</p></div>
               )}
               {country.visa?.processingTime && (
-                <div><span className="text-gray-400 text-xs">Processing Time</span><p className="font-medium text-gray-700 flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-blue-500" />{country.visa.processingTime}</p></div>
+                <div><span className="text-gray-400 text-xs">Processing Time</span><p className="font-medium text-gray-700 flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{country.visa.processingTime}</p></div>
               )}
               {country.visa?.cost && (
                 <div><span className="text-gray-400 text-xs">Application Cost</span><p className="font-medium text-gray-700">{country.visa.cost}</p></div>
@@ -567,15 +567,15 @@ function UniMiniCard({ uni }: { uni: any }) {
           }
         }}
       />
-      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 items-center justify-center flex-shrink-0 hidden">
-        <span className="text-sm font-bold text-blue-600">{uni.name?.charAt(0) || '?'}</span>
+      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 items-center justify-center flex-shrink-0 hidden">
+        <span className="text-sm font-bold text-purple-600">{uni.name?.charAt(0) || '?'}</span>
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold text-gray-800 truncate max-w-[140px]">{uni.name}</p>
         <p className="text-xs text-gray-400 truncate">{uni.city || uni.type || ''}</p>
       </div>
       {uni.courses?.length > 0 && (
-        <span className="text-xs bg-sky-50 text-sky-700 font-medium px-2 py-0.5 rounded-full border border-sky-100 flex-shrink-0">
+        <span className="text-xs bg-purple-50 text-purple-700 font-medium px-2 py-0.5 rounded-full border border-purple-100 flex-shrink-0">
           {uni.courses.length}
         </span>
       )}
@@ -628,7 +628,7 @@ function CountryRow({ country, unis, onEdit, onDelete, onView }: {
           </div>
           <div className="flex flex-wrap gap-x-4 mt-1">
             {country.visa?.type && (
-              <span className="text-xs text-blue-600 font-medium flex items-center gap-1">
+              <span className="text-xs text-purple-600 font-medium flex items-center gap-1">
                 <FileCheck2 className="w-3 h-3" /> {country.visa.type}
               </span>
             )}
@@ -650,7 +650,7 @@ function CountryRow({ country, unis, onEdit, onDelete, onView }: {
             <Eye className="w-3.5 h-3.5" /> View
           </button>
           <button type="button" onClick={() => onEdit(country)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 bg-sky-50 border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all">
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 hover:bg-purple-100 active:scale-95 transition-all">
             <Edit2 className="w-3.5 h-3.5" /> Edit
           </button>
           <button type="button" onClick={() => onDelete(mongoId)}
@@ -672,7 +672,7 @@ function CountryRow({ country, unis, onEdit, onDelete, onView }: {
 
           {/* Visa column */}
           <div>
-            <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
               <FileCheck2 className="w-3.5 h-3.5" /> Student Visa
             </p>
             <div className="space-y-1.5 text-xs">
@@ -845,14 +845,14 @@ export default function AdminCountries() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <span className="text-2xl leading-none">🌍</span>
               </div>
               <div>
-                <p className="text-blue-200 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
+                <p className="text-purple-200 text-xs font-medium uppercase tracking-wide">Admin Portal</p>
                 <h1 className="text-2xl font-bold leading-tight">Countries, Visa &amp; Passport</h1>
               </div>
             </div>
@@ -862,7 +862,7 @@ export default function AdminCountries() {
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
               </button>
               <button type="button" onClick={() => setShowAdd(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-blue-700 rounded-xl text-sm font-bold hover:bg-sky-50 transition-colors shadow-sm">
+                className="flex items-center gap-2 px-4 py-2 bg-white text-purple-700 rounded-xl text-sm font-bold hover:bg-purple-50 transition-colors shadow-sm">
                 <Plus className="w-4 h-4" /> Add Country
               </button>
             </div>

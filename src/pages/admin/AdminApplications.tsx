@@ -30,7 +30,7 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 
 const STATUS_COLORS: Record<string, string> = {
   draft:          'bg-gray-100 text-gray-600 border-gray-200',
-  submitted:      'bg-blue-100 text-blue-700 border-blue-200',
+  submitted:      'bg-purple-100 text-purple-700 border-purple-200',
   under_review:   'bg-yellow-100 text-yellow-700 border-yellow-200',
   offer_received: 'bg-green-100 text-green-700 border-green-200',
   accepted:       'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -239,7 +239,7 @@ export default function AdminApplications() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-[#3b0764] rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -411,7 +411,7 @@ export default function AdminApplications() {
                     <div key={`${app.studentId}-${appId}`}
                       className="flex items-center gap-4 px-5 py-4 hover:bg-purple-50/30 transition-colors">
                       {/* Student avatar */}
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
                         {app.studentName?.charAt(0)}
                       </div>
 
