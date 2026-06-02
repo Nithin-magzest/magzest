@@ -36,6 +36,18 @@ const userSockets = new Map(); // userId -> Set<socketId>
 app.set('io', io);
 app.set('userSockets', userSockets);
 
+// Nodemailer transporter — configure SMTP credentials in server/.env
+const nodemailer = require('nodemailer');
+const mailer = nodemailer.createTransport({
+  host:   process.env.SMTP_HOST   || 'smtp.gmail.com',
+  port:   Number(process.env.SMTP_PORT)  || 587,
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: {
+    user: process.env.SMTP_USER || 'nithin@magzest.in',
+    pass: process.env.SMTP_PASS || '',
+  },
+});
+
 // Public email subscription / free registration
 const Subscriber = require('./models/Subscriber');
 app.post('/api/subscribe', async (req, res) => {
@@ -58,6 +70,47 @@ app.post('/api/subscribe', async (req, res) => {
       phone:        sub.phone,
       subscribedAt: sub.subscribedAt,
     });
+
+    // Send thank-you email to the new subscriber
+    const greeting = sub.name ? `Hi ${sub.name},` : 'Hello,';
+    mailer.sendMail({
+      from:    '"Gradzest" <nithin@magzest.in>',
+      to:      sub.email,
+      subject: 'Thank you for registering with Gradzest!',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
+          <div style="background:#3b0764;padding:32px 24px;border-radius:8px 8px 0 0;text-align:center;">
+            <h1 style="color:#fff;margin:0;font-size:24px;letter-spacing:1px;">Gradzest</h1>
+            <p style="color:#e9d5ff;margin:8px 0 0;font-size:13px;">Your Global Education Partner</p>
+          </div>
+          <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+            <p style="font-size:16px;">${greeting}</p>
+            <p style="font-size:15px;line-height:1.6;">
+              Thank you for registering with <strong>Gradzest</strong>! We're thrilled to have you on board.
+            </p>
+            <p style="font-size:15px;line-height:1.6;">
+              Our team will reach out to you shortly to discuss how we can help you achieve your study-abroad goals.
+            </p>
+            <div style="margin:28px 0;padding:20px;background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:4px;">
+              <p style="margin:0;font-size:14px;color:#5b21b6;">
+                <strong>What happens next?</strong><br/>
+                A Gradzest counselor will contact you to understand your preferences and guide you through the best university options worldwide.
+              </p>
+            </div>
+            <p style="font-size:14px;color:#6b7280;">
+              If you have any questions, simply reply to this email — we're always happy to help.
+            </p>
+            <p style="font-size:15px;margin-top:24px;">
+              Warm regards,<br/>
+              <strong>The Gradzest Team</strong>
+            </p>
+          </div>
+          <p style="text-align:center;font-size:12px;color:#9ca3af;margin-top:16px;">
+            © ${new Date().getFullYear()} Gradzest · nithin@magzest.in
+          </p>
+        </div>
+      `,
+    }).catch(err => console.error('[mailer] thank-you email failed:', err.message));
 
     res.status(201).json({ message: 'Subscribed successfully' });
   } catch {
