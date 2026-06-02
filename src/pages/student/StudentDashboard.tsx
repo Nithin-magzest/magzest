@@ -352,14 +352,14 @@ export default function StudentDashboard() {
             </div>
           ) : (
             <div className="space-y-3">
-              {apps.map((app: any) => (
-                <div key={app._id || app.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+              {apps.map((app: any, i: number) => (
+                <div key={app._id || app.id || i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                   <div className="w-10 h-10 bg-[#f0f4ff] rounded-lg flex items-center justify-center text-[#0d1b4b] font-bold text-sm flex-shrink-0">
-                    {app.universityName.charAt(0)}
+                    {app.universityName?.charAt(0) ?? '?'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm truncate">{app.universityName}</p>
-                    <p className="text-gray-500 text-xs truncate">{app.courseName}</p>
+                    <p className="font-semibold text-gray-900 text-sm truncate">{app.universityName ?? 'Unknown University'}</p>
+                    <p className="text-gray-500 text-xs truncate">{app.courseName ?? ''}</p>
                   </div>
                   <StatusBadge status={app.status} />
                 </div>

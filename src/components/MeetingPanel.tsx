@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -92,18 +93,26 @@ function ScheduleModal({
   const [participants, setParticipants] = useState<any[]>([]);
   const [saving, setSaving]     = useState(false);
   const [error, setError]       = useState('');
+  const { user } = useAuth();
 
   useEffect(() => {
-    Promise.all([
-      api.admin.students().catch(() => []),
-      api.admin.counselors().catch(() => []),
-    ]).then(([students, counselors]) => {
-      setParticipants([
-        ...students.map((s: any) => ({ ...s, _role: 'student' })),
-        ...counselors.map((c: any) => ({ ...c, _role: 'counselor' })),
-      ]);
-    });
-  }, []);
+    const role = user?.role;
+    if (role === 'admin' || role === 'appteam') {
+      Promise.all([
+        api.admin.students().catch(() => []),
+        api.admin.counselors().catch(() => []),
+      ]).then(([students, counselors]) => {
+        setParticipants([
+          ...students.map((s: any) => ({ ...s, _role: 'student' })),
+          ...counselors.map((c: any) => ({ ...c, _role: 'counselor' })),
+        ]);
+      });
+    } else if (role === 'counselor') {
+      api.students.list().catch(() => []).then((students: any[]) => {
+        setParticipants(students.map((s: any) => ({ ...s, _role: 'student' })));
+      });
+    }
+  }, [user?.role]);
 
   const filtered = participants.filter(p =>
     !search ||

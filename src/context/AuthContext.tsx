@@ -2,6 +2,9 @@
 import { User } from '../types';
 import { api } from '../api';
 
+// Force a full page reload on HMR so the context reference never mismatches
+if (import.meta.hot) { import.meta.hot.decline(); }
+
 type LoginResult = { success: true; role: string } | { success: false };
 
 interface AuthContextType {
@@ -65,20 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {}
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-gray-500 text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <AuthContext.Provider value={{ user, login, loginWithToken, logout, refreshUser, isAuthenticated: !!user, loading }}>
-      {children}
+      {loading ? (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-gray-500 text-sm">Loading...</p>
+          </div>
+        </div>
+      ) : children}
     </AuthContext.Provider>
   );
 }
