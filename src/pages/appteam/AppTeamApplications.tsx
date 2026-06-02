@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import jsPDF from 'jspdf';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -312,6 +313,154 @@ export default function AppTeamApplications() {
     ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : '—';
 
+  const downloadPDF = () => {
+    if (!selected) return;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 18;
+    const contentW = pageW - margin * 2;
+    let y = 0;
+
+    const addPage = () => { doc.addPage(); y = 18; };
+    const checkY = (needed: number) => { if (y + needed > 275) addPage(); };
+
+    // ── Header banner ────────────────────────────────────────────────
+    doc.setFillColor(59, 7, 100);
+    doc.rect(0, 0, pageW, 36, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Student Application Report', margin, 16);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`, margin, 24);
+    const status = STATUS_MAP[selected.status];
+    doc.text(`Status: ${status?.label ?? selected.status}`, pageW - margin, 24, { align: 'right' });
+    y = 46;
+
+    // ── Section helper ───────────────────────────────────────────────
+    const sectionTitle = (title: string) => {
+      checkY(14);
+      doc.setFillColor(245, 243, 255);
+      doc.rect(margin, y, contentW, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(88, 28, 135);
+      doc.text(title, margin + 3, y + 5.5);
+      y += 12;
+    };
+
+    const row = (label: string, value: string, col = 0, cols = 1) => {
+      if (!value || value === '—') return;
+      checkY(10);
+      const colW = contentW / cols;
+      const x = margin + col * colW;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 140);
+      doc.text(label.toUpperCase(), x, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(30, 30, 30);
+      const lines = doc.splitTextToSize(value, colW - 4);
+      doc.text(lines, x, y + 5);
+      y += 5 + lines.length * 5 + 3;
+    };
+
+    const twoCol = (l1: string, v1: string, l2: string, v2: string) => {
+      checkY(14);
+      const colW = contentW / 2;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 140);
+      doc.text(l1.toUpperCase(), margin, y);
+      doc.text(l2.toUpperCase(), margin + colW, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(30, 30, 30);
+      doc.text(v1 || '—', margin, y + 5);
+      doc.text(v2 || '—', margin + colW, y + 5);
+      y += 14;
+    };
+
+    // ── Student Profile ──────────────────────────────────────────────
+    sectionTitle('Student Profile');
+    twoCol('Full Name',    selected._student?.name || '—', 'Email', selected._student?.email || '—');
+    twoCol('Nationality', selected._student?.nationality || '—', 'Education Level', selectedStudent?.educationLevel || '—');
+    twoCol('GPA',         selectedStudent?.gpa ? `${selectedStudent.gpa} / 4.0` : '—',
+           'English Score', selectedStudent?.englishScore ? `${selectedStudent.englishScore.type} ${selectedStudent.englishScore.score}` : '—');
+    twoCol('Budget',      selectedStudent?.budget ? `$${Number(selectedStudent.budget).toLocaleString()}` : '—',
+           'Preferred Countries', selectedStudent?.preferredCountries?.join(', ') || '—');
+    y += 2;
+
+    // ── Application Details ──────────────────────────────────────────
+    sectionTitle('Application Details');
+    twoCol('University', selected.universityName || '—', 'Course', selected.courseName || '—');
+    twoCol('Intake',     selected.intake || '—', 'Application Status', status?.label ?? selected.status);
+    twoCol('Submitted',  fmtDate(selected.submittedDate || selected.createdAt), 'Last Updated', fmtDate(selected.updatedDate || selected.updatedAt));
+    if (selected.notes || selected.processingNotes) {
+      row('Processing Notes', selected.notes || selected.processingNotes);
+    }
+    y += 2;
+
+    // ── Counselor ────────────────────────────────────────────────────
+    sectionTitle('Assigned Counselor');
+    if (selected._counselor) {
+      twoCol('Name', selected._counselor.name, 'Email', selected._counselor.email || '—');
+      if (selected._counselor.specialty) row('Specialty', selected._counselor.specialty);
+    } else {
+      doc.setFontSize(10); doc.setTextColor(160, 160, 160);
+      doc.setFont('helvetica', 'italic');
+      doc.text('No counselor assigned', margin, y); y += 10;
+    }
+    y += 2;
+
+    // ── Documents ────────────────────────────────────────────────────
+    sectionTitle(`Documents (${selectedStudent?.documents?.length ?? 0})`);
+    if (!selectedStudent?.documents?.length) {
+      doc.setFontSize(10); doc.setTextColor(160, 160, 160);
+      doc.setFont('helvetica', 'italic');
+      doc.text('No documents uploaded', margin, y); y += 10;
+    } else {
+      selectedStudent.documents.forEach((d: any, i: number) => {
+        checkY(12);
+        const bg = i % 2 === 0 ? [250, 248, 255] : [255, 255, 255];
+        doc.setFillColor(bg[0], bg[1], bg[2]);
+        doc.rect(margin, y - 3, contentW, 11, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(30, 30, 30);
+        doc.text(d.name || 'Document', margin + 3, y + 3.5);
+        const ds = d.type ? `${d.type}` : '';
+        const statusText = d.status ? ` · ${d.status.charAt(0).toUpperCase() + d.status.slice(1)}` : '';
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 120);
+        doc.text(ds + statusText, margin + 3, y + 8.5);
+        const fileLabel = d.url ? 'File uploaded' : 'No file';
+        doc.setTextColor(d.url ? 22 : 160, d.url ? 163 : 160, d.url ? 74 : 160);
+        doc.text(fileLabel, pageW - margin - 3, y + 3.5, { align: 'right' });
+        y += 12;
+      });
+    }
+
+    // ── Footer on every page ─────────────────────────────────────────
+    const totalPages = doc.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFillColor(245, 243, 255);
+      doc.rect(0, 288, pageW, 9, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(120, 100, 160);
+      doc.text('Gradzest — Student Application Report', margin, 294);
+      doc.text(`Page ${p} of ${totalPages}`, pageW - margin, 294, { align: 'right' });
+    }
+
+    const safeName = (selected._student?.name || 'student').replace(/\s+/g, '_');
+    doc.save(`${safeName}_application_report.pdf`);
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
@@ -455,6 +604,15 @@ export default function AppTeamApplications() {
               <p className="text-xs text-gray-400 truncate">{selected.courseName}</p>
             </div>
             <StatusBadge status={selected.status} />
+            <button
+              type="button"
+              onClick={downloadPDF}
+              title="Download full profile as PDF"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" />
+              PDF
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
