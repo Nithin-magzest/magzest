@@ -145,16 +145,16 @@ export default function CounselorProfile() {
       </div>
 
       {/* Header card */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white">
+      <div className="bg-gradient-to-r from-teal-500 to-green-400 rounded-2xl p-6 text-white">
         <div className="flex items-center gap-5">
           <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center text-3xl font-bold backdrop-blur-sm">
             {c.name?.charAt(0)}
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold">{c.name}</h2>
-            {c.title && <p className="text-sky-100 text-sm">{c.title}</p>}
-            <p className="text-blue-200 text-sm mt-0.5">{c.email}</p>
-            <div className="flex flex-wrap gap-3 mt-2 text-xs text-sky-100">
+            {c.title && <p className="text-green-100 text-sm">{c.title}</p>}
+            <p className="text-green-200 text-sm mt-0.5">{c.email}</p>
+            <div className="flex flex-wrap gap-3 mt-2 text-xs text-green-100">
               {c.experience > 0 && <span>{c.experience} yrs experience</span>}
               {c.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{c.phone}</span>}
               {c.address?.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{c.address.city}{c.address.country ? `, ${c.address.country}` : ''}</span>}
@@ -250,7 +250,7 @@ export default function CounselorProfile() {
                   <h3 className="font-bold text-gray-900 mb-3 text-sm">Languages</h3>
                   <div className="flex flex-wrap gap-2">
                     {c.languages.map((l: string) => (
-                      <span key={l} className="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-medium">{l}</span>
+                      <span key={l} className="bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-full font-medium">{l}</span>
                     ))}
                   </div>
                 </>

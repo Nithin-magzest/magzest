@@ -39,7 +39,7 @@ const STATUS_COLORS: Record<string, string> = {
 function Spinner({ size = 4, white = false }: { size?: number; white?: boolean }) {
   return (
     <span
-      className={`w-${size} h-${size} border-2 ${white ? 'border-white/40 border-t-white' : 'border-gray-300 border-t-[#0d1b4b]'} rounded-full animate-spin inline-block`}
+      className={`w-${size} h-${size} border-2 ${white ? 'border-white/40 border-t-white' : 'border-gray-300 border-t-green-600'} rounded-full animate-spin inline-block`}
     />
   );
 }
@@ -133,7 +133,7 @@ function UpdateStatusModal({
               onChange={e => setNotes(e.target.value)}
               rows={3}
               placeholder="Add a note about this status update…"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] resize-none placeholder:text-gray-400"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-600 resize-none placeholder:text-gray-400"
             />
           </div>
 
@@ -151,7 +151,7 @@ function UpdateStatusModal({
                   <div key={i} className={`flex ${c.authorRole === 'counselor' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs leading-relaxed ${
                       c.authorRole === 'counselor'
-                        ? 'bg-[#0d1b4b] text-white rounded-br-none'
+                        ? 'bg-green-600 text-white rounded-br-none'
                         : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
                     }`}>
                       <p className={`font-semibold mb-0.5 ${c.authorRole === 'counselor' ? 'text-blue-200' : 'text-blue-600'}`}>
@@ -177,11 +177,11 @@ function UpdateStatusModal({
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply(); } }}
                 placeholder="Reply to student…"
                 disabled={replying}
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] placeholder:text-gray-400"
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-600 placeholder:text-gray-400"
               />
               <button type="button" onClick={submitReply} disabled={replying || !replyText.trim()}
                 aria-label="Send reply"
-                className="flex items-center gap-1.5 px-3 py-2 bg-[#0d1b4b] text-white rounded-xl text-xs font-semibold hover:bg-[#152258] disabled:opacity-40 transition-colors">
+                className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-xl text-xs font-semibold hover:bg-green-700 disabled:opacity-40 transition-colors">
                 <Send className="w-3.5 h-3.5" /> Reply
               </button>
             </div>
@@ -198,7 +198,7 @@ function UpdateStatusModal({
             Cancel
           </button>
           <button type="button" onClick={handleSave} disabled={saving}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60 shadow-sm">
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-60 shadow-sm">
             {saving ? <><Spinner size={4} white />Saving…</> : 'Save Changes'}
           </button>
         </div>
@@ -263,14 +263,14 @@ export default function CounselorApplications() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-[#0d1b4b] rounded-2xl p-6 text-white shadow-lg">
+        <div className="bg-green-600 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-blue-200 text-xs font-medium uppercase tracking-wide">Counselor Portal</p>
+                <p className="text-green-200 text-xs font-medium uppercase tracking-wide">Counselor Portal</p>
                 <h1 className="text-2xl font-bold leading-tight">Student Applications</h1>
               </div>
             </div>
@@ -321,7 +321,7 @@ export default function CounselorApplications() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search by student, university or course…"
-                  className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b]"
+                  className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
                 />
               </div>
               <div className="relative">
@@ -329,7 +329,7 @@ export default function CounselorApplications() {
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value)}
                   aria-label="Filter by status"
-                  className="appearance-none pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] text-gray-700"
+                  className="appearance-none pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-600 text-gray-700"
                 >
                   <option value="all">All Statuses ({applications.length})</option>
                   {ALL_STATUSES.map(s => (
@@ -365,8 +365,8 @@ export default function CounselorApplications() {
                   const appId = app._id || app.id;
                   return (
                     <div key={`${app.studentId}-${appId}`}
-                      className="flex items-center gap-4 px-5 py-4 hover:bg-[#f0f4ff]/40 transition-colors">
-                      <div className="w-10 h-10 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      className="flex items-center gap-4 px-5 py-4 hover:bg-green-50/40 transition-colors">
+                      <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                         {app.studentName?.charAt(0)}
                       </div>
 
@@ -409,7 +409,7 @@ export default function CounselorApplications() {
                         type="button"
                         onClick={() => setEditingApp(app)}
                         className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
-                          text-[#0d1b4b] bg-[#f0f4ff] border border-[#c7d4f5] hover:bg-[#e0e9ff] hover:border-[#a0b4e8]
+                          text-green-800 bg-green-50 border border-green-200 hover:bg-green-100 hover:border-green-300
                           active:scale-95 transition-all">
                         <Edit2 className="w-3.5 h-3.5" />
                         Update

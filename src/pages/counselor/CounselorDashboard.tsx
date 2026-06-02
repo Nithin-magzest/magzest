@@ -294,10 +294,10 @@ export default function CounselorDashboard() {
             { label: 'Pending Docs', value: stats.pendingDocs, icon: AlertCircle, to: '/counselor/students' },
             { label: 'Offers Out', value: stats.offers, icon: Star, to: '/counselor/applications' },
           ].map(s => (
-            <Link key={s.label} to={s.to} className="bg-white border border-green-200 rounded-xl p-3 hover:bg-green-50 transition-colors">
-              <s.icon className="w-4 h-4 text-green-500 mb-1" />
-              <div className="text-2xl font-bold text-green-800">{s.value}</div>
-              <div className="text-xs text-green-600">{s.label}</div>
+            <Link key={s.label} to={s.to} className="bg-green-50 border border-green-300 rounded-xl p-3 hover:bg-green-100 transition-colors">
+              <s.icon className="w-4 h-4 text-green-600 mb-1" />
+              <div className="text-2xl font-extrabold text-gray-900">{s.value}</div>
+              <div className="text-xs font-bold text-gray-900">{s.label}</div>
             </Link>
           ))}
         </div>
