@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Layers, Users, UserCog, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Layers, Users, UserCog, CalendarDays, Activity } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
 
@@ -10,6 +10,7 @@ const navItems: { to: string; label: string; icon: React.ComponentType<{ classNa
   { to: '/appteam/students',     label: 'Students',     icon: Users },
   { to: '/appteam/counselors',   label: 'Counselors',   icon: UserCog },
   { to: '/appteam/activities',   label: 'Activities',   icon: CalendarDays },
+  { to: '/appteam/live-feed',    label: 'Live Feed',    icon: Activity },
 ];
 
 export default function AppTeamLayout() {

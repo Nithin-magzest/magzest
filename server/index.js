@@ -11,6 +11,7 @@ if (!process.env.JWT_SECRET || !process.env.MONGODB_URI) {
 }
 
 const { connectDB } = require('./db');
+const { initActivityLogger } = require('./middleware/logActivity');
 
 const app = express();
 const httpServer = createServer(app);
@@ -60,6 +61,9 @@ app.post('/api/subscribe', async (req, res) => {
   }
 });
 
+// Give the activity logger access to the socket server
+initActivityLogger(io);
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/countries', require('./routes/countries'));
 app.use('/api/universities', require('./routes/universities'));
@@ -70,6 +74,7 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/meetings', require('./routes/meetings'));
 app.use('/api/favicon', require('./routes/favicon'));
+app.use('/api/activity', require('./routes/activity'));
 
 // WebRTC signaling
 io.on('connection', (socket) => {

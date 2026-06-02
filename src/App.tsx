@@ -53,13 +53,15 @@ const AdminCountries         = lazy(() => import('./pages/admin/AdminCountries')
 const AdminChat              = lazy(() => import('./pages/admin/AdminChat'));
 const AdminCounselors        = lazy(() => import('./pages/admin/AdminCounselors'));
 const AdminStudents          = lazy(() => import('./pages/admin/AdminStudents'));
+const AdminActivityFeed      = lazy(() => import('./pages/admin/AdminActivityFeed'));
 
 // App Team module
 const AppTeamLayout       = lazy(() => import('./pages/appteam/AppTeamLayout'));
 const AppTeamDashboard    = lazy(() => import('./pages/appteam/AppTeamDashboard'));
 const AppTeamApplications = lazy(() => import('./pages/appteam/AppTeamApplications'));
 const AppTeamCounselors   = lazy(() => import('./pages/appteam/AppTeamCounselors'));
-const AppTeamStudents     = lazy(() => import('./pages/appteam/AppTeamStudents'));
+const AppTeamStudents       = lazy(() => import('./pages/appteam/AppTeamStudents'));
+const AppTeamActivityFeed   = lazy(() => import('./pages/appteam/AppTeamActivityFeed'));
 
 // App Dashboard module
 const AppDashLayout   = lazy(() => import('./pages/appdash/AppDashLayout'));
@@ -144,6 +146,7 @@ export default function App() {
               <Route path="applications" element={<AdminApplications />} />
               <Route path="application-board" element={<AdminApplicationBoard />} />
               <Route path="activities" element={<Activities />} />
+              <Route path="live-feed" element={<AdminActivityFeed />} />
               <Route path="chat" element={<AdminChat />} />
             </Route>
 
@@ -154,6 +157,7 @@ export default function App() {
               <Route path="counselors" element={<AppTeamCounselors />} />
               <Route path="students" element={<AppTeamStudents />} />
               <Route path="activities" element={<Activities />} />
+              <Route path="live-feed" element={<AppTeamActivityFeed />} />
             </Route>
 
             {/* App Dashboard module */}
