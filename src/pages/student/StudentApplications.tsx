@@ -333,15 +333,19 @@ export default function StudentApplications() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {Object.entries(counts).map(([key, val]) => (
+        {([
+          { key: 'all',            label: 'All',            inactive: 'bg-blue-50 border-blue-200 text-blue-800',       active: 'bg-[#0d1b4b] border-[#0d1b4b] text-white' },
+          { key: 'submitted',      label: 'Submitted',      inactive: 'bg-sky-50 border-sky-200 text-sky-800',           active: 'bg-sky-500 border-sky-500 text-white' },
+          { key: 'under_review',   label: 'Under Review',   inactive: 'bg-amber-50 border-amber-200 text-amber-800',     active: 'bg-amber-400 border-amber-400 text-white' },
+          { key: 'offer_received', label: 'Offer Received', inactive: 'bg-purple-50 border-purple-200 text-purple-800',  active: 'bg-purple-500 border-purple-500 text-white' },
+          { key: 'accepted',       label: 'Accepted',       inactive: 'bg-green-50 border-green-200 text-green-800',     active: 'bg-green-500 border-green-500 text-white' },
+        ] as const).map(({ key, label, inactive, active }) => (
           <button type="button" key={key} onClick={() => setFilter(key)}
-            className={`py-7 px-4 rounded-3xl text-center border-2 flex flex-col items-center justify-center gap-1 transition-all ${
-              filter === key
-                ? 'border-[#0d1b4b] bg-[#f0f4ff] shadow-sm'
-                : 'border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-200'
+            className={`py-7 px-4 rounded-3xl text-center border-2 flex flex-col items-center justify-center gap-1 transition-all shadow-sm ${
+              filter === key ? active : inactive
             }`}>
-            <div className={`text-3xl font-bold ${filter === key ? 'text-[#0d1b4b]' : 'text-gray-700'}`}>{val}</div>
-            <div className={`text-xs font-medium capitalize ${filter === key ? 'text-[#0d1b4b]/70' : 'text-gray-500'}`}>{key.replace('_', ' ')}</div>
+            <div className="text-3xl font-bold">{counts[key]}</div>
+            <div className="text-xs font-medium opacity-80">{label}</div>
           </button>
         ))}
       </div>
