@@ -221,12 +221,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
     socket.emit('register', userId);
 
-    socket.on('admin:new_subscriber', ({ email }: { email: string }) => {
+    socket.on('admin:new_subscriber', ({ name, email }: { name?: string; email: string }) => {
       addNotif({
         type: 'subscriber',
-        title: 'New Email Subscriber',
-        message: `${email} just subscribed from the homepage.`,
-        link: '/admin/settings',
+        title: 'New Free Registration',
+        message: `${name ? name + ' (' + email + ')' : email} just registered from the homepage.`,
+        link: '/admin/application-board',
       });
     });
 

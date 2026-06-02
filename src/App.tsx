@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CallProvider } from './context/CallContext';
 import { AuthModalProvider } from './context/AuthModalContext';
@@ -57,6 +57,7 @@ const AdminCounselors        = lazy(() => import('./pages/admin/AdminCounselors'
 const AdminStudents          = lazy(() => import('./pages/admin/AdminStudents'));
 const AdminActivityFeed      = lazy(() => import('./pages/admin/AdminActivityFeed'));
 const AdminMeetings          = lazy(() => import('./pages/admin/AdminMeetings'));
+const AdminSettings          = lazy(() => import('./pages/admin/AdminSettings'));
 
 // App Team module
 const AppTeamLayout       = lazy(() => import('./pages/appteam/AppTeamLayout'));
@@ -154,6 +155,8 @@ export default function App() {
               <Route path="live-feed" element={<AdminActivityFeed />} />
               <Route path="meetings" element={<AdminMeetings />} />
               <Route path="chat" element={<AdminChat />} />
+              <Route path="settings" element={<AdminSettings />} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
 
             {/* App Team module */}

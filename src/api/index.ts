@@ -225,10 +225,10 @@ export const api = {
     subscribers: () => req<any[]>('/admin/subscribers', { headers: authHeaders() }),
   },
 
-  subscribe: (email: string) =>
+  subscribe: (data: { name: string; email: string; phone: string }) =>
     req<{ message: string }>('/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify(data),
     }),
 };

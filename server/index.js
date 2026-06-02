@@ -36,10 +36,12 @@ const userSockets = new Map(); // userId -> Set<socketId>
 app.set('io', io);
 app.set('userSockets', userSockets);
 
-// Public email subscription
+// Public email subscription / free registration
 const Subscriber = require('./models/Subscriber');
 app.post('/api/subscribe', async (req, res) => {
   const email = (req.body.email || '').trim().toLowerCase();
+  const name  = (req.body.name  || '').trim();
+  const phone = (req.body.phone || '').trim();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ message: 'Invalid email address' });
   }
@@ -47,11 +49,13 @@ app.post('/api/subscribe', async (req, res) => {
     const existing = await Subscriber.findOne({ email });
     if (existing) return res.status(409).json({ message: 'Already subscribed' });
 
-    const sub = await Subscriber.create({ email });
+    const sub = await Subscriber.create({ name, email, phone });
 
     // Notify all connected admin sockets
     io.to('admin-room').emit('admin:new_subscriber', {
-      email: sub.email,
+      name:         sub.name,
+      email:        sub.email,
+      phone:        sub.phone,
       subscribedAt: sub.subscribedAt,
     });
 
