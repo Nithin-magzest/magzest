@@ -252,191 +252,194 @@ export default function Activities() {
         ))}
       </div>
 
-      {/* ── Full-width Calendar (only when Calendar tab active) ── */}
-      {tab === 'calendar' && <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-        {/* Month nav */}
-        <div className={`flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gradient-to-r ${t.calHeader}`}>
-          <div>
-            <h2 className="text-xl font-bold text-white">{MONTH_NAMES[calMonth]} {calYear}</h2>
-            <p className={`${t.calHeaderSub} text-xs mt-0.5`}>{DAY_NAMES[today.getDay()]}, {today.getDate()} {MONTH_NAMES[today.getMonth()]}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button type="button"
-              onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDay(today.getDate()); }}
-              className={`px-3 py-1.5 text-xs font-semibold ${t.todayBtnText} bg-white rounded-lg hover:bg-gray-50 transition-colors`}>
-              Today
-            </button>
-            <button type="button" onClick={prevMonth} title="Previous month" className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
-              <ChevronLeft className="w-4 h-4 text-white" />
-            </button>
-            <button type="button" onClick={nextMonth} title="Next month" className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
-              <ChevronRight className="w-4 h-4 text-white" />
-            </button>
-          </div>
-        </div>
-
-        {/* Day-name header */}
-        <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
-          {DAY_SHORT.map(d => (
-            <div key={d} className="text-center text-xs font-bold text-gray-400 py-3 tracking-wide">{d}</div>
-          ))}
-        </div>
-
-        {/* Date grid */}
-        <div className="grid grid-cols-7 divide-x divide-y divide-gray-100">
-          {Array.from({ length: firstDay }).map((_, i) => (
-            <div key={`e${i}`} className="h-20 bg-gray-50/50" />
-          ))}
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const day = i + 1;
-            const dateStr = `${calYear}-${padDate(calMonth + 1)}-${padDate(day)}`;
-            const hasEvent    = events.some(e => e.date === dateStr);
-            const hasReminder = reminders.some(r => r.date === dateStr);
-            const isToday     = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
-            const isSelected  = day === selectedDay;
-            const dayEvs = events.filter(e => e.date === dateStr);
-
-            return (
-              <button type="button" key={day} title={`Select ${MONTH_NAMES[calMonth]} ${day}`} onClick={() => setSelectedDay(day)}
-                className={`h-20 flex flex-col items-start justify-start p-2 text-left transition-all duration-150 relative group ${
-                  isSelected ? `${t.selectedBg} text-white` : isToday ? t.todayHighlight : 'hover:bg-gray-50'
-                }`}>
-                <span className={`text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full mb-1 ${
-                  isSelected ? `${t.selectedNumBg} ${t.selectedNumText}` : isToday ? t.todayNumBg : 'text-gray-700'
-                }`}>{day}</span>
-
-                {/* Event dots / mini labels */}
-                <div className="flex flex-col gap-0.5 w-full overflow-hidden">
-                  {dayEvs.slice(0, 2).map(e => (
-                    <span key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded font-medium truncate leading-tight ${
-                      isSelected ? 'bg-white/20 text-white' : EVENT_TYPE_COLOR[e.type]
-                    }`}>{e.title}</span>
-                  ))}
-                  {dayEvs.length > 2 && (
-                    <span className={`text-[10px] font-medium ${isSelected ? t.moreText : 'text-gray-400'}`}>+{dayEvs.length - 2} more</span>
-                  )}
-                </div>
-
-                {/* Indicator dots */}
-                <div className="absolute bottom-1.5 right-2 flex gap-1">
-                  {hasReminder && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-yellow-300' : 'bg-yellow-400'}`} />}
-                  {hasEvent && !dayEvs.length && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? t.indicatorDot : 'bg-gray-300'}`} />}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Legend */}
-        <div className="flex items-center gap-4 px-6 py-3 border-t border-gray-100 bg-gray-50">
-          <span className="text-xs text-gray-400 font-medium">Legend:</span>
-          {Object.entries(EVENT_TYPE_COLOR).map(([type, cls]) => (
-            <span key={type} className={`text-[10px] px-2 py-0.5 rounded font-medium ${cls}`}>{type}</span>
-          ))}
-          <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />Reminder</span>
-        </div>
-      </div>
-
-      }
-
-      {/* ── CALENDAR (day detail) ── */}
+      {/* ── Calendar tab: grid on left, day-detail panel on right ── */}
       {tab === 'calendar' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="flex gap-5 items-start">
 
-          {/* Selected day header */}
-          <div className={`bg-gradient-to-br ${t.dayDetailBg} rounded-2xl p-5 text-white`}>
-            <p className={`${t.dayDetailSub} text-xs font-semibold uppercase tracking-widest mb-1`}>{MONTH_NAMES[calMonth]} {calYear}</p>
-            <p className="text-4xl font-bold">{String(selectedDay).padStart(2, '0')}</p>
-            <p className={`${t.dayDetailSub} text-sm`}>{DAY_NAMES[new Date(calYear, calMonth, selectedDay).getDay()]}</p>
-            <div className="mt-3 flex gap-3">
-              <div className="bg-white/20 rounded-xl px-3 py-1.5 text-center">
-                <p className="text-lg font-bold">{dayEvents.length}</p>
-                <p className="text-[10px] text-indigo-200">Events</p>
+          {/* Left – calendar grid */}
+          <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Month nav */}
+            <div className={`flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gradient-to-r ${t.calHeader}`}>
+              <div>
+                <h2 className="text-xl font-bold text-white">{MONTH_NAMES[calMonth]} {calYear}</h2>
+                <p className={`${t.calHeaderSub} text-xs mt-0.5`}>{DAY_NAMES[today.getDay()]}, {today.getDate()} {MONTH_NAMES[today.getMonth()]}</p>
               </div>
-              <div className="bg-white/20 rounded-xl px-3 py-1.5 text-center">
-                <p className="text-lg font-bold">{dayReminders.length}</p>
-                <p className="text-[10px] text-indigo-200">Reminders</p>
+              <div className="flex items-center gap-2">
+                <button type="button"
+                  onClick={() => { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); setSelectedDay(today.getDate()); }}
+                  className={`px-3 py-1.5 text-xs font-semibold ${t.todayBtnText} bg-white rounded-lg hover:bg-gray-50 transition-colors`}>
+                  Today
+                </button>
+                <button type="button" onClick={prevMonth} title="Previous month" className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+                  <ChevronLeft className="w-4 h-4 text-white" />
+                </button>
+                <button type="button" onClick={nextMonth} title="Next month" className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+                  <ChevronRight className="w-4 h-4 text-white" />
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* Events for selected day */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                <Star className={`w-4 h-4 ${t.starIcon}`} /> Events
-              </h3>
-              {dayEvents.length > 0 && (
-                <span className={`text-xs ${t.eventsBadge} px-2 py-0.5 rounded-full font-medium`}>{dayEvents.length}</span>
-              )}
-            </div>
-            <div className="p-3 space-y-2 max-h-52 overflow-y-auto">
-              {dayEvents.length > 0 ? dayEvents.map(e => (
-                <div key={e.id} className="flex items-start gap-2.5 bg-gray-50 rounded-xl p-3">
-                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${EVENT_TYPE_DOT[e.type] || 'bg-gray-400'}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-900 leading-tight">{e.title}</p>
-                    <p className={`text-[11px] ${t.eventTime} font-medium mt-0.5`}>{e.time}</p>
-                  </div>
-                </div>
-              )) : (
-                <div className="text-center py-5">
-                  <Calendar className="w-7 h-7 text-gray-200 mx-auto mb-1.5" />
-                  <p className="text-xs text-gray-400">No events</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Reminders for selected day */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                <Bell className="w-4 h-4 text-amber-500" /> Reminders
-              </h3>
-              <button type="button" onClick={() => setShowAddReminder(true)}
-                className={`flex items-center gap-1 text-xs font-medium ${t.reminderBtn} transition-colors`}>
-                <Plus className="w-3.5 h-3.5" /> Add
-              </button>
+            {/* Day-name header */}
+            <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
+              {DAY_SHORT.map(d => (
+                <div key={d} className="text-center text-xs font-bold text-gray-400 py-3 tracking-wide">{d}</div>
+              ))}
             </div>
 
-            {showAddReminder && (
-              <div className="mx-3 mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
-                <input value={newReminder.text} onChange={e => setNewReminder(n => ({ ...n, text: e.target.value }))}
-                  placeholder="Reminder note..." autoFocus
-                  className="w-full text-xs border border-amber-200 rounded-lg px-3 py-2 outline-none focus:border-amber-400 bg-white text-gray-900 placeholder-gray-400 mb-2" />
-                <input type="time" value={newReminder.time} onChange={e => setNewReminder(n => ({ ...n, time: e.target.value }))}
-                  title="Reminder time"
-                  className="w-full text-xs border border-amber-200 rounded-lg px-3 py-2 outline-none focus:border-amber-400 bg-white text-gray-700 mb-2" />
-                <div className="flex gap-2 justify-end">
-                  <button type="button" onClick={() => setShowAddReminder(false)} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">Cancel</button>
-                  <button type="button" onClick={addReminder} className="text-xs bg-amber-500 text-white px-3 py-1 rounded-lg hover:bg-amber-600">Save</button>
-                </div>
-              </div>
-            )}
+            {/* Date grid */}
+            <div className="grid grid-cols-7 divide-x divide-y divide-gray-100">
+              {Array.from({ length: firstDay }).map((_, i) => (
+                <div key={`e${i}`} className="h-20 bg-gray-50/50" />
+              ))}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const day = i + 1;
+                const dateStr = `${calYear}-${padDate(calMonth + 1)}-${padDate(day)}`;
+                const hasEvent    = events.some(e => e.date === dateStr);
+                const hasReminder = reminders.some(r => r.date === dateStr);
+                const isToday     = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+                const isSelected  = day === selectedDay;
+                const dayEvs = events.filter(e => e.date === dateStr);
 
-            <div className="p-3 space-y-2 max-h-52 overflow-y-auto">
-              {dayReminders.length > 0 ? dayReminders.map(r => (
-                <div key={r.id} className="flex items-start gap-2.5 bg-amber-50 rounded-xl p-3 group">
-                  <Bell className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-900 leading-tight">{r.text}</p>
-                    {r.time && <p className="text-[11px] text-amber-600 font-medium mt-0.5">{r.time}</p>}
-                  </div>
-                  <button type="button" onClick={() => deleteReminder(r.id)} title="Delete reminder"
-                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all flex-shrink-0">
-                    <Trash2 className="w-3 h-3" />
+                return (
+                  <button type="button" key={day} title={`Select ${MONTH_NAMES[calMonth]} ${day}`} onClick={() => setSelectedDay(day)}
+                    className={`h-20 flex flex-col items-start justify-start p-2 text-left transition-all duration-150 relative group ${
+                      isSelected ? `${t.selectedBg} text-white` : isToday ? t.todayHighlight : 'hover:bg-gray-50'
+                    }`}>
+                    <span className={`text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full mb-1 ${
+                      isSelected ? `${t.selectedNumBg} ${t.selectedNumText}` : isToday ? t.todayNumBg : 'text-gray-700'
+                    }`}>{day}</span>
+
+                    {/* Event dots / mini labels */}
+                    <div className="flex flex-col gap-0.5 w-full overflow-hidden">
+                      {dayEvs.slice(0, 2).map(e => (
+                        <span key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded font-medium truncate leading-tight ${
+                          isSelected ? 'bg-white/20 text-white' : EVENT_TYPE_COLOR[e.type]
+                        }`}>{e.title}</span>
+                      ))}
+                      {dayEvs.length > 2 && (
+                        <span className={`text-[10px] font-medium ${isSelected ? t.moreText : 'text-gray-400'}`}>+{dayEvs.length - 2} more</span>
+                      )}
+                    </div>
+
+                    {/* Indicator dots */}
+                    <div className="absolute bottom-1.5 right-2 flex gap-1">
+                      {hasReminder && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-yellow-300' : 'bg-yellow-400'}`} />}
+                      {hasEvent && !dayEvs.length && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? t.indicatorDot : 'bg-gray-300'}`} />}
+                    </div>
                   </button>
+                );
+              })}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 px-6 py-3 border-t border-gray-100 bg-gray-50">
+              <span className="text-xs text-gray-400 font-medium">Legend:</span>
+              {Object.entries(EVENT_TYPE_COLOR).map(([type, cls]) => (
+                <span key={type} className={`text-[10px] px-2 py-0.5 rounded font-medium ${cls}`}>{type}</span>
+              ))}
+              <span className="flex items-center gap-1 text-[10px] text-gray-500"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />Reminder</span>
+            </div>
+          </div>
+
+          {/* Right – day detail panel */}
+          <div className="w-72 flex-shrink-0 flex flex-col gap-4">
+
+            {/* Selected day header */}
+            <div className={`bg-gradient-to-br ${t.dayDetailBg} rounded-2xl p-5 text-white`}>
+              <p className={`${t.dayDetailSub} text-xs font-semibold uppercase tracking-widest mb-1`}>{MONTH_NAMES[calMonth]} {calYear}</p>
+              <p className="text-4xl font-bold">{String(selectedDay).padStart(2, '0')}</p>
+              <p className={`${t.dayDetailSub} text-sm`}>{DAY_NAMES[new Date(calYear, calMonth, selectedDay).getDay()]}</p>
+              <div className="mt-3 flex gap-3">
+                <div className="bg-white/20 rounded-xl px-3 py-1.5 text-center">
+                  <p className="text-lg font-bold">{dayEvents.length}</p>
+                  <p className="text-[10px] text-indigo-200">Events</p>
                 </div>
-              )) : (
-                <div className="text-center py-5">
-                  <BellOff className="w-7 h-7 text-gray-200 mx-auto mb-1.5" />
-                  <p className="text-xs text-gray-400">No reminders for this day</p>
-                  <button type="button" onClick={() => setShowAddReminder(true)}
-                    className={`mt-2 text-xs ${t.reminderLink} font-medium hover:underline`}>+ Add a reminder</button>
+                <div className="bg-white/20 rounded-xl px-3 py-1.5 text-center">
+                  <p className="text-lg font-bold">{dayReminders.length}</p>
+                  <p className="text-[10px] text-indigo-200">Reminders</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Events for selected day */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                  <Star className={`w-4 h-4 ${t.starIcon}`} /> Events
+                </h3>
+                {dayEvents.length > 0 && (
+                  <span className={`text-xs ${t.eventsBadge} px-2 py-0.5 rounded-full font-medium`}>{dayEvents.length}</span>
+                )}
+              </div>
+              <div className="p-3 space-y-2 max-h-48 overflow-y-auto">
+                {dayEvents.length > 0 ? dayEvents.map(e => (
+                  <div key={e.id} className="flex items-start gap-2.5 bg-gray-50 rounded-xl p-3">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${EVENT_TYPE_DOT[e.type] || 'bg-gray-400'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-900 leading-tight">{e.title}</p>
+                      <p className={`text-[11px] ${t.eventTime} font-medium mt-0.5`}>{e.time}</p>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center py-5">
+                    <Calendar className="w-7 h-7 text-gray-200 mx-auto mb-1.5" />
+                    <p className="text-xs text-gray-400">No events</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Reminders for selected day */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-amber-500" /> Reminders
+                </h3>
+                <button type="button" onClick={() => setShowAddReminder(true)}
+                  className={`flex items-center gap-1 text-xs font-medium ${t.reminderBtn} transition-colors`}>
+                  <Plus className="w-3.5 h-3.5" /> Add
+                </button>
+              </div>
+
+              {showAddReminder && (
+                <div className="mx-3 mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                  <input value={newReminder.text} onChange={e => setNewReminder(n => ({ ...n, text: e.target.value }))}
+                    placeholder="Reminder note..." autoFocus
+                    className="w-full text-xs border border-amber-200 rounded-lg px-3 py-2 outline-none focus:border-amber-400 bg-white text-gray-900 placeholder-gray-400 mb-2" />
+                  <input type="time" value={newReminder.time} onChange={e => setNewReminder(n => ({ ...n, time: e.target.value }))}
+                    title="Reminder time"
+                    className="w-full text-xs border border-amber-200 rounded-lg px-3 py-2 outline-none focus:border-amber-400 bg-white text-gray-700 mb-2" />
+                  <div className="flex gap-2 justify-end">
+                    <button type="button" onClick={() => setShowAddReminder(false)} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">Cancel</button>
+                    <button type="button" onClick={addReminder} className="text-xs bg-amber-500 text-white px-3 py-1 rounded-lg hover:bg-amber-600">Save</button>
+                  </div>
                 </div>
               )}
+
+              <div className="p-3 space-y-2 max-h-48 overflow-y-auto">
+                {dayReminders.length > 0 ? dayReminders.map(r => (
+                  <div key={r.id} className="flex items-start gap-2.5 bg-amber-50 rounded-xl p-3 group">
+                    <Bell className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-900 leading-tight">{r.text}</p>
+                      {r.time && <p className="text-[11px] text-amber-600 font-medium mt-0.5">{r.time}</p>}
+                    </div>
+                    <button type="button" onClick={() => deleteReminder(r.id)} title="Delete reminder"
+                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all flex-shrink-0">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                )) : (
+                  <div className="text-center py-5">
+                    <BellOff className="w-7 h-7 text-gray-200 mx-auto mb-1.5" />
+                    <p className="text-xs text-gray-400">No reminders for this day</p>
+                    <button type="button" onClick={() => setShowAddReminder(true)}
+                      className={`mt-2 text-xs ${t.reminderLink} font-medium hover:underline`}>+ Add a reminder</button>
+                  </div>
+                )}
+              </div>
             </div>
+
           </div>
         </div>
       )}

@@ -695,6 +695,8 @@ export default function Home() {
   const [level, setLevel] = useState('');
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [subLoading, setSubLoading] = useState(false);
+  const [subError, setSubError] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [detailModal, setDetailModal] = useState<{ type: 'university' | 'country' | 'course'; name: string; flag?: string } | null>(null);
 
@@ -739,8 +741,20 @@ export default function Home() {
     else open('register');
   };
 
-  const handleSubscribe = () => {
-    if (email.trim()) { setSubscribed(true); setEmail(''); }
+  const handleSubscribe = async () => {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    setSubLoading(true);
+    setSubError('');
+    try {
+      await api.subscribe(trimmed);
+      setSubscribed(true);
+      setEmail('');
+    } catch (err: any) {
+      setSubError(err.message === 'Already subscribed' ? 'This email is already subscribed.' : 'Something went wrong. Please try again.');
+    } finally {
+      setSubLoading(false);
+    }
   };
 
   const countries = [...new Set(universities.map((u: any) => u.country))].sort();
@@ -1401,24 +1415,29 @@ export default function Home() {
           <FadeIn delayClass="delay-200">
             <p className="text-blue-200 text-sm mb-3">Get study abroad tips in your inbox</p>
             {subscribed ? (
-              <p className="text-white font-medium">Thanks for subscribing! 🎉 Check your inbox soon.</p>
+              <p className="text-white font-medium">Thanks for subscribing! Check your inbox soon.</p>
             ) : (
-              <div className="flex max-w-md mx-auto gap-2">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
-                  placeholder="Your email address"
-                  className="flex-1 px-4 py-2.5 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-white"
-                />
-                <button
-                  type="button"
-                  onClick={handleSubscribe}
-                  className="bg-white text-[#0d1b4b] font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap text-sm inline-flex items-center gap-1.5"
-                >
-                  <Mail className="w-3.5 h-3.5" /> Subscribe Free
-                </button>
+              <div className="max-w-md mx-auto">
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setSubError(''); }}
+                    onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
+                    placeholder="Your email address"
+                    disabled={subLoading}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-white disabled:opacity-60"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSubscribe}
+                    disabled={subLoading}
+                    className="bg-white text-[#0d1b4b] font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap text-sm inline-flex items-center gap-1.5 disabled:opacity-60"
+                  >
+                    <Mail className="w-3.5 h-3.5" /> {subLoading ? 'Subscribing…' : 'Subscribe Free'}
+                  </button>
+                </div>
+                {subError && <p className="text-red-300 text-xs mt-2">{subError}</p>}
               </div>
             )}
           </FadeIn>

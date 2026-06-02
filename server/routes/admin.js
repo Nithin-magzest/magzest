@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const University = require('../models/University');
 const Country = require('../models/Country');
+const Subscriber = require('../models/Subscriber');
 const authMiddleware = require('../middleware/auth');
 const { fetchEnrichmentData, clearCache } = require('../lib/enrichUniversity');
 
@@ -481,6 +482,14 @@ router.delete('/countries/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     await Country.findByIdAndDelete(req.params.id);
     res.json({ message: 'Country deleted' });
+  } catch { res.status(500).json({ message: 'Server error' }); }
+});
+
+// Email subscribers
+router.get('/subscribers', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const subscribers = await Subscriber.find().sort({ subscribedAt: -1 });
+    res.json(subscribers);
   } catch { res.status(500).json({ message: 'Server error' }); }
 });
 

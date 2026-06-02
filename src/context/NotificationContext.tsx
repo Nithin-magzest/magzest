@@ -1,8 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { io } from 'socket.io-client';
 import { api } from '../api';
 import { useAuth } from './AuthContext';
 
-export type NotifType = 'meeting' | 'application' | 'discount';
+export type NotifType = 'meeting' | 'application' | 'discount' | 'subscriber';
 
 export interface AppNotification {
   id: string;
@@ -192,6 +193,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setTimeout(() => addNotif(d), (i + 1) * 2500);
     });
   }, [isAuthenticated, addNotif]);
+
+  // Admin: real-time subscriber notifications via socket
+  useEffect(() => {
+    if (!isAuthenticated || userRole !== 'admin' || !userId) return;
+
+    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+    socket.emit('register', userId);
+
+    socket.on('admin:new_subscriber', ({ email }: { email: string }) => {
+      addNotif({
+        type: 'subscriber',
+        title: 'New Email Subscriber',
+        message: `${email} just subscribed from the homepage.`,
+        link: '/admin/settings',
+      });
+    });
+
+    return () => { socket.disconnect(); };
+  }, [isAuthenticated, userRole, userId, addNotif]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
