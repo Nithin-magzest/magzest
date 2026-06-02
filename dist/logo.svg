@@ -1,18 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100">
-  <!-- M icon: three overlapping triangles with even-odd fill creates white cutout stripes -->
-  <path fill-rule="evenodd" fill="#0f1a3e" d="
-    M 4,96 L 31,10 L 58,96 Z
-    M 19,96 L 50,3  L 81,96 Z
-    M 42,96 L 69,10 L 96,96 Z
-  "/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50">
   <text
-    x="112" y="58"
-    font-family="Georgia,'Times New Roman',serif"
-    font-weight="900" font-size="37"
-    fill="#0f1a3e">MAGZEST</text>
+    x="0" y="38"
+    font-family="Inter,ui-sans-serif,system-ui,sans-serif"
+    font-weight="800" font-size="42"
+    fill="#0d1b4b">Grad</text>
   <text
-    x="116" y="78"
-    font-family="Georgia,'Times New Roman',serif"
-    font-weight="700" font-size="15"
-    fill="#0f1a3e">Consultancy Services</text>
+    x="100" y="38"
+    font-family="Inter,ui-sans-serif,system-ui,sans-serif"
+    font-weight="800" font-size="42"
+    fill="#3b82f6">zest</text>
 </svg>
