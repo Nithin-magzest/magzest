@@ -88,8 +88,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const userId = user?.id ?? null;
   const userRole = user?.role ?? null;
 
-  const notifiedMeetingIds = useRef<Set<string>>(
-    new Set(JSON.parse(localStorage.getItem('notified_meeting_ids') || '[]'))
+  const notified1h = useRef<Set<string>>(
+    new Set(JSON.parse(localStorage.getItem('notified_meeting_1h') || '[]'))
+  );
+  const notified5m = useRef<Set<string>>(
+    new Set(JSON.parse(localStorage.getItem('notified_meeting_5m') || '[]'))
   );
   const lastAppStatuses = useRef<Record<string, string>>(
     JSON.parse(localStorage.getItem('last_app_statuses') || '{}')
@@ -119,6 +122,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    function meetingsLink() {
+      const role = userRoleRef.current;
+      if (role === 'counselor') return '/counselor/meetings';
+      if (role === 'student')   return '/student/meetings';
+      return '/admin/meetings';
+    }
+
     async function checkMeetings() {
       try {
         const meetings = await api.meetings.list();
@@ -126,21 +136,31 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
         meetings.forEach((m: any) => {
           const id = m._id || m.id;
-          if (notifiedMeetingIds.current.has(id)) return;
-
           const meetingAt = new Date(`${m.scheduledDate}T${m.scheduledTime}`);
           const minsUntil = (meetingAt.getTime() - now.getTime()) / 60000;
 
-          if (minsUntil >= 25 && minsUntil <= 35) {
-            const link = userRoleRef.current === 'counselor' ? '/counselor/meetings' : '/student/meetings';
+          // 1-hour reminder (fire in the 55–65 min window)
+          if (minsUntil >= 55 && minsUntil <= 65 && !notified1h.current.has(id)) {
             addNotif({
               type: 'meeting',
-              title: 'Meeting in 30 Minutes',
-              message: `"${m.title}" starts at ${m.scheduledTime} on ${m.platform?.toUpperCase() ?? 'your platform'}.`,
-              link,
+              title: 'Meeting in 1 Hour',
+              message: `"${m.title}" starts at ${m.scheduledTime}. Get ready!`,
+              link: meetingsLink(),
             });
-            notifiedMeetingIds.current.add(id);
-            localStorage.setItem('notified_meeting_ids', JSON.stringify([...notifiedMeetingIds.current]));
+            notified1h.current.add(id);
+            localStorage.setItem('notified_meeting_1h', JSON.stringify([...notified1h.current]));
+          }
+
+          // 5-minute reminder (fire in the 2–7 min window)
+          if (minsUntil >= 2 && minsUntil <= 7 && !notified5m.current.has(id)) {
+            addNotif({
+              type: 'meeting',
+              title: 'Meeting Starting Soon',
+              message: `"${m.title}" starts in 5 minutes — join now!`,
+              link: meetingsLink(),
+            });
+            notified5m.current.add(id);
+            localStorage.setItem('notified_meeting_5m', JSON.stringify([...notified5m.current]));
           }
         });
       } catch {}

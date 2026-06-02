@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { api } from '../../api';
 import StatusBadge from '../../components/StatusBadge';
+import ActivityFeed from '../../components/ActivityFeed';
+import MeetingPanel from '../../components/MeetingPanel';
 
 const SPECIALIZATIONS = [
   'UK Universities', 'Canada Universities', 'Australia Universities',
@@ -1716,6 +1718,18 @@ export default function AdminDashboard() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Activity feed + Meeting panel */}
+        {!loading && (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+            <div className="xl:col-span-2">
+              <ActivityFeed />
+            </div>
+            <div>
+              <MeetingPanel theme="purple" meetingsPagePath="/admin/meetings" />
             </div>
           </div>
         )}

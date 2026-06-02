@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Activity, RefreshCw, Zap } from 'lucide-react';
 import ActivityFeed from '../../components/ActivityFeed';
+import MeetingPanel from '../../components/MeetingPanel';
 
 export default function AdminActivityFeed() {
   const [seeding, setSeeding] = useState(false);
@@ -77,8 +78,15 @@ export default function AdminActivityFeed() {
         </p>
       </div>
 
-      {/* The feed */}
-      <ActivityFeed />
+      {/* Feed + Meeting panel side by side */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2">
+          <ActivityFeed />
+        </div>
+        <div>
+          <MeetingPanel theme="purple" meetingsPagePath="/admin/meetings" />
+        </div>
+      </div>
     </div>
   );
 }

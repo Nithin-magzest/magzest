@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import {
   Send, Search, MessageSquare, Phone, PhoneMissed, PhoneOff, Video,
-  Paperclip, Camera, CalendarDays, X, FileText, Download,
+  Paperclip, Camera, X, FileText, Download,
   Calendar, Clock, CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -137,8 +137,6 @@ export default function StudentChat() {
   const [search, setSearch] = useState('');
   const [input, setInput] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [showMeetingModal, setShowMeetingModal] = useState(false);
-  const [meetingForm, setMeetingForm] = useState({ date: '', time: '', notes: '' });
   const [sending, setSending] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevRoomIdRef = useRef<string | null>(null);
@@ -217,29 +215,6 @@ export default function StudentChat() {
       setPendingFile(null);
       setInput('');
       clearFileInputs();
-    } catch {} finally {
-      setSending(false);
-    }
-  };
-
-  const scheduleMeeting = async () => {
-    if (!user || !selectedRoom || !meetingForm.date || !meetingForm.time) return;
-    const dateStr = new Date(meetingForm.date + 'T00:00:00').toLocaleDateString('en-US', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-    });
-    const timeStr = new Date(`2000-01-01T${meetingForm.time}`).toLocaleTimeString('en-US', {
-      hour: '2-digit', minute: '2-digit',
-    });
-    setSending(true);
-    try {
-      const msg = await api.chat.scheduleMeeting(selectedRoom.id, {
-        senderName: user.name, meetingDate: dateStr, meetingTime: timeStr, meetingNotes: meetingForm.notes,
-      });
-      const updated = { ...selectedRoom, messages: [...selectedRoom.messages, msg] };
-      setSelectedRoom(updated);
-      setRooms(prev => prev.map(r => r.id === updated.id ? updated : r));
-      setShowMeetingModal(false);
-      setMeetingForm({ date: '', time: '', notes: '' });
     } catch {} finally {
       setSending(false);
     }
@@ -419,10 +394,6 @@ export default function StudentChat() {
                 className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-sky-50 hover:text-blue-600 transition-colors flex-shrink-0">
                 <Camera className="w-4 h-4" />
               </button>
-              <button type="button" onClick={() => setShowMeetingModal(true)} title="Schedule meeting"
-                className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-sky-50 hover:text-blue-600 transition-colors flex-shrink-0">
-                <CalendarDays className="w-4 h-4" />
-              </button>
               <div className="w-px h-6 bg-gray-200 mx-0.5 flex-shrink-0" />
               <input type="text" value={input} onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { pendingFile ? sendFile() : send(); } }}
@@ -438,46 +409,6 @@ export default function StudentChat() {
         </div>
       </div>
 
-      {/* Meeting modal */}
-      {showMeetingModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl">
-            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-gray-900">Schedule Meeting</h3>
-              </div>
-              <button type="button" aria-label="Close" onClick={() => setShowMeetingModal(false)} className="p-1 text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label htmlFor="meeting-date" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Date</label>
-                <input id="meeting-date" type="date" value={meetingForm.date} min={new Date().toISOString().split('T')[0]}
-                  onChange={e => setMeetingForm(f => ({ ...f, date: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label htmlFor="meeting-time" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Time</label>
-                <input id="meeting-time" type="time" value={meetingForm.time}
-                  onChange={e => setMeetingForm(f => ({ ...f, time: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Agenda / Notes (optional)</label>
-                <textarea value={meetingForm.notes} onChange={e => setMeetingForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="What will you discuss?" rows={3}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-              </div>
-              <button type="button" onClick={scheduleMeeting} disabled={!meetingForm.date || !meetingForm.time || sending}
-                className="w-full bg-[#0d1b4b] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#152258] disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
-                <CalendarDays className="w-4 h-4" /> Schedule Meeting
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

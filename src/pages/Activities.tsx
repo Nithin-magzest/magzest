@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { api } from '../api';
 import {
   Calendar, CheckSquare, Star, Phone, Plus, ChevronLeft, ChevronRight,
-  Check, Clock, Video, PhoneCall, PhoneOff, Trash2, X, Bell, BellOff
+  Check, Clock, Video, PhoneCall, PhoneOff, Trash2, X, Bell, BellOff, Users,
 } from 'lucide-react';
+import MeetingPanel from '../components/MeetingPanel';
 
-type Tab = 'calendar' | 'tasks' | 'events' | 'calls';
+type Tab = 'calendar' | 'tasks' | 'events' | 'calls' | 'meetings';
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -48,6 +50,13 @@ const INITIAL_REMINDERS = [
   { id: 1, date: '2026-05-28', text: 'Submit monthly progress report', time: '09:00 AM' },
   { id: 2, date: '2026-05-30', text: 'Call Riya about UK visa docs',   time: '11:30 AM' },
 ];
+
+function fmt12h(time24: string) {
+  if (!time24) return '';
+  const [h, m] = time24.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${String(h % 12 || 12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+}
 
 const PRIORITY_COLOR: Record<string,string> = {
   high:   'bg-red-100 text-red-700',
@@ -157,6 +166,8 @@ export default function Activities() {
     pathname.includes('/appteam')   ? 'appteam' :
     pathname.includes('/board')     ? 'board' : 'counselor';
 
+  const isStudent = role === 'student';
+
   const today = new Date();
   const [tab, setTab]           = useState<Tab>('calendar');
   const [calYear, setCalYear]   = useState(today.getFullYear());
@@ -164,12 +175,12 @@ export default function Activities() {
   const [selectedDay, setSelectedDay] = useState(today.getDate());
 
   const [tasks, setTasks]           = useState(INITIAL_TASKS);
-  const [newTask, setNewTask]       = useState('');
+  const [newTask, setNewTask]       = useState({ title: '', studentName: '' });
   const [showAddTask, setShowAddTask] = useState(false);
 
   const [events, setEvents]           = useState(INITIAL_EVENTS);
   const [showAddEvent, setShowAddEvent] = useState(false);
-  const [newEvent, setNewEvent]       = useState({ title: '', date: '', time: '', type: 'meeting', desc: '' });
+  const [newEvent, setNewEvent]       = useState({ title: '', date: '', time: '', type: 'meeting', desc: '', studentName: '' });
 
   const [calls, setCalls]               = useState(INITIAL_CALLS);
   const [showScheduleCall, setShowScheduleCall] = useState(false);
@@ -178,6 +189,61 @@ export default function Activities() {
   const [reminders, setReminders]         = useState(INITIAL_REMINDERS);
   const [showAddReminder, setShowAddReminder] = useState(false);
   const [newReminder, setNewReminder]     = useState({ text: '', time: '' });
+
+  const [students, setStudents] = useState<{ _id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    if (role === 'admin') {
+      api.admin.students().then(setStudents).catch(() => {});
+    } else if (role === 'counselor') {
+      api.students.list().then(setStudents).catch(() => {});
+    }
+  }, [role]);
+
+  // Track meeting IDs already added so we never duplicate them
+  const addedMeetingIds = useRef(new Set<string>());
+
+  const addMeetingToActivities = useCallback((m: any) => {
+    const id = (m._id || m.id)?.toString();
+    if (!id || addedMeetingIds.current.has(id)) return;
+    addedMeetingIds.current.add(id);
+
+    const isUpcoming = new Date(`${m.scheduledDate}T${m.scheduledTime}`) > new Date();
+
+    setEvents(prev => [...prev, {
+      id: parseInt(id.slice(-8), 16) || Date.now(),
+      title: m.title,
+      date: m.scheduledDate,
+      time: fmt12h(m.scheduledTime),
+      type: 'meeting',
+      desc: `${m.platform?.toUpperCase() ?? 'Online'} · ${m.duration ?? 60} min`,
+    }]);
+
+    if (isUpcoming) {
+      setTasks(prev => [...prev, {
+        id: Date.now(),
+        title: `Meeting: ${m.title}`,
+        done: false,
+        priority: 'high',
+        due: m.scheduledDate,
+        page: 'activities',
+      }]);
+    }
+  }, []);
+
+  // Load all meetings from backend on mount and sync calendar + tasks
+  useEffect(() => {
+    api.meetings.list().then((meetings: any[]) => {
+      meetings.forEach(addMeetingToActivities);
+    }).catch(() => {});
+  }, [addMeetingToActivities]);
+
+  // Listen for real-time meeting creation from MeetingPanel
+  useEffect(() => {
+    const handler = (e: Event) => addMeetingToActivities((e as CustomEvent).detail);
+    window.addEventListener('meeting:scheduled', handler);
+    return () => window.removeEventListener('meeting:scheduled', handler);
+  }, [addMeetingToActivities]);
 
   const daysInMonth = getDaysInMonth(calYear, calMonth);
   const firstDay    = getFirstDay(calYear, calMonth);
@@ -192,15 +258,16 @@ export default function Activities() {
   const toggleTask  = (id: number) => setTasks(ts => ts.map(t => t.id === id ? { ...t, done: !t.done } : t));
   const deleteTask  = (id: number) => setTasks(ts => ts.filter(t => t.id !== id));
   const addTask = () => {
-    if (!newTask.trim()) return;
-    setTasks(ts => [...ts, { id: Date.now(), title: newTask.trim(), done: false, priority: 'medium', due: '' }]);
-    setNewTask(''); setShowAddTask(false);
+    if (!newTask.title.trim()) return;
+    setTasks(ts => [...ts, { id: Date.now(), title: newTask.title.trim(), done: false, priority: 'medium', due: '', page: 'activities', studentName: newTask.studentName }]);
+    setNewTask({ title: '', studentName: '' });
+    setShowAddTask(false);
   };
 
   const addEvent = () => {
     if (!newEvent.title.trim() || !newEvent.date) return;
     setEvents(ev => [...ev, { id: Date.now(), ...newEvent }]);
-    setNewEvent({ title: '', date: '', time: '', type: 'meeting', desc: '' });
+    setNewEvent({ title: '', date: '', time: '', type: 'meeting', desc: '', studentName: '' });
     setShowAddEvent(false);
   };
 
@@ -219,11 +286,19 @@ export default function Activities() {
   };
   const deleteReminder = (id: number) => setReminders(rs => rs.filter(r => r.id !== id));
 
+  const meetingTheme = (role === 'appteam' || role === 'board') ? 'orange' : 'purple';
+  const meetingPath  =
+    role === 'admin'     ? '/admin/meetings' :
+    role === 'appteam'   ? '/admin/meetings' :
+    role === 'counselor' ? '/counselor/meetings' :
+    role === 'student'   ? '/student/meetings' : '/admin/meetings';
+
   const TABS: { key: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
     { key: 'calendar', label: 'Calendar', icon: <Calendar className="w-4 h-4" /> },
     { key: 'tasks',    label: 'Tasks',    icon: <CheckSquare className="w-4 h-4" />, count: tasks.filter(t => !t.done).length },
     { key: 'events',   label: 'Events',   icon: <Star className="w-4 h-4" />,        count: events.length },
     { key: 'calls',    label: 'Calls',    icon: <Phone className="w-4 h-4" />,       count: calls.filter(c => c.status === 'scheduled').length },
+    { key: 'meetings', label: 'Meetings', icon: <Users className="w-4 h-4" /> },
   ];
 
   return (
@@ -231,22 +306,26 @@ export default function Activities() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Activities</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your calendar, tasks, events and calls in one place</p>
+        <p className="text-sm text-gray-500 mt-1">
+          {isStudent
+            ? 'View your calendar, tasks, events and calls assigned by your counselor'
+            : 'Manage and assign calendar, tasks, events and calls for your students'}
+        </p>
       </div>
 
       {/* Tabs – top of page, horizontal */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
-        {TABS.map(t => (
-          <button type="button" key={t.key} onClick={() => setTab(t.key)}
+        {TABS.map(tb => (
+          <button type="button" key={tb.key} onClick={() => setTab(tb.key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+              tab === tb.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
             }`}>
-            {t.icon}
-            {t.label}
-            {t.count !== undefined && t.count > 0 && (
+            {tb.icon}
+            {tb.label}
+            {tb.count !== undefined && tb.count > 0 && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                tab === t.key ? t.tabBadgeActive : 'bg-gray-200 text-gray-600'
-              }`}>{t.count}</span>
+                tab === tb.key ? t.tabBadgeActive : 'bg-gray-200 text-gray-600'
+              }`}>{tb.count}</span>
             )}
           </button>
         ))}
@@ -452,18 +531,35 @@ export default function Activities() {
               <span className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{tasks.filter(t => !t.done).length}</span> pending</span>
               <span className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{tasks.filter(t => t.done).length}</span> completed</span>
             </div>
-            <button type="button" onClick={() => setShowAddTask(true)}
-              className={`flex items-center gap-2 px-4 py-2 ${t.actionBtn} text-white text-sm font-medium rounded-xl ${t.actionBtnHover} transition-colors shadow-sm`}>
-              <Plus className="w-4 h-4" /> Add Task
-            </button>
+            {!isStudent && (
+              <button type="button" onClick={() => setShowAddTask(true)}
+                className={`flex items-center gap-2 px-4 py-2 ${t.actionBtn} text-white text-sm font-medium rounded-xl ${t.actionBtnHover} transition-colors shadow-sm`}>
+                <Plus className="w-4 h-4" /> Add Task
+              </button>
+            )}
           </div>
 
-          {showAddTask && (
+          {isStudent && (
+            <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 mb-4">
+              <CheckSquare className="w-3.5 h-3.5 flex-shrink-0" />
+              Tasks are assigned to you by your counselor or admin.
+            </div>
+          )}
+
+          {!isStudent && showAddTask && (
             <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-md mb-4">
-              <input value={newTask} onChange={e => setNewTask(e.target.value)}
+              <input value={newTask.title} onChange={e => setNewTask(n => ({ ...n, title: e.target.value }))}
                 onKeyDown={e => e.key === 'Enter' && addTask()}
                 placeholder="What needs to be done?" autoFocus
                 className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none ${t.formBorder} text-gray-900 placeholder-gray-400 mb-3`} />
+              <select
+                title="Assign to student"
+                value={newTask.studentName}
+                onChange={e => setNewTask(n => ({ ...n, studentName: e.target.value }))}
+                className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none ${t.formBorder} text-gray-700 mb-3`}>
+                <option value="">Assign to student (optional)</option>
+                {students.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
+              </select>
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowAddTask(false)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><X className="w-3 h-3" /> Cancel</button>
                 <button type="button" onClick={addTask} className={`px-4 py-1.5 ${t.actionBtn} text-white text-sm rounded-lg ${t.actionBtnHover}`}>Add</button>
@@ -478,10 +574,17 @@ export default function Activities() {
                   className="w-5 h-5 rounded-md border-2 border-gray-300 flex items-center justify-center flex-shrink-0 hover:border-gray-500 transition-colors" />
                 <Link to={`/${role}/${task.page}`} className="flex-1 min-w-0 group">
                   <p className="text-sm font-medium text-gray-900 group-hover:underline">{task.title}</p>
-                  {task.due && <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1"><Clock className="w-3 h-3" />Due {task.due}</p>}
+                  <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                    {task.due && <p className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" />Due {task.due}</p>}
+                    {(task as any).studentName && (
+                      <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                        <Users className="w-3 h-3" />{(task as any).studentName}
+                      </span>
+                    )}
+                  </div>
                 </Link>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLOR[task.priority]}`}>{task.priority}</span>
-                <button type="button" onClick={() => deleteTask(task.id)} title="Delete task" className="p-1 text-gray-300 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                {!isStudent && <button type="button" onClick={() => deleteTask(task.id)} title="Delete task" className="p-1 text-gray-300 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>}
               </div>
             ))}
             {tasks.filter(t => t.done).length > 0 && (
@@ -495,8 +598,11 @@ export default function Activities() {
                     </button>
                     <Link to={`/${role}/${task.page}`} className="flex-1 min-w-0">
                       <p className="text-sm text-gray-400 line-through hover:underline">{task.title}</p>
+                      {(task as any).studentName && (
+                        <span className="text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-medium">{(task as any).studentName}</span>
+                      )}
                     </Link>
-                    <button type="button" onClick={() => deleteTask(task.id)} title="Delete task" className="p-1 text-gray-300 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                    {!isStudent && <button type="button" onClick={() => deleteTask(task.id)} title="Delete task" className="p-1 text-gray-300 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>}
                   </div>
                 ))}
               </>
@@ -510,13 +616,22 @@ export default function Activities() {
         <div className="max-w-2xl">
           <div className="flex items-center justify-between mb-5">
             <span className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{events.length}</span> upcoming events</span>
-            <button type="button" onClick={() => setShowAddEvent(true)}
-              className={`flex items-center gap-2 px-4 py-2 ${t.actionBtn} text-white text-sm font-medium rounded-xl ${t.actionBtnHover} transition-colors shadow-sm`}>
-              <Plus className="w-4 h-4" /> Add Event
-            </button>
+            {!isStudent && (
+              <button type="button" onClick={() => setShowAddEvent(true)}
+                className={`flex items-center gap-2 px-4 py-2 ${t.actionBtn} text-white text-sm font-medium rounded-xl ${t.actionBtnHover} transition-colors shadow-sm`}>
+                <Plus className="w-4 h-4" /> Add Event
+              </button>
+            )}
           </div>
 
-          {showAddEvent && (
+          {isStudent && (
+            <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 mb-4">
+              <Star className="w-3.5 h-3.5 flex-shrink-0" />
+              Events are scheduled for you by your counselor or admin.
+            </div>
+          )}
+
+          {!isStudent && showAddEvent && (
             <div className="bg-white rounded-2xl border border-purple-200 p-5 shadow-md mb-5">
               <h3 className="text-sm font-semibold text-gray-800 mb-4">New Event</h3>
               <div className="grid grid-cols-1 gap-3">
@@ -534,6 +649,11 @@ export default function Activities() {
                   <option value="university">University</option>
                   <option value="workshop">Workshop</option>
                   <option value="seminar">Seminar</option>
+                </select>
+                <select title="Assign to student" value={newEvent.studentName} onChange={e => setNewEvent(n => ({ ...n, studentName: e.target.value }))}
+                  className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700">
+                  <option value="">Assign to student (optional)</option>
+                  {students.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
                 </select>
                 <textarea value={newEvent.desc} onChange={e => setNewEvent(n => ({ ...n, desc: e.target.value }))}
                   placeholder="Description (optional)" rows={2}
@@ -558,6 +678,11 @@ export default function Activities() {
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <h3 className="text-sm font-semibold text-gray-900">{ev.title}</h3>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${EVENT_TYPE_COLOR[ev.type] || 'bg-gray-100 text-gray-600'}`}>{ev.type}</span>
+                          {(ev as any).studentName && (
+                            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                              <Users className="w-3 h-3" />{(ev as any).studentName}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-gray-500">{ev.desc}</p>
                       </div>
@@ -574,6 +699,13 @@ export default function Activities() {
         </div>
       )}
 
+      {/* ── MEETINGS ── */}
+      {tab === 'meetings' && (
+        <div className="max-w-md">
+          <MeetingPanel theme={meetingTheme} meetingsPagePath={meetingPath} hideSchedule={role === 'student'} />
+        </div>
+      )}
+
       {/* ── CALLS ── */}
       {tab === 'calls' && (
         <div className="max-w-2xl">
@@ -582,18 +714,30 @@ export default function Activities() {
               <span className="text-sm text-gray-500"><span className="font-semibold text-blue-600">{calls.filter(c => c.status === 'scheduled').length}</span> scheduled</span>
               <span className="text-sm text-gray-500"><span className="font-semibold text-red-500">{calls.filter(c => c.status === 'missed').length}</span> missed</span>
             </div>
-            <button type="button" onClick={() => setShowScheduleCall(true)}
-              className={`flex items-center gap-2 px-4 py-2 ${t.actionBtn} text-white text-sm font-medium rounded-xl ${t.actionBtnHover} transition-colors shadow-sm`}>
-              <Plus className="w-4 h-4" /> Schedule Call
-            </button>
+            {!isStudent && (
+              <button type="button" onClick={() => setShowScheduleCall(true)}
+                className={`flex items-center gap-2 px-4 py-2 ${t.actionBtn} text-white text-sm font-medium rounded-xl ${t.actionBtnHover} transition-colors shadow-sm`}>
+                <Plus className="w-4 h-4" /> Schedule Call
+              </button>
+            )}
           </div>
 
-          {showScheduleCall && (
+          {isStudent && (
+            <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 mb-4">
+              <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+              Calls are scheduled for you by your counselor or admin.
+            </div>
+          )}
+
+          {!isStudent && showScheduleCall && (
             <div className="bg-white rounded-2xl border border-purple-200 p-5 shadow-md mb-5">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">Schedule a Call</h3>
+              <h3 className="text-sm font-semibold text-gray-800 mb-4">Schedule a Call with Student</h3>
               <div className="grid grid-cols-1 gap-3">
-                <input value={newCall.name} onChange={e => setNewCall(n => ({ ...n, name: e.target.value }))}
-                  placeholder="Contact name" className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-900 placeholder-gray-400" />
+                <select title="Select student" value={newCall.name} onChange={e => setNewCall(n => ({ ...n, name: e.target.value }))}
+                  className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700">
+                  <option value="">Select student</option>
+                  {students.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
+                </select>
                 <div className="grid grid-cols-2 gap-3">
                   <select title="Call type" value={newCall.type} onChange={e => setNewCall(n => ({ ...n, type: e.target.value }))}
                     className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700">

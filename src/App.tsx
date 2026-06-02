@@ -30,6 +30,7 @@ const StudentProfile      = lazy(() => import('./pages/student/StudentProfile'))
 const StudentChat         = lazy(() => import('./pages/student/StudentChat'));
 const StudentCourses      = lazy(() => import('./pages/student/StudentCourses'));
 const StudentCountries    = lazy(() => import('./pages/student/StudentCountries'));
+const StudentMeetings     = lazy(() => import('./pages/student/StudentMeetings'));
 
 // Counselor module
 const CounselorLayout       = lazy(() => import('./pages/counselor/CounselorLayout'));
@@ -41,6 +42,7 @@ const CounselorProfile      = lazy(() => import('./pages/counselor/CounselorProf
 const CounselorCourses      = lazy(() => import('./pages/counselor/CounselorCourses'));
 const CounselorCountries    = lazy(() => import('./pages/counselor/CounselorCountries'));
 const CounselorApplications = lazy(() => import('./pages/counselor/CounselorApplications'));
+const CounselorMeetings     = lazy(() => import('./pages/counselor/CounselorMeetings'));
 
 // Admin module
 const AdminLayout            = lazy(() => import('./pages/admin/AdminLayout'));
@@ -54,6 +56,7 @@ const AdminChat              = lazy(() => import('./pages/admin/AdminChat'));
 const AdminCounselors        = lazy(() => import('./pages/admin/AdminCounselors'));
 const AdminStudents          = lazy(() => import('./pages/admin/AdminStudents'));
 const AdminActivityFeed      = lazy(() => import('./pages/admin/AdminActivityFeed'));
+const AdminMeetings          = lazy(() => import('./pages/admin/AdminMeetings'));
 
 // App Team module
 const AppTeamLayout       = lazy(() => import('./pages/appteam/AppTeamLayout'));
@@ -120,6 +123,7 @@ export default function App() {
               <Route path="courses" element={<StudentCourses />} />
               <Route path="countries" element={<StudentCountries />} />
               <Route path="activities" element={<Activities />} />
+              <Route path="meetings" element={<StudentMeetings />} />
             </Route>
 
             {/* Counselor module */}
@@ -132,6 +136,7 @@ export default function App() {
               <Route path="courses" element={<CounselorCourses />} />
               <Route path="countries" element={<CounselorCountries />} />
               <Route path="activities" element={<Activities />} />
+              <Route path="meetings" element={<CounselorMeetings />} />
               <Route path="applications" element={<CounselorApplications />} />
             </Route>
 
@@ -147,6 +152,7 @@ export default function App() {
               <Route path="application-board" element={<AdminApplicationBoard />} />
               <Route path="activities" element={<Activities />} />
               <Route path="live-feed" element={<AdminActivityFeed />} />
+              <Route path="meetings" element={<AdminMeetings />} />
               <Route path="chat" element={<AdminChat />} />
             </Route>
 

@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
 import { Layers, Users, UserCog, TrendingUp, Clock, CheckCircle, ArrowRight } from 'lucide-react';
+import ActivityFeed from '../../components/ActivityFeed';
+import MeetingPanel from '../../components/MeetingPanel';
 
 const STATUSES = [
   { key: 'draft',          label: 'Draft',          color: 'text-gray-600',   bg: 'bg-gray-100',   bar: 'bg-gray-400' },
@@ -234,6 +236,16 @@ export default function AppTeamDashboard() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Activity feed + Meeting panel */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2">
+          <ActivityFeed />
+        </div>
+        <div>
+          <MeetingPanel theme="orange" meetingsPagePath="/admin/meetings" />
         </div>
       </div>
 
