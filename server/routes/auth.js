@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
+const University = require('../models/University');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -205,7 +206,49 @@ router.get('/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user.toJSON());
+
+    const userObj = user.toJSON();
+
+    // Enrich student applications that are missing universityName/courseName
+    if (userObj.role === 'student' && Array.isArray(userObj.applications)) {
+      const missingIds = [...new Set(
+        userObj.applications
+          .filter(a => !a.universityName && a.universityId)
+          .map(a => a.universityId)
+      )];
+
+      if (missingIds.length > 0) {
+        const unis = await University.find({
+          $or: [{ _id: { $in: missingIds } }, { id: { $in: missingIds } }]
+        }).select('_id id name courses');
+        const uniMap = {};
+        unis.forEach(u => {
+          uniMap[u._id.toString()] = u;
+          if (u.id) uniMap[u.id] = u;
+        });
+
+        userObj.applications = userObj.applications.map(app => {
+          if (!app.universityName && app.universityId) {
+            const uni = uniMap[app.universityId.toString()] || uniMap[app.universityId];
+            if (uni) {
+              app.universityName = uni.name;
+              if (!app.courseName && app.courseId) {
+                const course = (uni.courses || []).find(c =>
+                  c._id?.toString() === app.courseId?.toString() || c.id === app.courseId
+                );
+                if (course) {
+                  app.courseName = course.name;
+                  if (!app.intake && course.intake?.length) app.intake = course.intake[0];
+                }
+              }
+            }
+          }
+          return app;
+        });
+      }
+    }
+
+    res.json(userObj);
   } catch (err) {
     console.error('[auth/me]', err);
     res.status(500).json({ message: 'Server error' });
