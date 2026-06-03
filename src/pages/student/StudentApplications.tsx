@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Plus, Calendar, ArrowRight, CheckCircle, Clock, Star, ChevronDown, ChevronUp, User, BookOpen, Globe, DollarSign, MessageCircle, Send, XCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -59,18 +59,18 @@ function ApplicationCard({ app, onAccept, onReject, accepting, rejecting, onComm
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center font-bold text-blue-700 text-xl flex-shrink-0">
-              {app.universityName?.charAt(0)}
+              {app.universityName ? app.universityName.charAt(0) : <span className="text-blue-300 text-sm">?</span>}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-gray-900 text-lg">{app.universityName}</h3>
+                <h3 className="font-bold text-gray-900 text-lg">{app.universityName || <span className="text-gray-400 font-normal italic text-base">University not specified</span>}</h3>
                 {isRecentlyUpdated && (
                   <span className="text-[10px] font-bold bg-blue-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">Updated</span>
                 )}
               </div>
-              <p className="text-gray-600 text-sm">{app.courseName}</p>
+              <p className="text-gray-600 text-sm">{app.courseName || <span className="text-gray-400 italic text-xs">Course not specified</span>}</p>
               <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-400">
-                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Intake: {app.intake}</span>
+                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Intake: {app.intake || '—'}</span>
                 {app.studyMode && <span>{app.studyMode}</span>}
                 {app.submittedDate && <span>Submitted: {app.submittedDate}</span>}
                 {lastUpdated && (
@@ -382,6 +382,8 @@ export default function StudentApplications() {
   const [accepting, setAccepting] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
 
+  useEffect(() => { refreshUser(); }, []);
+
   if (!student) return null;
 
   const apps = [...(student.applications || [])].sort((a: any, b: any) => {
@@ -458,8 +460,8 @@ export default function StudentApplications() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((app: any) => (
-            <ApplicationCard key={app._id || app.id} app={app} onAccept={acceptOffer} onReject={rejectOffer} accepting={accepting} rejecting={rejecting} onCommentPosted={refreshUser} />
+          {filtered.map((app: any, i: number) => (
+            <ApplicationCard key={app._id || app.id || String(i)} app={app} onAccept={acceptOffer} onReject={rejectOffer} accepting={accepting} rejecting={rejecting} onCommentPosted={refreshUser} />
           ))}
         </div>
       )}

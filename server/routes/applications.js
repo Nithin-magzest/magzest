@@ -27,6 +27,9 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create application (student only)
 router.post('/', authMiddleware, async (req, res) => {
   if (req.user.role !== 'student') return res.status(403).json({ message: 'Forbidden' });
+  if (!req.body.universityName || !req.body.courseName) {
+    return res.status(400).json({ message: 'universityName and courseName are required' });
+  }
   const now = new Date().toISOString();
   const today = now.split('T')[0];
   try {
