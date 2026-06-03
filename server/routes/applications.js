@@ -27,9 +27,10 @@ router.get('/', authMiddleware, async (req, res) => {
 // Create application (student only)
 router.post('/', authMiddleware, async (req, res) => {
   if (req.user.role !== 'student') return res.status(403).json({ message: 'Forbidden' });
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString();
+  const today = now.split('T')[0];
   try {
-    const app = { ...req.body, studentId: req.user.id, submittedDate: today, updatedDate: today, status: 'submitted' };
+    const app = { ...req.body, studentId: req.user.id, submittedDate: today, updatedDate: now, status: 'submitted' };
     const user = await User.findByIdAndUpdate(req.user.id, { $push: { applications: app } }, { new: true }).select('-password');
     const newApp = user.applications[user.applications.length - 1];
     res.json(newApp.toJSON());
@@ -61,10 +62,14 @@ router.post('/:appId/comments', authMiddleware, async (req, res) => {
 // Update application status
 router.put('/:appId', authMiddleware, async (req, res) => {
   const { status, notes } = req.body;
-  const today = new Date().toISOString().split('T')[0];
   try {
-    const updateFields = { 'applications.$.status': status, 'applications.$.updatedDate': today };
+    // Find current status before updating (to store rejectedFrom)
+    const existing = await User.findOne({ 'applications._id': req.params.appId }).select('applications.$');
+    const currentStatus = existing?.applications?.[0]?.status;
+
+    const updateFields = { 'applications.$.status': status, 'applications.$.updatedDate': new Date().toISOString() };
     if (notes !== undefined) updateFields['applications.$.notes'] = notes;
+    if (status === 'rejected' && currentStatus) updateFields['applications.$.rejectedFrom'] = currentStatus;
 
     const user = await User.findOneAndUpdate(
       { 'applications._id': req.params.appId },

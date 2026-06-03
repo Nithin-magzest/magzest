@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Plus, Calendar, ArrowRight, CheckCircle, Clock, Star, ChevronDown, ChevronUp, User, BookOpen, Globe, DollarSign, MessageCircle, Send } from 'lucide-react';
+import { FileText, Plus, Calendar, ArrowRight, CheckCircle, Clock, Star, ChevronDown, ChevronUp, User, BookOpen, Globe, DollarSign, MessageCircle, Send, XCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Student } from '../../types';
@@ -25,10 +25,12 @@ function DetailRow({ label, value }: { label: string; value?: string | boolean |
   );
 }
 
-function ApplicationCard({ app, onAccept, accepting, onCommentPosted }: {
+function ApplicationCard({ app, onAccept, onReject, accepting, rejecting, onCommentPosted }: {
   app: any;
   onAccept: (id: string) => void;
+  onReject: (id: string) => void;
   accepting: string | null;
+  rejecting: string | null;
   onCommentPosted: () => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -48,8 +50,11 @@ function ApplicationCard({ app, onAccept, accepting, onCommentPosted }: {
     setSubmitting(false);
   };
 
+  const lastUpdated = app.updatedAt || app.updatedDate || app.submittedDate || app.createdAt;
+  const isRecentlyUpdated = lastUpdated && (Date.now() - new Date(lastUpdated).getTime()) < 7 * 24 * 60 * 60 * 1000;
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+    <div className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-shadow ${isRecentlyUpdated ? 'border-blue-200 ring-1 ring-blue-100' : 'border-gray-100'}`}>
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start gap-4">
@@ -57,12 +62,23 @@ function ApplicationCard({ app, onAccept, accepting, onCommentPosted }: {
               {app.universityName?.charAt(0)}
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 text-lg">{app.universityName}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-gray-900 text-lg">{app.universityName}</h3>
+                {isRecentlyUpdated && (
+                  <span className="text-[10px] font-bold bg-blue-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">Updated</span>
+                )}
+              </div>
               <p className="text-gray-600 text-sm">{app.courseName}</p>
               <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-400">
                 <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Intake: {app.intake}</span>
                 {app.studyMode && <span>{app.studyMode}</span>}
                 {app.submittedDate && <span>Submitted: {app.submittedDate}</span>}
+                {lastUpdated && (
+                  <span className="text-blue-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {new Date(lastUpdated).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -76,39 +92,99 @@ function ApplicationCard({ app, onAccept, accepting, onCommentPosted }: {
 
         {/* Timeline */}
         <div className="mt-4 pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-0">
-            {timeline.map((step, i) => {
-              const stepIdx = statusOrder.indexOf(step.key);
-              const isCompleted = currentStep >= stepIdx;
-              const isCurrent = app.status === step.key;
-              const stepColors: Record<string, { bg: string; border: string; text: string; line: string }> = {
-                submitted:      { bg: 'bg-sky-500',    border: 'border-sky-500',    text: 'text-sky-600',    line: 'bg-sky-500' },
-                under_review:   { bg: 'bg-amber-400',  border: 'border-amber-400',  text: 'text-amber-500',  line: 'bg-amber-400' },
-                offer_received: { bg: 'bg-purple-500', border: 'border-purple-500', text: 'text-purple-600', line: 'bg-purple-500' },
-                accepted:       { bg: 'bg-green-500',  border: 'border-green-500',  text: 'text-green-600',  line: 'bg-green-500' },
-              };
-              const sc = stepColors[step.key];
+          {(() => {
+            const isRejected = app.status === 'rejected';
+            const stepColors: Record<string, { bg: string; border: string; text: string; line: string }> = {
+              submitted:      { bg: 'bg-sky-500',    border: 'border-sky-500',    text: 'text-sky-600',    line: 'bg-sky-500' },
+              under_review:   { bg: 'bg-amber-400',  border: 'border-amber-400',  text: 'text-amber-500',  line: 'bg-amber-400' },
+              offer_received: { bg: 'bg-purple-500', border: 'border-purple-500', text: 'text-purple-600', line: 'bg-purple-500' },
+              accepted:       { bg: 'bg-green-500',  border: 'border-green-500',  text: 'text-green-600',  line: 'bg-green-500' },
+            };
+
+            if (isRejected) {
+              // Use rejectedFrom to know exactly which steps were completed before rejection
+              const rejectedFrom = app.rejectedFrom || 'submitted';
+              const rejectedFromIdx = statusOrder.indexOf(rejectedFrom);
+
+              // Each step's completed state based on what stage was reached
+              const stepsReached = (key: string) => statusOrder.indexOf(key) <= rejectedFromIdx;
+
+              const rejectedTimeline = [
+                { key: 'submitted',      label: 'Submitted',      icon: timeline[0].icon },
+                { key: 'under_review',   label: 'Under Review',   icon: timeline[1].icon },
+                { key: 'offer_received', label: 'Offer Received', icon: timeline[2].icon },
+                { key: 'rejected',       label: 'Rejected',       icon: XCircle },
+              ];
+
               return (
-                <div key={step.key} className="flex items-center flex-1">
-                  <div className="flex flex-col items-center">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${isCompleted ? `${sc.bg} ${sc.border}` : 'bg-white border-gray-200'}`}>
-                      <step.icon className={`w-3.5 h-3.5 ${isCompleted ? 'text-white' : 'text-gray-300'}`} />
-                    </div>
-                    <span className={`text-xs mt-1 ${isCurrent ? `${sc.text} font-semibold` : isCompleted ? 'text-gray-600' : 'text-gray-300'}`}>{step.label}</span>
-                  </div>
-                  {i < timeline.length - 1 && <div className={`flex-1 h-0.5 mx-1 mb-4 ${currentStep > stepIdx ? stepColors[timeline[i + 1].key].line : 'bg-gray-200'}`} />}
+                <div className="flex items-center gap-0">
+                  {rejectedTimeline.map((step, i) => {
+                    const isRej = step.key === 'rejected';
+                    const completed = isRej ? true : stepsReached(step.key);
+                    const sc = isRej
+                      ? { bg: 'bg-red-500', border: 'border-red-500' }
+                      : completed
+                        ? stepColors[step.key]
+                        : { bg: 'bg-white', border: 'border-gray-200' };
+                    // Line between this step and next: color only if current step was reached
+                    const lineColor = completed && !isRej
+                      ? (i === rejectedTimeline.length - 2 ? 'bg-red-400' : stepColors[rejectedTimeline[i + 1]?.key]?.line || 'bg-gray-200')
+                      : 'bg-gray-200';
+                    return (
+                      <div key={step.key} className="flex items-center flex-1">
+                        <div className="flex flex-col items-center">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${sc.bg} ${sc.border}`}>
+                            <step.icon className={`w-3.5 h-3.5 ${completed ? 'text-white' : 'text-gray-300'}`} />
+                          </div>
+                          <span className={`text-xs mt-1 ${isRej ? 'text-red-600 font-semibold' : completed ? 'text-gray-600' : 'text-gray-300'}`}>{step.label}</span>
+                        </div>
+                        {i < rejectedTimeline.length - 1 && (
+                          <div className={`flex-1 h-0.5 mx-1 mb-4 ${lineColor}`} />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               );
-            })}
-          </div>
+            }
+
+            // Normal flow — all 4 steps, completed in color, future in gray
+            return (
+              <div className="flex items-center gap-0">
+                {timeline.map((step, i) => {
+                  const stepIdx = statusOrder.indexOf(step.key);
+                  const isCompleted = currentStep >= stepIdx;
+                  const isCurrent = app.status === step.key;
+                  const sc = stepColors[step.key];
+                  return (
+                    <div key={step.key} className="flex items-center flex-1">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${isCompleted ? `${sc.bg} ${sc.border}` : 'bg-white border-gray-200'}`}>
+                          <step.icon className={`w-3.5 h-3.5 ${isCompleted ? 'text-white' : 'text-gray-300'}`} />
+                        </div>
+                        <span className={`text-xs mt-1 ${isCurrent ? `${sc.text} font-semibold` : isCompleted ? 'text-gray-600' : 'text-gray-300'}`}>{step.label}</span>
+                      </div>
+                      {i < timeline.length - 1 && (
+                        <div className={`flex-1 h-0.5 mx-1 mb-4 ${currentStep > stepIdx ? stepColors[timeline[i + 1].key].line : 'bg-gray-200'}`} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Offer actions */}
         {app.status === 'offer_received' && (
-          <div className="mt-4 flex gap-3">
-            <button type="button" onClick={() => onAccept(appId)} disabled={accepting === appId}
+          <div className="mt-4 flex gap-3 flex-wrap">
+            <button type="button" onClick={() => onAccept(appId)} disabled={accepting === appId || rejecting === appId}
               className="flex-1 bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-60">
-              {accepting === appId ? 'Accepting...' : 'Accept Offer'}
+              {accepting === appId ? 'Accepting...' : '✓ Accept Offer'}
+            </button>
+            <button type="button" onClick={() => onReject(appId)} disabled={accepting === appId || rejecting === appId}
+              className="flex-1 bg-red-50 text-red-600 border border-red-300 py-2.5 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors disabled:opacity-60">
+              {rejecting === appId ? 'Rejecting...' : '✕ Reject Offer'}
             </button>
             <Link to={`/university/${app.universityId}`} className="flex items-center gap-1 text-blue-600 text-sm font-medium hover:text-blue-700 px-4 py-2.5">
               View University <ArrowRight className="w-3.5 h-3.5" />
@@ -304,10 +380,14 @@ export default function StudentApplications() {
   const student = user as Student;
   const [filter, setFilter] = useState('all');
   const [accepting, setAccepting] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState<string | null>(null);
 
   if (!student) return null;
 
-  const apps = student.applications || [];
+  const apps = [...(student.applications || [])].sort((a: any, b: any) => {
+    const getTs = (x: any) => new Date(x.updatedAt || x.updatedDate || x.submittedDate || x.createdAt || 0).getTime();
+    return getTs(b) - getTs(a);
+  });
   const filtered = filter === 'all' ? apps : apps.filter((a: any) => a.status === filter);
 
   const counts: Record<string, number> = {
@@ -316,6 +396,7 @@ export default function StudentApplications() {
     under_review: apps.filter((a: any) => a.status === 'under_review').length,
     offer_received: apps.filter((a: any) => a.status === 'offer_received').length,
     accepted: apps.filter((a: any) => a.status === 'accepted').length,
+    rejected: apps.filter((a: any) => a.status === 'rejected').length,
   };
 
   const acceptOffer = async (appId: string) => {
@@ -325,6 +406,16 @@ export default function StudentApplications() {
       await refreshUser();
     } catch {}
     setAccepting(null);
+  };
+
+  const rejectOffer = async (appId: string) => {
+    if (!window.confirm('Are you sure you want to reject this offer? This cannot be undone.')) return;
+    setRejecting(appId);
+    try {
+      await api.applications.update(appId, { status: 'rejected' });
+      await refreshUser();
+    } catch {}
+    setRejecting(null);
   };
 
   return (
@@ -339,13 +430,14 @@ export default function StudentApplications() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         {([
           { key: 'all',            label: 'All',            inactive: 'bg-blue-50 border-blue-200 text-blue-800',       active: 'bg-[#0d1b4b] border-[#0d1b4b] text-white' },
           { key: 'submitted',      label: 'Submitted',      inactive: 'bg-sky-50 border-sky-200 text-sky-800',           active: 'bg-sky-500 border-sky-500 text-white' },
           { key: 'under_review',   label: 'Under Review',   inactive: 'bg-amber-50 border-amber-200 text-amber-800',     active: 'bg-amber-400 border-amber-400 text-white' },
           { key: 'offer_received', label: 'Offer Received', inactive: 'bg-purple-50 border-purple-200 text-purple-800',  active: 'bg-purple-500 border-purple-500 text-white' },
           { key: 'accepted',       label: 'Accepted',       inactive: 'bg-green-50 border-green-200 text-green-800',     active: 'bg-green-500 border-green-500 text-white' },
+          { key: 'rejected',       label: 'Rejected',       inactive: 'bg-red-50 border-red-200 text-red-800',           active: 'bg-red-500 border-red-500 text-white' },
         ] as const).map(({ key, label, inactive, active }) => (
           <button type="button" key={key} onClick={() => setFilter(key)}
             className={`py-7 px-4 rounded-3xl text-center border-2 flex flex-col items-center justify-center gap-1 transition-all shadow-sm ${
@@ -367,7 +459,7 @@ export default function StudentApplications() {
       ) : (
         <div className="space-y-4">
           {filtered.map((app: any) => (
-            <ApplicationCard key={app._id || app.id} app={app} onAccept={acceptOffer} accepting={accepting} onCommentPosted={refreshUser} />
+            <ApplicationCard key={app._id || app.id} app={app} onAccept={acceptOffer} onReject={rejectOffer} accepting={accepting} rejecting={rejecting} onCommentPosted={refreshUser} />
           ))}
         </div>
       )}

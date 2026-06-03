@@ -30,6 +30,7 @@ const ApplicationSchema = new mongoose.Schema({
   notes: String,
   intake: String,
   offerLetterUrl: String,
+  rejectedFrom: String,
 
   // Application details
   studyMode: String,
