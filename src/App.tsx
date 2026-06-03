@@ -17,6 +17,8 @@ const Universities     = lazy(() => import('./pages/Universities'));
 const UniversityDetail = lazy(() => import('./pages/UniversityDetail'));
 const Search           = lazy(() => import('./pages/Search'));
 const PublicLayout     = lazy(() => import('./pages/PublicLayout'));
+const ForgotPassword   = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword    = lazy(() => import('./pages/ResetPassword'));
 
 // Shared Activities page
 const Activities = lazy(() => import('./pages/Activities'));
@@ -113,6 +115,8 @@ export default function App() {
               <Route path="/search" element={<Search />} />
             </Route>
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Student module */}
             <Route path="/student" element={<StudentLayout />}>

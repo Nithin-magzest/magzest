@@ -312,7 +312,10 @@ export default function Login() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <Link to="/forgot-password" className="text-xs text-[#0d1b4b] hover:underline">Forgot password?</Link>
+              </div>
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
@@ -327,6 +330,12 @@ export default function Login() {
             <button type="submit" disabled={anyLoading} className="w-full bg-[#0d1b4b] text-white py-3 rounded-xl font-semibold hover:bg-[#152258] transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed">
               {submitting ? 'Signing in...' : 'Sign In'}
             </button>
+            <Link
+              to="/forgot-password"
+              className="block w-full text-center py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+            >
+              Forgot Password?
+            </Link>
           </form>
 
           <div className="mt-8">

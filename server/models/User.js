@@ -120,6 +120,10 @@ const UserSchema = new mongoose.Schema({
   joinedDate: String,
   status: { type: String, enum: ['active', 'inactive', 'enrolled'], default: 'active' },
 
+  // Password reset
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+
   // Counselor fields
   specialization: [String],
   assignedStudents: [String],

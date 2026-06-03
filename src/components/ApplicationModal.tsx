@@ -28,15 +28,15 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
   const [error, setError] = useState('');
 
   const [personal, setPersonal] = useState({
-    dateOfBirth: '',
-    gender: '',
-    passportNumber: '',
+    dateOfBirth: student?.dateOfBirth || '',
+    gender: student?.gender || '',
+    passportNumber: student?.passport?.number || '',
     phone: student?.phone || '',
-    addressStreet: '',
-    addressCity: '',
-    addressState: '',
-    addressCountry: student?.nationality || '',
-    addressPostal: '',
+    addressStreet: student?.address?.street || '',
+    addressCity: student?.address?.city || '',
+    addressState: student?.address?.state || '',
+    addressCountry: student?.address?.country || student?.nationality || '',
+    addressPostal: student?.address?.postalCode || '',
   });
 
   const [academic, setAcademic] = useState({
@@ -201,6 +201,12 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
           {step === 0 && (
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-800">Personal Information</h3>
+              {(student?.dateOfBirth || student?.gender || student?.passport?.number || student?.phone || student?.address?.city) && (
+                <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm text-blue-700">
+                  <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-500" />
+                  <span>Fields pre-filled from your profile — review and update if needed.</span>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Full Name</label>
@@ -262,6 +268,12 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
           {step === 1 && (
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-800">Academic Background</h3>
+              {(student?.educationLevel || student?.gpa) && (
+                <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm text-blue-700">
+                  <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-500" />
+                  <span>Academic details pre-filled from your profile — review and update if needed.</span>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Highest Education Level</label>
@@ -308,6 +320,12 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
           {/* Step 2 — English Proficiency & Finance */}
           {step === 2 && (
             <div className="space-y-5">
+              {(student?.englishScore?.type || student?.englishScore?.score) && (
+                <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm text-blue-700">
+                  <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-500" />
+                  <span>English proficiency pre-filled from your profile — review and update if needed.</span>
+                </div>
+              )}
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3">Intake & Study Mode</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

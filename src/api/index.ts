@@ -45,6 +45,18 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       }),
+    forgotPassword: (email: string) =>
+      req<{ message: string }>('/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      }),
+    resetPassword: (token: string, password: string) =>
+      req<{ message: string }>('/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      }),
     googleLogin: (credential: string) =>
       req<{ token: string; user: any }>('/auth/google', {
         method: 'POST',
