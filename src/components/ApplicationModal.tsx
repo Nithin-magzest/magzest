@@ -416,7 +416,7 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
               </div>
 
               <div>
-                <h3 className="font-semibold text-gray-800 mb-1">Documents Checklist <span className="text-red-500">*</span></h3>
+                <h3 className="font-semibold text-gray-800 mb-1">Documents Checklist</h3>
                 <p className="text-sm text-gray-500 mb-3">Confirm you have these documents ready to submit when requested:</p>
                 <div className="space-y-1.5">
                   {([
