@@ -81,15 +81,22 @@ function ApplicationCard({ app, onAccept, accepting, onCommentPosted }: {
               const stepIdx = statusOrder.indexOf(step.key);
               const isCompleted = currentStep >= stepIdx;
               const isCurrent = app.status === step.key;
+              const stepColors: Record<string, { bg: string; border: string; text: string; line: string }> = {
+                submitted:      { bg: 'bg-sky-500',    border: 'border-sky-500',    text: 'text-sky-600',    line: 'bg-sky-500' },
+                under_review:   { bg: 'bg-amber-400',  border: 'border-amber-400',  text: 'text-amber-500',  line: 'bg-amber-400' },
+                offer_received: { bg: 'bg-purple-500', border: 'border-purple-500', text: 'text-purple-600', line: 'bg-purple-500' },
+                accepted:       { bg: 'bg-green-500',  border: 'border-green-500',  text: 'text-green-600',  line: 'bg-green-500' },
+              };
+              const sc = stepColors[step.key];
               return (
                 <div key={step.key} className="flex items-center flex-1">
                   <div className="flex flex-col items-center">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${isCompleted ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${isCompleted ? `${sc.bg} ${sc.border}` : 'bg-white border-gray-200'}`}>
                       <step.icon className={`w-3.5 h-3.5 ${isCompleted ? 'text-white' : 'text-gray-300'}`} />
                     </div>
-                    <span className={`text-xs mt-1 ${isCurrent ? 'text-blue-600 font-semibold' : isCompleted ? 'text-gray-600' : 'text-gray-300'}`}>{step.label}</span>
+                    <span className={`text-xs mt-1 ${isCurrent ? `${sc.text} font-semibold` : isCompleted ? 'text-gray-600' : 'text-gray-300'}`}>{step.label}</span>
                   </div>
-                  {i < timeline.length - 1 && <div className={`flex-1 h-0.5 mx-1 mb-4 ${currentStep > stepIdx ? 'bg-blue-600' : 'bg-gray-200'}`} />}
+                  {i < timeline.length - 1 && <div className={`flex-1 h-0.5 mx-1 mb-4 ${currentStep > stepIdx ? stepColors[timeline[i + 1].key].line : 'bg-gray-200'}`} />}
                 </div>
               );
             })}
