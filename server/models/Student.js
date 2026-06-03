@@ -26,6 +26,16 @@ const DocumentSchema = new mongoose.Schema({
   status: { type: String, default: 'pending' },
 });
 
+const PassportSchema = new mongoose.Schema(
+  { number: String, issueDate: String, expiryDate: String, issuingCountry: String },
+  { _id: false }
+);
+
+const AddressSchema = new mongoose.Schema(
+  { street: String, city: String, state: String, postalCode: String },
+  { _id: false }
+);
+
 const StudentSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -33,6 +43,11 @@ const StudentSchema = new mongoose.Schema({
   role: { type: String, default: 'student' },
   phone: String,
   nationality: String,
+  dateOfBirth: String,
+  gender: String,
+  maritalStatus: String,
+  passport: PassportSchema,
+  address: AddressSchema,
   educationLevel: String,
   gpa: Number,
   englishScore: EnglishScoreSchema,

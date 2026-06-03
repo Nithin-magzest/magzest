@@ -101,6 +101,13 @@ const UserSchema = new mongoose.Schema({
   // Student fields
   phone: String,
   nationality: String,
+  maritalStatus: String,
+  passport: {
+    number: String,
+    issueDate: String,
+    expiryDate: String,
+    issuingCountry: String,
+  },
   educationLevel: String,
   gpa: Number,
   englishScore: { type: { type: String, enum: ['IELTS', 'TOEFL', 'PTE', 'Duolingo'] }, score: Number },
