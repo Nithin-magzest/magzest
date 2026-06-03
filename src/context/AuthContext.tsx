@@ -3,7 +3,7 @@ import { User } from '../types';
 import { api } from '../api';
 
 // Force a full page reload on HMR so the context reference never mismatches
-if (import.meta.hot) { import.meta.hot.decline(); }
+if (import.meta.hot) { import.meta.hot.invalidate(); }
 
 type LoginResult = { success: true; role: string } | { success: false };
 

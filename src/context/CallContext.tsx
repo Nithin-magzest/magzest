@@ -73,7 +73,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const logCallRef = useRef<(status: string, duration: number, remoteId: string) => void>(() => {});
   const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
 
-  const ringtoneRef = useRef<ReturnType<typeof createPirateTone> | null>(null);
+  const ringtoneRef = useRef<ReturnType<typeof createCallRingtone> | null>(null);
 
   useEffect(() => {
     if (callState === 'incoming' || callState === 'calling') {
