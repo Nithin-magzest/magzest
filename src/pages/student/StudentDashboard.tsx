@@ -1,6 +1,6 @@
 ﻿import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Clock, CheckCircle, Bell, ArrowRight, Star, MapPin, Upload, X, AlertCircle, ExternalLink } from 'lucide-react';
+import { FileText, Clock, CheckCircle, Bell, ArrowRight, Star, MapPin, Upload, X, AlertCircle, ExternalLink, CalendarDays } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Student } from '../../types';
@@ -107,6 +107,7 @@ export default function StudentDashboard() {
   const [showUpload, setShowUpload] = useState(false);
   const [recommendations, setRecommendations] = useState<Array<{ uni: any; score: number; matchPct: number; matchedCourse: any; reasons: string[] }>>([]);
   const [recsLoading, setRecsLoading] = useState(true);
+  const [upcomingIntakes, setUpcomingIntakes] = useState<Array<{ uniName: string; uniId: string; intake: string; deadline: string; daysLeft: number }>>([]);
 
   useEffect(() => {
     const levelMap: Record<string, string> = {
@@ -171,6 +172,26 @@ export default function StudentDashboard() {
       setRecommendations(
         scored.filter((r: any) => r.score > 0).sort((a: any, b: any) => b.score - a.score).slice(0, 4)
       );
+
+      // Build upcoming intakes from applied + preferred universities
+      const appliedIds = new Set((student.applications || []).map((a: any) => a.universityId));
+      const relevantUnis = unis.filter((u: any) => appliedIds.has(u._id || u.id) || (student.preferredCountries || []).includes(u.country));
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const intakeRows: Array<{ uniName: string; uniId: string; intake: string; deadline: string; daysLeft: number }> = [];
+      relevantUnis.forEach((uni: any) => {
+        (uni.applicationDeadlines || []).forEach((d: any) => {
+          if (!d.deadline) return;
+          const deadlineDate = new Date(d.deadline);
+          if (isNaN(deadlineDate.getTime())) return;
+          const daysLeft = Math.ceil((deadlineDate.getTime() - today.getTime()) / 86400000);
+          if (daysLeft >= 0) {
+            intakeRows.push({ uniName: uni.name, uniId: uni._id || uni.id, intake: d.intake, deadline: d.deadline, daysLeft });
+          }
+        });
+      });
+      intakeRows.sort((a, b) => a.daysLeft - b.daysLeft);
+      setUpcomingIntakes(intakeRows.slice(0, 3));
+
       setRecsLoading(false);
     }).catch(() => setRecsLoading(false));
   }, []);
@@ -388,6 +409,46 @@ export default function StudentDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Upcoming Intakes */}
+      {upcomingIntakes.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-blue-600" />
+              <h2 className="text-lg font-bold text-gray-900">Upcoming Application Deadlines</h2>
+            </div>
+            <Link to="/student/universities" className="text-[#0d1b4b] text-sm font-medium hover:text-[#152258] flex items-center gap-1">
+              Explore <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {upcomingIntakes.map((item, i) => {
+              const urgent = item.daysLeft <= 14;
+              const soon = item.daysLeft <= 30;
+              const badgeColor = urgent
+                ? 'bg-red-50 text-red-600 border-red-200'
+                : soon
+                ? 'bg-amber-50 text-amber-600 border-amber-200'
+                : 'bg-green-50 text-green-600 border-green-200';
+              const dotColor = urgent ? 'bg-red-500' : soon ? 'bg-amber-400' : 'bg-green-500';
+              return (
+                <Link key={i} to={`/university/${item.uniId}`}
+                  className="flex items-center gap-4 p-3.5 bg-gray-50 hover:bg-blue-50 rounded-xl transition-colors group">
+                  <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotColor}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate group-hover:text-[#0d1b4b]">{item.uniName}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{item.intake} intake · Deadline: {new Date(item.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg border flex-shrink-0 ${badgeColor}`}>
+                    {item.daysLeft === 0 ? 'Today!' : item.daysLeft === 1 ? '1 day left' : `${item.daysLeft} days left`}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
         <div className="flex items-center justify-between mb-5">

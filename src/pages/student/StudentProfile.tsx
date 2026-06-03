@@ -104,6 +104,21 @@ export default function StudentProfile() {
     name: student?.name || '',
     phone: student?.phone || '',
     nationality: student?.nationality || '',
+    dateOfBirth: student?.dateOfBirth || '',
+    gender: student?.gender || '',
+    maritalStatus: student?.maritalStatus || '',
+    passport: {
+      number: student?.passport?.number || '',
+      issueDate: student?.passport?.issueDate || '',
+      expiryDate: student?.passport?.expiryDate || '',
+      issuingCountry: student?.passport?.issuingCountry || '',
+    },
+    address: {
+      street: student?.address?.street || '',
+      city: student?.address?.city || '',
+      state: student?.address?.state || '',
+      postalCode: student?.address?.postalCode || '',
+    },
     educationLevel: student?.educationLevel || '',
     gpa: student?.gpa || 0,
   });
@@ -132,7 +147,11 @@ export default function StudentProfile() {
   const save = async () => {
     setSaving(true);
     try {
-      await api.students.updateMe(form);
+      await api.students.updateMe({
+        ...form,
+        passport: form.passport.number ? form.passport : undefined,
+        address: form.address.city ? form.address : undefined,
+      });
       await refreshUser();
       setEditing(false);
     } catch {}
@@ -189,21 +208,22 @@ export default function StudentProfile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-5">
+          {/* Personal Information */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2"><User className="w-5 h-5 text-blue-600" /> Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {[
-                { label: 'Full Name', key: 'name' as const },
-                { label: 'Phone', key: 'phone' as const },
-                { label: 'Nationality', key: 'nationality' as const },
-              ].map(field => (
+              {([
+                { label: 'Full Name', key: 'name' },
+                { label: 'Phone', key: 'phone' },
+                { label: 'Nationality', key: 'nationality' },
+              ] as { label: string; key: 'name' | 'phone' | 'nationality' }[]).map(field => (
                 <div key={field.label}>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">{field.label}</label>
                   {editing ? (
                     <input aria-label={field.label} value={form[field.key]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   ) : (
-                    <p className="text-gray-900 font-medium">{student[field.key] as string}</p>
+                    <p className="text-gray-900 font-medium">{student[field.key] || '—'}</p>
                   )}
                 </div>
               ))}
@@ -211,6 +231,101 @@ export default function StudentProfile() {
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Email</label>
                 <p className="text-gray-900 font-medium">{student.email}</p>
               </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Date of Birth</label>
+                {editing ? (
+                  <input type="date" aria-label="Date of Birth" value={form.dateOfBirth}
+                    onChange={e => setForm(f => ({ ...f, dateOfBirth: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                ) : (
+                  <p className="text-gray-900 font-medium">
+                    {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Gender</label>
+                {editing ? (
+                  <select aria-label="Gender" value={form.gender} onChange={e => setForm(f => ({ ...f, gender: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">Select</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                    <option>Prefer not to say</option>
+                  </select>
+                ) : <p className="text-gray-900 font-medium">{student.gender || '—'}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Marital Status</label>
+                {editing ? (
+                  <select aria-label="Marital Status" value={form.maritalStatus} onChange={e => setForm(f => ({ ...f, maritalStatus: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">Select</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Widowed</option>
+                  </select>
+                ) : <p className="text-gray-900 font-medium">{student.maritalStatus || '—'}</p>}
+              </div>
+            </div>
+          </div>
+
+          {/* Passport Details */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-600" /> Passport Details
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {([
+                { label: 'Passport Number', key: 'number', type: 'text' },
+                { label: 'Issuing Country', key: 'issuingCountry', type: 'text' },
+                { label: 'Issue Date', key: 'issueDate', type: 'date' },
+                { label: 'Expiry Date', key: 'expiryDate', type: 'date' },
+              ] as { label: string; key: keyof typeof form.passport; type: string }[]).map(field => (
+                <div key={field.label}>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{field.label}</label>
+                  {editing ? (
+                    <input type={field.type} aria-label={field.label} value={form.passport[field.key]}
+                      onChange={e => setForm(f => ({ ...f, passport: { ...f.passport, [field.key]: e.target.value } }))}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  ) : (
+                    <p className="text-gray-900 font-medium">{student.passport?.[field.key] || '—'}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Address */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
+              <User className="w-5 h-5 text-blue-600" /> Address
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Street Address</label>
+                {editing ? (
+                  <input aria-label="Street Address" value={form.address.street}
+                    onChange={e => setForm(f => ({ ...f, address: { ...f.address, street: e.target.value } }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                ) : <p className="text-gray-900 font-medium">{student.address?.street || '—'}</p>}
+              </div>
+              {([
+                { label: 'City', key: 'city' },
+                { label: 'State', key: 'state' },
+                { label: 'Postal Code', key: 'postalCode' },
+              ] as { label: string; key: keyof typeof form.address }[]).map(field => (
+                <div key={field.label}>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{field.label}</label>
+                  {editing ? (
+                    <input aria-label={field.label} value={form.address[field.key]}
+                      onChange={e => setForm(f => ({ ...f, address: { ...f.address, [field.key]: e.target.value } }))}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  ) : <p className="text-gray-900 font-medium">{student.address?.[field.key] || '—'}</p>}
+                </div>
+              ))}
             </div>
           </div>
 
