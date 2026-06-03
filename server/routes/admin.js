@@ -184,7 +184,8 @@ router.post('/applications', authMiddleware, async (req, res) => {
   if (!studentId || !universityName || !courseName) {
     return res.status(400).json({ message: 'studentId, universityName, and courseName are required' });
   }
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString();
+  const today = now.split('T')[0];
   try {
     const app = {
       universityName, courseName,
@@ -193,7 +194,7 @@ router.post('/applications', authMiddleware, async (req, res) => {
       courseId: courseId || '',
       status: 'submitted',
       submittedDate: today,
-      updatedDate: today,
+      updatedDate: now,
     };
     const student = await User.findOneAndUpdate(
       { _id: studentId, role: 'student' },
@@ -234,11 +235,14 @@ router.get('/applications', authMiddleware, adminOnly, async (req, res) => {
 // Update application status (admin only)
 router.put('/applications/:studentId/:appId', authMiddleware, adminOnly, async (req, res) => {
   const { status, notes } = req.body;
-  const today = new Date().toISOString().split('T')[0];
   try {
-    const update = { 'applications.$.updatedDate': today };
+    const existing = await User.findOne({ _id: req.params.studentId, 'applications._id': req.params.appId }).select('applications.$');
+    const currentStatus = existing?.applications?.[0]?.status;
+
+    const update = { 'applications.$.updatedDate': new Date().toISOString() };
     if (status) update['applications.$.status'] = status;
     if (notes !== undefined) update['applications.$.notes'] = notes;
+    if (status === 'rejected' && currentStatus) update['applications.$.rejectedFrom'] = currentStatus;
 
     const student = await User.findOneAndUpdate(
       { _id: req.params.studentId, 'applications._id': req.params.appId },

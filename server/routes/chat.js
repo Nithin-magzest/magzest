@@ -156,7 +156,7 @@ router.post('/rooms/:roomId/files', authMiddleware, upload.single('file'), async
         if (activeApp) {
           await User.updateOne(
             { _id: studentId, 'applications._id': activeApp._id },
-            { $set: { 'applications.$.status': 'offer_received', 'applications.$.offerLetterUrl': fileUrl, 'applications.$.updatedDate': new Date().toISOString().split('T')[0] } }
+            { $set: { 'applications.$.status': 'offer_received', 'applications.$.offerLetterUrl': fileUrl, 'applications.$.updatedDate': new Date().toISOString() } }
           );
         }
       }

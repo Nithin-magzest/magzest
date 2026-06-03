@@ -16,6 +16,7 @@ const ApplicationSchema = new mongoose.Schema({
   updatedDate: String,
   notes: String,
   intake: String,
+  rejectedFrom: String,
 });
 
 const DocumentSchema = new mongoose.Schema({
