@@ -181,12 +181,12 @@ async function autoSeedIfEmpty() {
   const Country = require('./models/Country');
   const { universityData, countryData } = require('./seed');
 
-  // Always sync latest university and country data on startup
+  // Insert new universities/countries from seed data without overwriting existing (admin-enriched) records
   for (const u of universityData) {
-    await University.updateOne({ id: u.id }, { $set: u }, { upsert: true });
+    await University.updateOne({ id: u.id }, { $setOnInsert: u }, { upsert: true });
   }
   for (const c of countryData) {
-    await Country.updateOne({ id: c.id }, { $set: c }, { upsert: true });
+    await Country.updateOne({ id: c.id }, { $setOnInsert: c }, { upsert: true });
   }
 
   const count = await User.countDocuments();

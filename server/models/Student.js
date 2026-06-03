@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const EnglishScoreSchema = new mongoose.Schema(
   { type: { type: String }, score: Number },
@@ -45,4 +45,4 @@ const StudentSchema = new mongoose.Schema({
   status: { type: String, default: 'active' },
 }, { timestamps: true });
 
-export default mongoose.model('Student', StudentSchema);
+module.exports = mongoose.model('Student', StudentSchema);

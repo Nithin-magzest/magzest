@@ -12,7 +12,7 @@ router.get('/', authMiddleware, async (req, res) => {
       return res.json(user?.applications || []);
     }
     if (req.user.role === 'counselor') {
-      const students = await User.find({ role: 'student' }).select('applications name');
+      const students = await User.find({ role: 'student', counselorId: req.user.id }).select('applications name');
       const apps = students.flatMap(s =>
         s.applications.map(a => ({ ...a.toJSON(), studentName: s.name, studentId: s._id }))
       );

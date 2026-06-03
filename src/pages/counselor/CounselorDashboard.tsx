@@ -191,7 +191,7 @@ export default function CounselorDashboard() {
   const handleSaveNote = async () => {
     setSavingNote(true);
     try {
-      await api.students.updateMe({ bio: noteInput });
+      await api.counselors.updateMe({ bio: noteInput });
       setWorkNote(noteInput);
       setEditingNote(false);
     } catch { /* ignore */ }

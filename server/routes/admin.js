@@ -249,6 +249,7 @@ router.put('/applications/:studentId/:appId', authMiddleware, adminOnly, async (
     if (!student) return res.status(404).json({ message: 'Application not found' });
 
     const app = student.applications.id(req.params.appId);
+    if (!app) return res.status(404).json({ message: 'Application not found' });
     const appObj = app.toJSON ? app.toJSON() : app;
     res.json({
       ...appObj,
@@ -483,6 +484,86 @@ router.delete('/countries/:id', authMiddleware, adminOnly, async (req, res) => {
     await Country.findByIdAndDelete(req.params.id);
     res.json({ message: 'Country deleted' });
   } catch { res.status(500).json({ message: 'Server error' }); }
+});
+
+// Analytics overview
+router.get('/analytics', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const period = req.query.period || '30d';
+    const periodDays = period === '7d' ? 7 : period === '90d' ? 90 : period === '1yr' ? 365 : 30;
+    const since = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
+
+    const [students, counselors] = await Promise.all([
+      User.find({ role: 'student' }).select('name joinedDate applications counselorId assignedStudents'),
+      User.find({ role: 'counselor' }).select('name assignedStudents'),
+    ]);
+
+    const newStudents = students.filter(s => s.joinedDate && new Date(s.joinedDate) >= since).length;
+
+    const allApps = students.flatMap(s => s.applications || []);
+    const approvedStatuses = ['offer_received', 'visa_approved', 'enrolled'];
+    const approvedCount = allApps.filter(a => approvedStatuses.includes(a.status)).length;
+    const visaApprovalRate = allApps.length ? Math.round((approvedCount / allApps.length) * 100) : 0;
+
+    const studentsWithApps = students.filter(s => (s.applications || []).length > 0).length;
+    const conversionRate = students.length ? Math.round((studentsWithApps / students.length) * 100) : 0;
+
+    const revenue = studentsWithApps * 500;
+
+    // Monthly registrations (last 6 months)
+    const monthlyMap = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const key = d.toLocaleString('default', { month: 'short', year: '2-digit' });
+      monthlyMap[key] = 0;
+    }
+    students.forEach(s => {
+      if (!s.joinedDate) return;
+      const d = new Date(s.joinedDate);
+      const key = d.toLocaleString('default', { month: 'short', year: '2-digit' });
+      if (key in monthlyMap) monthlyMap[key]++;
+    });
+    const monthlyRegistrations = Object.entries(monthlyMap).map(([month, count]) => ({ month, count }));
+
+    // Applications by country (from university name heuristic — use preferredCountries if available)
+    const countryCount = {};
+    students.forEach(s => (s.applications || []).forEach(a => {
+      const country = a.universityCountry || 'Unknown';
+      countryCount[country] = (countryCount[country] || 0) + 1;
+    }));
+    const applicationsByCountry = Object.entries(countryCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([country, count]) => ({ country, count }));
+
+    // Conversion funnel
+    const totalRegistered = students.length;
+    const totalApplied = studentsWithApps;
+    const totalOffers = students.filter(s => (s.applications || []).some(a => a.status === 'offer_received' || a.status === 'enrolled' || a.status === 'visa_approved')).length;
+    const totalEnrolled = students.filter(s => (s.applications || []).some(a => a.status === 'enrolled')).length;
+    const base = totalRegistered || 1;
+    const conversionFunnel = [
+      { stage: 'Registered', count: totalRegistered, pct: 100 },
+      { stage: 'Applied', count: totalApplied, pct: Math.round((totalApplied / base) * 100) },
+      { stage: 'Offer Received', count: totalOffers, pct: Math.round((totalOffers / base) * 100) },
+      { stage: 'Enrolled', count: totalEnrolled, pct: Math.round((totalEnrolled / base) * 100) },
+    ];
+
+    // Counselor performance
+    const counselorPerformance = counselors.map(c => {
+      const assigned = students.filter(s => s.counselorId?.toString() === c._id.toString());
+      const appCount = assigned.reduce((n, s) => n + (s.applications?.length || 0), 0);
+      const offerCount = assigned.reduce((n, s) => n + (s.applications || []).filter(a => approvedStatuses.includes(a.status)).length, 0);
+      const score = assigned.length ? Math.min(100, Math.round(((offerCount / Math.max(appCount, 1)) * 60) + (Math.min(assigned.length, 10) / 10 * 40))) : 0;
+      const workload = assigned.length >= 8 ? 'High' : assigned.length >= 4 ? 'Medium' : 'Low';
+      return { name: c.name, students: assigned.length, applications: appCount, offers: offerCount, workload, score };
+    });
+
+    res.json({ newStudents, visaApprovalRate, conversionRate, revenue, monthlyRegistrations, applicationsByCountry, conversionFunnel, counselorPerformance });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Server error' });
+  }
 });
 
 // Email subscribers

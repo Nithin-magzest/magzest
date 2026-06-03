@@ -16,11 +16,25 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+// Update own profile (counselor)
+router.put('/me', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'counselor') return res.status(403).json({ message: 'Forbidden' });
+  const { password, role, _id, ...updates } = req.body;
+  try {
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user.toJSON());
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get own documents (counselor)
 router.get('/me/documents', authMiddleware, async (req, res) => {
   if (req.user.role !== 'counselor') return res.status(403).json({ message: 'Forbidden' });
   try {
     const user = await User.findById(req.user.id).select('documents');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json((user.documents || []).map(d => d.toJSON()));
   } catch {
     res.status(500).json({ message: 'Server error' });

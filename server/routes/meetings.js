@@ -33,7 +33,9 @@ router.post('/', auth, async (req, res) => {
     if (req.user.role === 'counselor') {
       const alreadyIn = allParticipants.some(p => p.userId?.toString() === req.user.id?.toString());
       if (!alreadyIn) {
-        allParticipants = [{ userId: req.user.id, name: req.user.name, role: 'counselor' }, ...allParticipants];
+        const User = require('../models/User');
+        const self = await User.findById(req.user.id).select('name');
+        allParticipants = [{ userId: req.user.id, name: self?.name || '', role: 'counselor' }, ...allParticipants];
       }
     }
     const meeting = await Meeting.create({

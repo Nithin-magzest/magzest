@@ -18,8 +18,10 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // Get current student profile
 router.get('/me', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ message: 'Forbidden' });
   try {
     const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user.toJSON());
   } catch {
     res.status(500).json({ message: 'Server error' });
@@ -46,6 +48,7 @@ router.post('/me/documents', authMiddleware, upload.single('file'), async (req, 
   try {
     const doc = { name: docName, type: type || 'Other', url, uploadedDate: new Date().toISOString().split('T')[0], status: 'pending' };
     const user = await User.findByIdAndUpdate(req.user.id, { $push: { documents: doc } }, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     const newDoc = user.documents[user.documents.length - 1];
     res.json(newDoc.toJSON());
   } catch {
