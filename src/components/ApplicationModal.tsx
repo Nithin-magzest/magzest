@@ -48,6 +48,11 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
     percentage: student?.gpa ? String(student.gpa) : '',
   });
 
+  const [educationLevelCustom, setEducationLevelCustom] = useState('');
+  const [graduationYearCustom, setGraduationYearCustom] = useState('');
+  const isOtherLevel = academic.educationLevel === 'Other';
+  const isOtherYear = academic.graduationYear === 'Other';
+
   const [finance, setFinance] = useState({
     englishTestType: student?.englishScore?.type || '',
     englishTestScore: student?.englishScore?.score ? String(student.englishScore.score) : '',
@@ -83,6 +88,8 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
       if (!academic.previousInstitution.trim()) return 'Previous institution is required';
       if (!academic.previousDegree.trim()) return 'Degree name is required';
       if (!academic.graduationYear) return 'Graduation year is required';
+      if (isOtherYear && !graduationYearCustom.trim()) return 'Please enter a graduation year';
+      if (isOtherLevel && !educationLevelCustom.trim()) return 'Please enter your education level';
       if (!academic.percentage.trim()) return 'GPA / Percentage is required';
     }
     if (step === 2) {
@@ -134,11 +141,11 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
           country: personal.addressCountry,
           postalCode: personal.addressPostal,
         },
-        educationLevel: academic.educationLevel,
+        educationLevel: isOtherLevel ? educationLevelCustom : academic.educationLevel,
         previousInstitution: academic.previousInstitution,
         previousDegree: academic.previousDegree,
         previousMajor: academic.previousMajor,
-        graduationYear: academic.graduationYear,
+        graduationYear: isOtherYear ? graduationYearCustom : academic.graduationYear,
         percentage: academic.percentage,
         englishTest: finance.englishTestType ? {
           type: finance.englishTestType,
@@ -275,23 +282,33 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <label className={labelCls}>Highest Education Level</label>
-                  <select value={academic.educationLevel} onChange={e => setAcademic(a => ({ ...a, educationLevel: e.target.value }))} className={`${inputCls} bg-white`}>
+                  <select value={academic.educationLevel} onChange={e => { setAcademic(a => ({ ...a, educationLevel: e.target.value })); setEducationLevelCustom(''); }} className={`${inputCls} bg-white`}>
                     <option value="">Select level</option>
                     <option>High School</option>
                     <option>Diploma</option>
                     <option>Bachelor</option>
                     <option>Master</option>
                     <option>PhD</option>
+                    <option>Other</option>
                   </select>
+                  {isOtherLevel && (
+                    <input type="text" value={educationLevelCustom} onChange={e => setEducationLevelCustom(e.target.value)}
+                      placeholder="Enter your education level" className={inputCls} autoFocus />
+                  )}
                 </div>
-                <div>
+                <div className="space-y-2">
                   <label className={labelCls}>Graduation Year <span className="text-red-500">*</span></label>
-                  <select value={academic.graduationYear} onChange={e => setAcademic(a => ({ ...a, graduationYear: e.target.value }))} className={`${inputCls} bg-white`}>
+                  <select value={academic.graduationYear} onChange={e => { setAcademic(a => ({ ...a, graduationYear: e.target.value })); setGraduationYearCustom(''); }} className={`${inputCls} bg-white`}>
                     <option value="">Select year</option>
                     {Array.from({ length: 17 }, (_, i) => 2027 - i).map(y => <option key={y}>{y}</option>)}
+                    <option>Other</option>
                   </select>
+                  {isOtherYear && (
+                    <input type="text" value={graduationYearCustom} onChange={e => setGraduationYearCustom(e.target.value)}
+                      placeholder="Enter graduation year" className={inputCls} autoFocus />
+                  )}
                 </div>
               </div>
               <div>
