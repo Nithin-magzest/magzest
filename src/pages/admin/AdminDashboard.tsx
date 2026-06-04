@@ -1722,18 +1722,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Activity feed + Meeting panel */}
-        {!loading && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-            <div className="xl:col-span-2">
-              <ActivityFeed />
-            </div>
-            <div>
-              <MeetingPanel theme="purple" meetingsPagePath="/admin/meetings" />
-            </div>
-          </div>
-        )}
-
         {/* Students tab */}
         {!loading && activeTab === 'students' && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -1834,6 +1822,18 @@ export default function AdminDashboard() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Activity feed + Meeting panel — always visible below tab content */}
+        {!loading && (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+            <div className="xl:col-span-2">
+              <ActivityFeed />
+            </div>
+            <div>
+              <MeetingPanel theme="purple" meetingsPagePath="/admin/meetings" />
             </div>
           </div>
         )}
