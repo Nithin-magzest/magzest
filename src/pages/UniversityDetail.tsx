@@ -23,6 +23,29 @@ function useWikipediaPhoto(name: string) {
   return photo;
 }
 
+function UniLogoBox({ uni }: { uni: any }) {
+  const domain = uni.website ? uni.website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
+  const uniId = uni.id || uni._id;
+  const [stage, setStage] = useState<'proxy' | 'favicon' | 'letter'>(uniId ? 'proxy' : domain ? 'favicon' : 'letter');
+  const src = stage === 'proxy' ? `/api/unilogo/${uniId}` : `/api/favicon/${domain}`;
+
+  return (
+    <div className="w-16 h-16 bg-white rounded-xl border-2 border-white/30 shadow-lg overflow-hidden p-1.5 flex items-center justify-center flex-shrink-0">
+      {stage === 'letter' ? (
+        <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-2xl rounded-lg">
+          {uni.name?.charAt(0) || '?'}
+        </span>
+      ) : (
+        <img src={src} alt={uni.name} className="w-full h-full object-contain"
+          onError={() => {
+            if (stage === 'proxy' && domain) setStage('favicon');
+            else setStage('letter');
+          }} />
+      )}
+    </div>
+  );
+}
+
 export default function UniversityDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -87,6 +110,8 @@ export default function UniversityDetail() {
         <div className="absolute bottom-6 left-6 right-6">
           <div className="flex items-end justify-between">
             <div className="flex items-end gap-4">
+              {/* University logo */}
+              <UniLogoBox uni={uni} />
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">#{uni.ranking} World Ranking</span>

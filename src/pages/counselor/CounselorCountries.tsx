@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, ChevronDown, ChevronUp, Clock, DollarSign, FileCheck2, CreditCard, Check, GraduationCap, Globe } from 'lucide-react';
 import { api } from '../../api';
 import { CountryFlag } from '../../components/CountryFlag';
 
 function UniMiniCard({ uni }: { uni: any }) {
   return (
-    <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm min-w-0">
+    <Link to={`/university/${uni.id || uni._id}`}
+      className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm min-w-0 hover:border-green-300 hover:shadow-md transition-all cursor-pointer">
       <img
-        src={(uni.logo && !uni.logo.includes('clearbit.com') ? uni.logo : null) || (uni.website ? `/api/favicon/${uni.website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}` : '')}
+        src={`/api/unilogo/${uni.id || uni._id}`}
         alt=""
         className="w-8 h-8 rounded-lg object-contain bg-gray-50 border border-gray-100 flex-shrink-0"
         onError={(e) => {
@@ -34,7 +36,7 @@ function UniMiniCard({ uni }: { uni: any }) {
           {uni.courses.length}
         </span>
       )}
-    </div>
+    </Link>
   );
 }
 

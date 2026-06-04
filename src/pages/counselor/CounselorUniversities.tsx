@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, MapPin, Star, BookOpen, ChevronDown, ChevronUp, DollarSign, Calendar, CheckCircle, ExternalLink, Users, Award, X, Plus, GraduationCap } from 'lucide-react';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
@@ -252,21 +253,28 @@ function CourseRow({ course, universityName, universityId, onApply }: {
 
 // ── University Card ───────────────────────────────────────────────────────────
 
-function UniLogoImg({ name, website }: { name: string; website?: string }) {
-  const [err, setErr] = useState(false);
-  if (!website || err) {
+function UniLogoImg({ name, website, uniId }: { name: string; website?: string; uniId?: string }) {
+  const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
+  const initial: 'proxy' | 'favicon' | 'letter' = uniId ? 'proxy' : domain ? 'favicon' : 'letter';
+  const [stage, setStage] = useState(initial);
+
+  if (stage === 'letter') {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-xl rounded-lg leading-none">
         {name?.charAt(0) || '?'}
       </span>
     );
   }
+  const src = stage === 'proxy' ? `/api/unilogo/${uniId}` : `/api/favicon/${domain}`;
   return (
     <img
-      src={`/api/favicon/${website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}`}
+      src={src}
       alt={name}
       className="w-full h-full object-contain"
-      onError={() => setErr(true)}
+      onError={() => {
+        if (stage === 'proxy' && domain) setStage('favicon');
+        else setStage('letter');
+      }}
     />
   );
 }
@@ -282,7 +290,7 @@ function UniversityCard({ uni, onApply }: {
       {/* Header */}
       <div className="flex gap-4 p-5">
         <div className="w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0">
-          <UniLogoImg name={uni.name} website={uni.website} />
+          <UniLogoImg name={uni.name} website={uni.website} uniId={uni.id || uni._id} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
@@ -328,6 +336,11 @@ function UniversityCard({ uni, onApply }: {
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           {expanded ? 'Collapse' : 'View Courses & Info'}
         </button>
+        <Link to={`/university/${uni.id || uni._id}`}
+          title="View full university page"
+          className="flex items-center gap-1 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-colors">
+          <GraduationCap className="w-4 h-4" /> Full Page
+        </Link>
         {uni.website && (
           <a href={uni.website} target="_blank" rel="noopener noreferrer"
             title="Visit university website"

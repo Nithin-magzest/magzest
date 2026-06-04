@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Plus, Trash2, X, Search, Edit2, ChevronDown, ChevronUp,
   Check, DollarSign, Clock, FileCheck2, CreditCard, RefreshCw,
@@ -550,9 +551,10 @@ function CountryDetailModal({ country, unis, onClose }: { country: any; unis: an
 
 function UniMiniCard({ uni }: { uni: any }) {
   return (
-    <div className="flex items-center gap-2.5 bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm min-w-0 hover:border-sky-200 hover:shadow-md transition-all">
+    <Link to={`/university/${uni.id || uni._id}`}
+      className="flex items-center gap-2.5 bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm min-w-0 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer">
       <img
-        src={(uni.logo && !uni.logo.includes('clearbit.com') ? uni.logo : null) || (uni.website ? `/api/favicon/${uni.website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}` : '')}
+        src={`/api/unilogo/${uni.id || uni._id}`}
         alt=""
         className="w-9 h-9 rounded-lg object-contain bg-gray-50 border border-gray-100 flex-shrink-0"
         onError={(e) => {
@@ -579,7 +581,7 @@ function UniMiniCard({ uni }: { uni: any }) {
           {uni.courses.length}
         </span>
       )}
-    </div>
+    </Link>
   );
 }
 

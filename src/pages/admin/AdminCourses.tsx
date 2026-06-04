@@ -329,27 +329,26 @@ function CourseModal({ universities, uniId: initialUniId, course, onClose, onSav
   );
 }
 
-function UniLogoImg({ name, website }: { name: string; website?: string }) {
-  const [err, setErr] = useState(false);
-  if (!website || err) {
+function UniLogoImg({ name, website, uniId }: { name: string; website?: string; uniId?: string }) {
+  const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
+  const initial: 'proxy' | 'favicon' | 'letter' = uniId ? 'proxy' : domain ? 'favicon' : 'letter';
+  const [stage, setStage] = useState(initial);
+  if (stage === 'letter') {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
         {name?.charAt(0) || '?'}
       </span>
     );
   }
+  const src = stage === 'proxy' ? `/api/unilogo/${uniId}` : `/api/favicon/${domain}`;
   return (
-    <img
-      src={`/api/favicon/${website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}`}
-      alt={name}
-      className="w-full h-full object-contain"
-      onError={() => setErr(true)}
-    />
+    <img src={src} alt={name} className="w-full h-full object-contain"
+      onError={() => { if (stage === 'proxy' && domain) setStage('favicon'); else setStage('letter'); }} />
   );
 }
 
-function CourseCard({ course, uniName, onEdit, onDelete, onApply }: {
-  course: any; uniName: string; onEdit: () => void; onDelete: () => void; onApply: () => void;
+function CourseCard({ course, uniName, uniId, onEdit, onDelete, onApply }: {
+  course: any; uniName: string; uniId?: string; onEdit: () => void; onDelete: () => void; onApply: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -357,7 +356,7 @@ function CourseCard({ course, uniName, onEdit, onDelete, onApply }: {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       <div className="flex items-start gap-4 px-5 py-4">
         <div className="w-10 h-10 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1 flex-shrink-0 mt-0.5">
-          <UniLogoImg name={uniName} website={course.website} />
+          <UniLogoImg name={uniName} website={course.website} uniId={uniId} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -477,6 +476,7 @@ export default function AdminCourses() {
       _uniId: normalId(uni),
       _uniName: uni.name,
       website: uni.website,
+      _uniLogo: uni.logo,
     }))
   );
 
@@ -597,6 +597,7 @@ export default function AdminCourses() {
                 key={`${c._uniId}-${normalId(c)}`}
                 course={c}
                 uniName={c._uniName}
+                uniId={c._uniId}
                 onEdit={() => setEditing({ course: c, uniId: c._uniId })}
                 onDelete={() => handleDelete(c._uniId, normalId(c))}
                 onApply={() => setApplyModal(c)}

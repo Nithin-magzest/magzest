@@ -27,7 +27,8 @@ router.get('/:domain', async (req, res) => {
 
   const sources = [
     `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-    `https://www.google.com/s2/favicons?domain=${domain}&sz=32`,
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
     `https://favicon.yandex.net/favicon/${domain}`,
   ];
 

@@ -185,7 +185,7 @@ export default function StudentDashboard() {
           if (isNaN(deadlineDate.getTime())) return;
           const daysLeft = Math.ceil((deadlineDate.getTime() - today.getTime()) / 86400000);
           if (daysLeft >= 0) {
-            intakeRows.push({ uniName: uni.name, uniId: uni._id || uni.id, intake: d.intake, deadline: d.deadline, daysLeft });
+            intakeRows.push({ uniName: uni.name, uniId: uni.id || uni._id, intake: d.intake, deadline: d.deadline, daysLeft });
           }
         });
       });

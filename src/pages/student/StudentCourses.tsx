@@ -13,22 +13,21 @@ const LEVEL_COLORS: Record<string, string> = {
   'Certificate': 'bg-yellow-100 text-yellow-700',
 };
 
-function UniLogoImg({ name, website }: { name: string; website?: string }) {
-  const [err, setErr] = useState(false);
-  if (!website || err) {
+function UniLogoImg({ name, website, uniId }: { name: string; website?: string; uniId?: string }) {
+  const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
+  const initial: 'proxy' | 'favicon' | 'letter' = uniId ? 'proxy' : domain ? 'favicon' : 'letter';
+  const [stage, setStage] = useState(initial);
+  if (stage === 'letter') {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
         {name?.charAt(0) || '?'}
       </span>
     );
   }
+  const src = stage === 'proxy' ? `/api/unilogo/${uniId}` : `/api/favicon/${domain}`;
   return (
-    <img
-      src={`/api/favicon/${website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}`}
-      alt={name}
-      className="w-full h-full object-contain"
-      onError={() => setErr(true)}
-    />
+    <img src={src} alt={name} className="w-full h-full object-contain"
+      onError={() => { if (stage === 'proxy' && domain) setStage('favicon'); else setStage('letter'); }} />
   );
 }
 
@@ -46,7 +45,7 @@ export default function StudentCourses() {
   }, []);
 
   const allCourses = universities.flatMap(uni =>
-    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, uniId: uni.id || uni._id, city: uni.city, country: uni.country, website: uni.website }))
+    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, uniId: uni.id || uni._id, city: uni.city, country: uni.country, website: uni.website, uniLogo: uni.logo }))
   );
 
   const uniNames = [...new Set(universities.map(u => u.name))].sort() as string[];
@@ -109,7 +108,7 @@ export default function StudentCourses() {
           <div key={course.id || course._id || i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow flex flex-col">
             <div className="flex items-start gap-3 mb-2">
               <div className="w-10 h-10 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1 flex-shrink-0 mt-0.5">
-                <UniLogoImg name={course.uniName} website={course.website} />
+                <UniLogoImg name={course.uniName} website={course.website} uniId={course.uniId} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1.5">
