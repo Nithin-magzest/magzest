@@ -9,6 +9,8 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 import AuthModal from './components/AuthModal';
+import ToastContainer from './components/ToastNotification';
+import { useNotifications } from './context/NotificationContext';
 
 // Public pages
 const Home             = lazy(() => import('./pages/Home'));
@@ -87,6 +89,11 @@ function ScrollToTop() {
   return null;
 }
 
+function ToastLayer() {
+  const { toasts, dismissToast } = useNotifications();
+  return <ToastContainer toasts={toasts} onDismiss={dismissToast} />;
+}
+
 function PageSpinner() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -104,6 +111,7 @@ export default function App() {
       <AuthModalProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
+        <ToastLayer />
         <AuthModal />
         <Suspense fallback={<PageSpinner />}>
           <Routes>

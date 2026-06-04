@@ -47,6 +47,27 @@ router.post('/', auth, async (req, res) => {
       notes: notes || '',
       createdBy: req.user.id,
     });
+
+    // Notify each student participant via socket in real-time
+    const io = req.app.get('io');
+    const userSockets = req.app.get('userSockets');
+    if (io && userSockets) {
+      allParticipants
+        .filter(p => p.role === 'student')
+        .forEach(p => {
+          const sids = userSockets.get(String(p.userId));
+          if (sids) {
+            sids.forEach(sid => io.to(sid).emit('meeting:scheduled', {
+              title,
+              scheduledDate,
+              scheduledTime,
+              platform: platform || 'teams',
+              meetingLink,
+            }));
+          }
+        });
+    }
+
     res.status(201).json(meeting);
   } catch (err) {
     res.status(500).json({ message: err.message });

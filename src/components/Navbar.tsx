@@ -31,7 +31,7 @@ const NOTIF_COLORS: Record<string, string> = {
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const { open } = useAuthModal();
-  const { notifications, unreadCount, markRead, markAllRead, dismiss } = useNotifications();
+  const { notifications, unreadCount, markRead, markAllRead, dismiss, clearAll } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -172,12 +172,20 @@ export default function Navbar() {
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                       <span className="text-sm font-semibold text-gray-900">Notifications</span>
-                      {unreadCount > 0 && (
-                        <button type="button" onClick={markAllRead}
-                          className="flex items-center gap-1 text-xs text-[#0d1b4b] hover:underline font-medium">
-                          <CheckCheck className="w-3.5 h-3.5" /> Mark all read
-                        </button>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {unreadCount > 0 && (
+                          <button type="button" onClick={markAllRead}
+                            className="flex items-center gap-1 text-xs text-[#0d1b4b] hover:underline font-medium">
+                            <CheckCheck className="w-3.5 h-3.5" /> Mark all read
+                          </button>
+                        )}
+                        {notifications.length > 0 && (
+                          <button type="button" onClick={clearAll}
+                            className="text-xs text-red-500 hover:underline font-medium">
+                            Clear all
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {canScrollUp && (
@@ -195,9 +203,13 @@ export default function Navbar() {
                           No notifications yet
                         </div>
                       ) : (
-                        notifications.map(n => (
+                        notifications.map(n => {
+                          const priority = (n as any).priority || 'normal';
+                          const priorityDot = priority === 'urgent' ? 'bg-red-500' : priority === 'normal' ? 'bg-blue-500' : 'bg-gray-400';
+                          const bgColor = !n.read ? (priority === 'urgent' ? 'bg-red-50/50' : 'bg-blue-50/40') : '';
+                          return (
                           <div key={n.id}
-                            className={`flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${!n.read ? "bg-blue-50/40" : ""}`}
+                            className={`flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${bgColor}`}
                             onClick={() => handleNotifClick(n)}>
                             <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${NOTIF_COLORS[n.type]}`}>
                               {NOTIF_ICONS[n.type]}
@@ -213,11 +225,15 @@ export default function Navbar() {
                                 </button>
                               </div>
                               <p className="text-xs text-gray-500 mt-0.5 leading-snug">{n.message}</p>
-                              <p className="text-[10px] text-gray-400 mt-1">{timeAgo(n.timestamp)}</p>
+                              <div className="flex items-center justify-between mt-1">
+                                <p className="text-[10px] text-gray-400">{timeAgo(n.timestamp)}</p>
+                                {n.link && <span className="text-[10px] font-semibold text-blue-500">View →</span>}
+                              </div>
                             </div>
-                            {!n.read && <span className="mt-1.5 w-2 h-2 bg-[#0d1b4b] rounded-full flex-shrink-0" />}
+                            {!n.read && <span className={`mt-1.5 w-2 h-2 ${priorityDot} rounded-full flex-shrink-0 animate-pulse`} />}
                           </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
 

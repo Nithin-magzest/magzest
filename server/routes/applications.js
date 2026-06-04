@@ -82,6 +82,22 @@ router.put('/:appId', authMiddleware, async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'Application not found' });
     const app = user.applications.find(a => a._id.toString() === req.params.appId);
+
+    // Notify student in real-time via socket
+    const io = req.app.get('io');
+    const userSockets = req.app.get('userSockets');
+    if (io && userSockets && status) {
+      const sids = userSockets.get(String(user._id));
+      if (sids) {
+        sids.forEach(sid => io.to(sid).emit('application:updated', {
+          appId: req.params.appId,
+          status,
+          universityName: app.universityName,
+          courseName: app.courseName,
+        }));
+      }
+    }
+
     res.json(app.toJSON());
   } catch {
     res.status(500).json({ message: 'Server error' });
