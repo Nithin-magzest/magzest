@@ -271,16 +271,22 @@ export default function AppTeamApplications() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return enriched.filter(app => {
-      if (statusFilter !== 'all' && app.status !== statusFilter) return false;
-      if (counselorFilter !== 'all' && app._counselor?._id !== counselorFilter) return false;
-      if (q) {
-        const h = [app._student?.name, app._student?.email, app._student?.nationality, app.universityName, app.courseName, app.intake, app._counselor?.name]
-          .filter(Boolean).join(' ').toLowerCase();
-        if (!h.includes(q)) return false;
-      }
-      return true;
-    });
+    return enriched
+      .filter(app => {
+        if (statusFilter !== 'all' && app.status !== statusFilter) return false;
+        if (counselorFilter !== 'all' && app._counselor?._id !== counselorFilter) return false;
+        if (q) {
+          const h = [app._student?.name, app._student?.email, app._student?.nationality, app.universityName, app.courseName, app.intake, app._counselor?.name]
+            .filter(Boolean).join(' ').toLowerCase();
+          if (!h.includes(q)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const ta = new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime();
+        const tb = new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime();
+        return tb - ta;
+      });
   }, [enriched, search, statusFilter, counselorFilter]);
 
   const handleSelect = useCallback(async (app: any) => {

@@ -335,7 +335,7 @@ function StudentsList() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filtered.map((student: any) => {
           const sid = student._id || student.id;
-          const apps = student.applications || [];
+          const apps = [...(student.applications || [])].sort((a: any, b: any) => new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime() - new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime());
           const docs = student.documents || [];
           return (
             <Link key={sid} to={`/counselor/students/${sid}`} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group">
@@ -422,7 +422,11 @@ function StudentDetail() {
     </div>
   );
 
-  const apps = student.applications || [];
+  const apps = [...(student.applications || [])].sort((a: any, b: any) => {
+    const ta = new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime();
+    const tb = new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime();
+    return tb - ta;
+  });
   const docs = student.documents || [];
 
   return (

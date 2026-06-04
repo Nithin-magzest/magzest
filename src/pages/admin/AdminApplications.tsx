@@ -198,15 +198,21 @@ export default function AdminApplications() {
     count: applications.filter(a => a.status === s.value).length,
   }));
 
-  const filtered = applications.filter(a => {
-    const matchesSearch =
-      a.studentName?.toLowerCase().includes(search.toLowerCase()) ||
-      a.universityName?.toLowerCase().includes(search.toLowerCase()) ||
-      a.courseName?.toLowerCase().includes(search.toLowerCase()) ||
-      a.studentEmail?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filtered = applications
+    .filter(a => {
+      const matchesSearch =
+        a.studentName?.toLowerCase().includes(search.toLowerCase()) ||
+        a.universityName?.toLowerCase().includes(search.toLowerCase()) ||
+        a.courseName?.toLowerCase().includes(search.toLowerCase()) ||
+        a.studentEmail?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const ta = new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime();
+      const tb = new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime();
+      return tb - ta;
+    });
 
   const filteredSubs = subscribers.filter(s => {
     const q = subSearch.toLowerCase();

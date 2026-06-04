@@ -146,7 +146,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: {
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Applications{student.applications?.length > 0 ? ` (${student.applications.length})` : ''}</p>
                 {student.applications?.length > 0 ? (
-                  <div className="space-y-2">{student.applications.map((app: any, i: number) => (
+                  <div className="space-y-2">{[...student.applications].sort((a: any, b: any) => new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime() - new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime()).map((app: any, i: number) => (
                     <div key={app._id || i} className="bg-gray-50 rounded-xl p-3 flex items-start gap-3 border border-gray-100">
                       <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-900">{app.universityName}</p><p className="text-xs text-gray-500">{app.courseName}</p></div>
                       <StatusBadge status={app.status} />

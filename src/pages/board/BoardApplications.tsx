@@ -64,12 +64,18 @@ export default function BoardApplications() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return applications.filter(a => {
-      const matchSearch = !q || [a.studentName, a.universityName, a.courseName, a.intake]
-        .some(v => v?.toLowerCase().includes(q));
-      const matchStatus = statusFilter === 'all' || a.status === statusFilter;
-      return matchSearch && matchStatus;
-    });
+    return applications
+      .filter(a => {
+        const matchSearch = !q || [a.studentName, a.universityName, a.courseName, a.intake]
+          .some(v => v?.toLowerCase().includes(q));
+        const matchStatus = statusFilter === 'all' || a.status === statusFilter;
+        return matchSearch && matchStatus;
+      })
+      .sort((a, b) => {
+        const ta = new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime();
+        const tb = new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime();
+        return tb - ta;
+      });
   }, [applications, search, statusFilter]);
 
   const selectApp = useCallback(async (app: any) => {
