@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, BookOpen, Calendar, Award, CheckCircle, X, Plus } from 'lucide-react';
 import { api } from '../../api';
 
@@ -17,10 +17,27 @@ function ApplyModal({ course, students, onClose }: {
   onClose: () => void;
 }) {
   const [studentId, setStudentId] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentDropOpen, setStudentDropOpen] = useState(false);
   const [intake, setIntake] = useState(course.intake?.[0] || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  const dropRef = useRef<HTMLDivElement>(null);
+  const filteredStudents = students.filter(s =>
+    !studentSearch || s.name?.toLowerCase().includes(studentSearch.toLowerCase()) || s.email?.toLowerCase().includes(studentSearch.toLowerCase())
+  );
+  const selectedStudent = students.find(s => (s._id || s.id) === studentId);
+
+  useEffect(() => {
+    if (!studentDropOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setStudentDropOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [studentDropOpen]);
 
   const handleApply = async () => {
     if (!studentId) { setError('Please select a student.'); return; }
@@ -71,15 +88,52 @@ function ApplyModal({ course, students, onClose }: {
         </div>
 
         <div className="p-5 space-y-4">
-          <div>
+          <div className="relative" ref={dropRef}>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Student <span className="text-red-500">*</span></label>
-            <select value={studentId} onChange={e => setStudentId(e.target.value)} aria-label="Select student"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-              <option value="">— Choose a student —</option>
-              {students.map(s => (
-                <option key={s._id || s.id} value={s._id || s.id}>{s.name} ({s.email})</option>
-              ))}
-            </select>
+            <button type="button"
+              onClick={() => setStudentDropOpen(v => !v)}
+              className={`w-full px-3 py-2.5 border rounded-xl text-sm text-left flex items-center justify-between bg-white transition-colors ${studentDropOpen ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-200 hover:border-gray-300'}`}>
+              <span className={selectedStudent ? 'text-gray-900' : 'text-gray-400'}>
+                {selectedStudent ? `${selectedStudent.name} (${selectedStudent.email})` : '— Choose a student —'}
+              </span>
+              <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            </button>
+            {studentDropOpen && (
+              <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                <div className="p-2 border-b border-gray-100">
+                  <div className="flex items-center gap-2 px-2.5 py-1.5 bg-gray-50 rounded-lg">
+                    <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <input
+                      autoFocus
+                      type="text"
+                      value={studentSearch}
+                      onChange={e => setStudentSearch(e.target.value)}
+                      placeholder="Search by name or email…"
+                      className="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400"
+                    />
+                    {studentSearch && (
+                      <button type="button" onClick={() => setStudentSearch('')}>
+                        <X className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="max-h-44 overflow-y-auto">
+                  {filteredStudents.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">No students found</p>
+                  ) : (
+                    filteredStudents.map(s => (
+                      <button type="button" key={s._id || s.id}
+                        onClick={() => { setStudentId(s._id || s.id); setStudentDropOpen(false); setStudentSearch(''); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-emerald-50 transition-colors flex flex-col gap-0.5 ${studentId === (s._id || s.id) ? 'bg-emerald-50' : ''}`}>
+                        <span className="font-medium text-gray-900">{s.name}</span>
+                        <span className="text-xs text-gray-400">{s.email}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {course.intake && course.intake.length > 0 && (
