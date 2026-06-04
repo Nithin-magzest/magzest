@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCallContext } from '../../context/CallContext';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../../api';
 
 const formatDuration = (s: number) => {
@@ -14,6 +15,13 @@ const formatDuration = (s: number) => {
 };
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+function getRoleBadgeClass(role: string) {
+  if (role === 'Application Team') return 'text-orange-700 bg-orange-50';
+  if (role === 'Counselor') return 'text-teal-700 bg-teal-50';
+  if (role === 'Student') return 'text-sky-700 bg-sky-50';
+  return 'text-gray-600 bg-gray-100';
+}
 
 function CallMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   const { callStatus, callDuration, senderName, timestamp } = msg;
@@ -44,7 +52,7 @@ function CallMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   );
 }
 
-function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
+function FileMessage({ msg, isMe, senderRole }: { msg: any; isMe: boolean; senderRole?: string }) {
   const sizeKb = msg.fileSize ? (msg.fileSize / 1024).toFixed(0) : null;
   return (
     <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -52,7 +60,8 @@ function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
         {!isMe && (
           <div className="flex items-center gap-1.5 mb-1">
             <div className="w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
-            <span className="text-xs text-gray-500">{msg.senderName}</span>
+            <span className="text-xs font-medium text-gray-700">{msg.senderName}</span>
+            {senderRole && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
           </div>
         )}
         <div className={`rounded-xl overflow-hidden border shadow-sm ${isMe ? 'border-orange-400' : 'border-gray-200'}`}>
@@ -82,14 +91,15 @@ function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   );
 }
 
-function MeetingMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
+function MeetingMessage({ msg, isMe, senderRole }: { msg: any; isMe: boolean; senderRole?: string }) {
   return (
     <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
       <div className="max-w-[75%]">
         {!isMe && (
           <div className="flex items-center gap-1.5 mb-1">
             <div className="w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
-            <span className="text-xs text-gray-500">{msg.senderName}</span>
+            <span className="text-xs font-medium text-gray-700">{msg.senderName}</span>
+            {senderRole && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
           </div>
         )}
         <div className={`rounded-xl overflow-hidden border shadow-sm ${isMe ? 'bg-orange-500 border-orange-400' : 'bg-white border-orange-200'}`}>
@@ -119,6 +129,8 @@ function MeetingMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
 export default function AppTeamChat() {
   const { user } = useAuth();
   const { callState, startCall, startVideoCall, lastMessageTime } = useCallContext();
+  const [searchParams] = useSearchParams();
+  const autoCounselorId = searchParams.get('counselorId');
   const [rooms, setRooms] = useState<any[]>([]);
   const [counselors, setCounselors] = useState<any[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
@@ -141,6 +153,27 @@ export default function AppTeamChat() {
         ]);
         setRooms(roomList);
         setCounselors(counselorList);
+
+        if (autoCounselorId) {
+          const target = counselorList.find((c: any) => String(c._id || c.id) === autoCounselorId);
+          if (target) {
+            const pid = String(target._id || target.id);
+            const existing = roomList.find((r: any) => r.participants?.map(String).includes(pid));
+            if (existing?.type === 'appteam-counselor') {
+              setSelectedRoom(existing);
+            } else {
+              const newRoom = await api.chat.createRoom(
+                [String(user?.id), pid],
+                [user?.name || 'Application Team', target.name],
+                'appteam-counselor'
+              );
+              setRooms(prev => prev.map((r: any) => r.id === newRoom.id ? newRoom : r).concat(prev.some((r: any) => r.id === newRoom.id) ? [] : [newRoom]));
+              setSelectedRoom(newRoom);
+            }
+            return;
+          }
+        }
+
         if (roomList.length > 0) setSelectedRoom(roomList[0]);
       } catch {}
     })();
@@ -184,13 +217,14 @@ export default function AppTeamChat() {
   const openChat = async (person: any) => {
     const pid = String(person._id || person.id);
     const existing = rooms.find((r: any) => r.participants?.map(String).includes(pid));
-    if (existing) { setSelectedRoom(existing); return; }
+    if (existing?.type === 'appteam-counselor') { setSelectedRoom(existing); return; }
     try {
       const newRoom = await api.chat.createRoom(
         [String(user?.id), pid],
-        [user?.name || 'App Team', person.name]
+        [user?.name || 'Application Team', person.name],
+        'appteam-counselor'
       );
-      setRooms(prev => [...prev, newRoom]);
+      setRooms(prev => prev.map(r => r.id === newRoom.id ? newRoom : r).concat(prev.some((r: any) => r.id === newRoom.id) ? [] : [newRoom]));
       setSelectedRoom(newRoom);
     } catch {}
   };
@@ -247,6 +281,11 @@ export default function AppTeamChat() {
 
   const remoteName = selectedRoom?.participantNames?.find((n: string) => n !== user?.name) || 'Counselor';
   const remoteId = selectedRoom?.participants?.find((id: string) => id !== String(user?.id)) ?? '';
+
+  const getSenderRole = (senderId: string) => {
+    if (String(user?.id) === senderId) return 'Application Team';
+    return 'Counselor';
+  };
 
   const filteredCounselors = counselors
     .filter((p: any) =>
@@ -367,16 +406,23 @@ export default function AppTeamChat() {
               ) : (selectedRoom.messages || []).map((msg: any) => {
                 const key = msg._id || msg.id;
                 const isMe = msg.senderId === String(user?.id);
+                const senderRole = getSenderRole(msg.senderId);
                 if (msg.type === 'call') return <CallMessage key={key} msg={msg} isMe={isMe} />;
-                if (msg.type === 'file') return <FileMessage key={key} msg={msg} isMe={isMe} />;
-                if (msg.type === 'meeting') return <MeetingMessage key={key} msg={msg} isMe={isMe} />;
+                if (msg.type === 'file') return <FileMessage key={key} msg={msg} isMe={isMe} senderRole={senderRole} />;
+                if (msg.type === 'meeting') return <MeetingMessage key={key} msg={msg} isMe={isMe} senderRole={senderRole} />;
                 return (
                   <div key={key} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <div className="max-w-[70%]">
+                      {isMe && (
+                        <div className="flex items-center justify-end gap-1.5 mb-1">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass('Application Team')}`}>Application Team</span>
+                        </div>
+                      )}
                       {!isMe && (
                         <div className="flex items-center gap-1.5 mb-1">
                           <div className="w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName?.charAt(0)}</div>
-                          <span className="text-xs text-gray-500">{msg.senderName}</span>
+                          <span className="text-xs font-medium text-gray-700">{msg.senderName}</span>
+                          {senderRole && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
                         </div>
                       )}
                       <div className={`px-4 py-3 rounded-xl text-sm leading-relaxed ${isMe ? 'bg-orange-500 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>

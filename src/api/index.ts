@@ -125,9 +125,9 @@ export const api = {
       req<any>(`/chat/rooms/${roomId}/messages`, {
         method: 'POST', headers: authHeaders(), body: JSON.stringify({ content, senderName }),
       }),
-    createRoom: (participantIds: string[], participantNames: string[]) =>
+    createRoom: (participantIds: string[], participantNames: string[], roomType?: string) =>
       req<any>('/chat/rooms', {
-        method: 'POST', headers: authHeaders(), body: JSON.stringify({ participantIds, participantNames }),
+        method: 'POST', headers: authHeaders(), body: JSON.stringify({ participantIds, participantNames, type: roomType }),
       }),
     logCall: (participantIds: string[], callStatus: string, callDuration: number, callerName: string) =>
       req<any>('/chat/rooms/call-log', {
@@ -141,6 +141,8 @@ export const api = {
       }),
     markRead: (roomId: string) =>
       req<any>(`/chat/rooms/${roomId}/read`, { method: 'PUT', headers: authHeaders() }),
+    updateRoomType: (roomId: string, type: string) =>
+      req<any>(`/chat/rooms/${roomId}`, { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ type }) }),
   },
 
   counselors: {
@@ -238,6 +240,10 @@ export const api = {
     }),
     analytics: (period: string) => req<any>(`/admin/analytics?period=${period}`, { headers: authHeaders() }),
     subscribers: () => req<any[]>('/admin/subscribers', { headers: authHeaders() }),
+    appteamUsers: () => req<any[]>('/admin/appteam-users', { headers: authHeaders() }),
+    markAppTeam: (id: string, isAppTeam: boolean) => req<any>(`/admin/users/${id}/appteam`, {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify({ isAppTeam }),
+    }),
   },
 
   subscribe: (data: { name: string; email: string; phone: string }) =>

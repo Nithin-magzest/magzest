@@ -70,6 +70,7 @@ const AppTeamApplications = lazy(() => import('./pages/appteam/AppTeamApplicatio
 const AppTeamCounselors   = lazy(() => import('./pages/appteam/AppTeamCounselors'));
 const AppTeamStudents       = lazy(() => import('./pages/appteam/AppTeamStudents'));
 const AppTeamActivityFeed   = lazy(() => import('./pages/appteam/AppTeamActivityFeed'));
+const AppTeamChat           = lazy(() => import('./pages/appteam/AppTeamChat'));
 
 // App Dashboard module
 const AppDashLayout   = lazy(() => import('./pages/appdash/AppDashLayout'));
@@ -179,6 +180,7 @@ export default function App() {
               <Route path="students" element={<AppTeamStudents />} />
               <Route path="activities" element={<Activities />} />
               <Route path="live-feed" element={<AppTeamActivityFeed />} />
+              <Route path="chat" element={<AppTeamChat />} />
             </Route>
 
             {/* App Dashboard module */}

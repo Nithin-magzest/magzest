@@ -92,6 +92,7 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: false },
   role: { type: String, enum: ['student', 'counselor', 'admin'], required: true },
+  isAppTeam: { type: Boolean, default: false },
   // Social login provider IDs
   googleId: { type: String, sparse: true },
   githubId: { type: String, sparse: true },

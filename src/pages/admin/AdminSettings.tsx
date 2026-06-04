@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Building2, User, Lock, Palette, Bell, Mail, GitBranch,
   ShieldCheck, MessageCircle, CalendarDays, Download, AlertTriangle,
@@ -6,6 +6,7 @@ import {
   Smartphone, Globe,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -374,6 +375,23 @@ function ApplicationStages() {
 }
 
 function RolesPermissions() {
+  const [adminUsers, setAdminUsers] = useState<any[]>([]);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.admin.appteamUsers().then(setAdminUsers).catch(() => {});
+  }, []);
+
+  const toggleAppTeam = async (user: any) => {
+    setSaving(user.id || user._id);
+    try {
+      const updated = await api.admin.markAppTeam(user.id || user._id, !user.isAppTeam);
+      setAdminUsers(prev => prev.map(u => (u.id || u._id) === (updated.id || updated._id) ? updated : u));
+    } catch {} finally {
+      setSaving(null);
+    }
+  };
+
   const roles = [
     { role: 'Admin', perms: { viewAll: true, editStudents: true, editCounselors: true, deleteRecords: true, exportData: true } },
     { role: 'Counselor', perms: { viewAll: false, editStudents: true, editCounselors: false, deleteRecords: false, exportData: false } },
@@ -383,38 +401,78 @@ function RolesPermissions() {
     viewAll: 'View all records', editStudents: 'Edit student profiles', editCounselors: 'Manage counselors',
     deleteRecords: 'Delete records', exportData: 'Export data',
   };
+
   return (
-    <SectionCard title="Roles & Permissions">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left py-2.5 pr-6 text-xs font-semibold text-gray-500 uppercase">Permission</th>
-              {roles.map(r => (
-                <th key={r.role} className="text-center py-2.5 px-3 text-xs font-semibold text-gray-500 uppercase">{r.role}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {Object.keys(PERM_LABELS).map(perm => (
-              <tr key={perm}>
-                <td className="py-3 pr-6 text-gray-700">{PERM_LABELS[perm]}</td>
+    <div className="space-y-6">
+      <SectionCard title="App Team Users">
+        <p className="text-sm text-gray-500 mb-4">
+          Mark which admin-role users belong to the Application Team. This controls how their chat rooms appear to counselors ("Admin Team" vs "Application Team").
+        </p>
+        {adminUsers.length === 0 ? (
+          <p className="text-sm text-gray-400 italic">No admin users found.</p>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {adminUsers.map(u => {
+              const uid = u.id || u._id;
+              return (
+                <div key={uid} className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{u.name}</p>
+                    <p className="text-xs text-gray-400">{u.email}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${u.isAppTeam ? 'bg-orange-100 text-orange-700' : 'bg-purple-100 text-purple-700'}`}>
+                      {u.isAppTeam ? 'Application Team' : 'Admin Team'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleAppTeam(u)}
+                      disabled={saving === uid}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 disabled:opacity-50 transition-colors"
+                    >
+                      {saving === uid ? 'Saving…' : u.isAppTeam ? 'Set as Admin Team' : 'Set as Application Team'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <p className="text-xs text-gray-400 mt-4">Changes take effect immediately — counselor chat rooms will be relabeled on next load.</p>
+      </SectionCard>
+
+      <SectionCard title="Roles & Permissions">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="text-left py-2.5 pr-6 text-xs font-semibold text-gray-500 uppercase">Permission</th>
                 {roles.map(r => (
-                  <td key={r.role} className="py-3 px-3 text-center">
-                    <div className="flex items-center justify-center">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${r.perms[perm as keyof typeof r.perms] ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-300'}`}>
-                        {r.perms[perm as keyof typeof r.perms] ? <Check className="w-3 h-3" /> : '×'}
-                      </div>
-                    </div>
-                  </td>
+                  <th key={r.role} className="text-center py-2.5 px-3 text-xs font-semibold text-gray-500 uppercase">{r.role}</th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="text-xs text-gray-400 mt-4">Contact support to modify role permissions.</p>
-    </SectionCard>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {Object.keys(PERM_LABELS).map(perm => (
+                <tr key={perm}>
+                  <td className="py-3 pr-6 text-gray-700">{PERM_LABELS[perm]}</td>
+                  {roles.map(r => (
+                    <td key={r.role} className="py-3 px-3 text-center">
+                      <div className="flex items-center justify-center">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${r.perms[perm as keyof typeof r.perms] ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-300'}`}>
+                          {r.perms[perm as keyof typeof r.perms] ? <Check className="w-3 h-3" /> : '×'}
+                        </div>
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-gray-400 mt-4">Contact support to modify role permissions.</p>
+      </SectionCard>
+    </div>
   );
 }
 

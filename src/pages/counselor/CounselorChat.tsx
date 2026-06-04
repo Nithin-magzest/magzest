@@ -15,6 +15,28 @@ const formatDuration = (s: number) => {
 };
 const formatTime = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+function mapRoleToDisplay(dbRole: string): string {
+  if (dbRole === 'admin') return 'Admin Team';
+  if (dbRole === 'appteam') return 'Application Team';
+  if (dbRole === 'counselor') return 'Counselor';
+  if (dbRole === 'student') return 'Student';
+  // New messages store display names directly — pass through as-is
+  return dbRole;
+}
+
+function resolveDisplayName(senderName: string, senderRole?: string) {
+  if (senderRole === 'Admin Team' || senderRole === 'Application Team') return senderRole;
+  return senderName;
+}
+
+function getRoleBadgeClass(role: string) {
+  if (role === 'Counselor') return 'text-teal-700 bg-teal-50';
+  if (role === 'Student') return 'text-sky-700 bg-sky-50';
+  if (role === 'Application Team') return 'text-orange-700 bg-orange-50';
+  if (role === 'Admin Team') return 'text-purple-700 bg-purple-50';
+  return 'text-gray-600 bg-gray-100';
+}
+
 function CallMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   const { callStatus, callDuration, senderName, timestamp } = msg;
   let icon = <Phone className="w-3.5 h-3.5" />;
@@ -44,7 +66,7 @@ function CallMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   );
 }
 
-function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
+function FileMessage({ msg, isMe, senderRole }: { msg: any; isMe: boolean; senderRole?: string }) {
   const isOffer = msg.isOfferLetter;
   const sizeKb = msg.fileSize ? (msg.fileSize / 1024).toFixed(0) : null;
   return (
@@ -52,8 +74,9 @@ function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
       <div className="max-w-[75%]">
         {!isMe && (
           <div className="flex items-center gap-1.5 mb-1">
-            <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
-            <span className="text-xs text-gray-500">{msg.senderName}</span>
+            <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{resolveDisplayName(msg.senderName, senderRole).charAt(0)}</div>
+            <span className="text-xs text-gray-500">{resolveDisplayName(msg.senderName, senderRole)}</span>
+            {senderRole && senderRole !== 'Admin Team' && senderRole !== 'Application Team' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
           </div>
         )}
         <div className={`rounded-2xl overflow-hidden border shadow-sm ${isMe ? 'border-green-400' : isOffer ? 'border-emerald-300 ring-2 ring-emerald-200' : 'border-gray-200'}`}>
@@ -88,14 +111,15 @@ function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   );
 }
 
-function MeetingMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
+function MeetingMessage({ msg, isMe, senderRole }: { msg: any; isMe: boolean; senderRole?: string }) {
   return (
     <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
       <div className="max-w-[75%]">
         {!isMe && (
           <div className="flex items-center gap-1.5 mb-1">
-            <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
-            <span className="text-xs text-gray-500">{msg.senderName}</span>
+            <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{resolveDisplayName(msg.senderName, senderRole).charAt(0)}</div>
+            <span className="text-xs text-gray-500">{resolveDisplayName(msg.senderName, senderRole)}</span>
+            {senderRole && senderRole !== 'Admin Team' && senderRole !== 'Application Team' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
           </div>
         )}
         <div className={`rounded-2xl overflow-hidden border shadow-sm ${isMe ? 'bg-green-600 border-green-400' : 'bg-white border-blue-200'}`}>
@@ -128,6 +152,7 @@ export default function CounselorChat() {
   const { callState, startCall, startVideoCall, lastMessageTime } = useCallContext();
   const [rooms, setRooms] = useState<any[]>([]);
   const [myStudents, setMyStudents] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [input, setInput] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -138,6 +163,7 @@ export default function CounselorChat() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const prevRoomIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -180,7 +206,9 @@ export default function CounselorChat() {
   }, [selectedRoom?.id]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const isRoomChange = prevRoomIdRef.current !== (selectedRoom?.id ?? null);
+    prevRoomIdRef.current = selectedRoom?.id ?? null;
+    bottomRef.current?.scrollIntoView({ behavior: isRoomChange ? 'instant' : 'smooth' });
   }, [selectedRoom?.messages]);
 
   const clearFileInputs = () => {
@@ -244,18 +272,65 @@ export default function CounselorChat() {
     }
   };
 
-  const getStudentName = (room: any) => room.participantNames?.find((n: string) => n !== user?.name) || 'Student';
-  const studentsWithNoChat = myStudents.filter((s: any) => {
+  const getRoleLabel = (room: any): string => {
+    if (room?.type === 'appteam-counselor' || room.participantNames?.includes('Application Team')) return 'Application Team';
+    if (room?.type === 'admin-counselor') return 'Admin Team';
+    return 'Student';
+  };
+
+  const relabelToAppTeam = async () => {
+    if (!selectedRoom) return;
+    try {
+      const updated = await api.chat.updateRoomType(selectedRoom.id, 'appteam-counselor');
+      setSelectedRoom(updated);
+      setRooms(prev => prev.map(r => r.id === updated.id ? updated : r));
+    } catch {}
+  };
+
+  const getStudentName = (room: any): string => {
+    if (room?.type === 'appteam-counselor' || room.participantNames?.includes('Application Team')) {
+      return 'Application Team';
+    }
+    if (room?.type === 'admin-counselor') return 'Admin Team';
+    const actual = room.participantNames?.find(
+      (n: string) => n !== user?.name && n !== 'Application Team' && n !== 'Admin Team'
+    );
+    return actual || 'Student';
+  };
+
+  const getRoomPartnerRole = (room: any) => {
+    if (room?.type === 'appteam-counselor' || room.participantNames?.includes('Application Team')) return 'Application Team';
+    if (room?.type === 'admin-counselor') return 'Admin Team';
+    return 'Counselor';
+  };
+
+  const getSenderRole = (senderId: string, msgSenderRole?: string) => {
+    if (String(user?.id) === senderId) return 'Counselor';
+    if (msgSenderRole) return mapRoleToDisplay(msgSenderRole);
+    if (myStudents.some((s: any) => String(s._id || s.id) === senderId)) return 'Student';
+    return getRoomPartnerRole(selectedRoom);
+  };
+const studentsWithNoChat = myStudents.filter((s: any) => {
     const sid = s._id || s.id;
     return !rooms.some((r: any) => r.participants?.includes(sid));
   });
+
+  const q = search.toLowerCase();
+  const filteredRooms = rooms.filter((room: any) => {
+    const name = getStudentName(room).toLowerCase();
+    return !q || name.includes(q);
+  });
+  const filteredStudentsWithNoChat = studentsWithNoChat.filter((s: any) =>
+    !q || s.name?.toLowerCase().includes(q)
+  );
+
   const remoteId = selectedRoom?.participants?.find((id: string) => id !== user?.id) ?? '';
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Chat</h1>
-        <p className="text-gray-500 mt-1">Communicate with students</p>
+        <p className="text-gray-500 mt-1">Communicate with students, admin & application team</p>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex chat-window-wide">
@@ -264,20 +339,22 @@ export default function CounselorChat() {
           <div className="p-4 border-b border-gray-100">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="text" placeholder="Search conversations…" aria-label="Search conversations"
+              <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search conversations…" aria-label="Search conversations"
                 className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {rooms.length === 0 && studentsWithNoChat.length === 0 ? (
+            {filteredRooms.length === 0 && filteredStudentsWithNoChat.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center p-4">
                 <MessageSquare className="w-8 h-8 text-gray-300 mb-2" />
                 <p className="text-sm text-gray-400">No conversations</p>
               </div>
             ) : (
               <>
-                {rooms.map((room: any) => {
-                  const studentName = getStudentName(room);
+                {filteredRooms.map((room: any) => {
+                  const partnerName = getStudentName(room);
+                  const roleLabel = getRoleLabel(room);
                   const unread = room.messages?.filter((m: any) => !m.read && m.senderId !== user?.id).length || 0;
                   const lastMsg = room.messages?.[room.messages.length - 1];
                   const lastMsgPreview = lastMsg?.type === 'call'
@@ -288,21 +365,26 @@ export default function CounselorChat() {
                   return (
                     <button type="button" key={room.id} onClick={() => setSelectedRoom(room)}
                       className={`w-full flex items-start gap-3 p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 ${selectedRoom?.id === room.id ? 'bg-green-50' : ''}`}>
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700 flex-shrink-0">{studentName.charAt(0)}</div>
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700 flex-shrink-0">{partnerName.charAt(0)}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center">
-                          <span className={`text-sm font-semibold ${selectedRoom?.id === room.id ? 'text-green-700' : 'text-gray-900'}`}>{studentName}</span>
+                          <span className={`text-sm font-semibold ${selectedRoom?.id === room.id ? 'text-green-700' : 'text-gray-900'}`}>{partnerName}</span>
                           {unread > 0 && <span className="bg-green-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">{unread}</span>}
                         </div>
+                        <p className={`text-[10px] font-medium mt-0.5 ${getRoleBadgeClass(roleLabel)} inline-block px-1.5 py-0.5 rounded-full`}>{roleLabel}</p>
                         {lastMsgPreview && <p className="text-xs text-gray-400 truncate mt-0.5">{lastMsgPreview}</p>}
                       </div>
                     </button>
                   );
                 })}
-                {studentsWithNoChat.map((s: any) => (
+                {filteredStudentsWithNoChat.map((s: any) => (
                   <div key={s._id || s.id} className="flex items-start gap-3 p-4 border-b border-gray-50 opacity-60">
                     <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 flex-shrink-0">{s.name.charAt(0)}</div>
-                    <div><p className="text-sm font-medium text-gray-700">{s.name}</p><p className="text-xs text-gray-400">No messages yet</p></div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{s.name}</p>
+                      <p className={`text-[10px] font-medium mt-0.5 ${getRoleBadgeClass('Student')} inline-block px-1.5 py-0.5 rounded-full`}>Student</p>
+                      <p className="text-xs text-gray-400">No messages yet</p>
+                    </div>
                   </div>
                 ))}
               </>
@@ -312,16 +394,22 @@ export default function CounselorChat() {
 
         {/* Chat area */}
         {selectedRoom ? (
-          <div className="flex-1 flex flex-col min-w-0 min-h-0">
+          <div className="flex-1 flex flex-col min-w-0">
             <div className="p-4 border-b border-gray-100 bg-green-50 flex items-center gap-3">
               <div className="w-10 h-10 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                 {getStudentName(selectedRoom).charAt(0)}
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-gray-900">{getStudentName(selectedRoom)}</p>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className="text-xs text-gray-500">Student</span>
+                  <span className="text-xs text-gray-500">{getRoleLabel(selectedRoom)}</span>
+                  {selectedRoom?.type === 'admin-counselor' && (
+                    <button type="button" onClick={relabelToAppTeam}
+                      className="text-[10px] text-orange-500 hover:text-orange-700 underline leading-none">
+                      Set as Application Team
+                    </button>
+                  )}
                 </div>
               </div>
               <button type="button" title="Voice call" aria-label="Voice call"
@@ -338,20 +426,32 @@ export default function CounselorChat() {
               </button>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
-              {(selectedRoom.messages || []).map((msg: any) => {
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {(selectedRoom.messages || []).length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                  <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
+                  <p className="text-gray-500 text-sm">No messages yet. Start the conversation!</p>
+                </div>
+              ) : (selectedRoom.messages || []).map((msg: any) => {
                 const key = msg._id || msg.id;
-                if (msg.type === 'call') return <CallMessage key={key} msg={msg} isMe={msg.senderId === user?.id} />;
-                if (msg.type === 'file') return <FileMessage key={key} msg={msg} isMe={msg.senderId === user?.id} />;
-                if (msg.type === 'meeting') return <MeetingMessage key={key} msg={msg} isMe={msg.senderId === user?.id} />;
-                const isMe = msg.senderId === user?.id;
+                const isMe = msg.senderId === String(user?.id);
+                const senderRole = getSenderRole(msg.senderId, msg.senderRole);
+                if (msg.type === 'call') return <CallMessage key={key} msg={msg} isMe={isMe} />;
+                if (msg.type === 'file') return <FileMessage key={key} msg={msg} isMe={isMe} senderRole={senderRole} />;
+                if (msg.type === 'meeting') return <MeetingMessage key={key} msg={msg} isMe={isMe} senderRole={senderRole} />;
                 return (
                   <div key={key} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <div className="max-w-[70%]">
+                      {isMe && (
+                        <div className="flex items-center justify-end gap-1.5 mb-1">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass('Counselor')}`}>Counselor</span>
+                        </div>
+                      )}
                       {!isMe && (
                         <div className="flex items-center gap-1.5 mb-1">
-                          <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
-                          <span className="text-xs text-gray-500">{msg.senderName}</span>
+                          <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{resolveDisplayName(msg.senderName, senderRole).charAt(0)}</div>
+                          <span className="text-xs text-gray-500">{resolveDisplayName(msg.senderName, senderRole)}</span>
+                          {senderRole && senderRole !== 'Admin Team' && senderRole !== 'Application Team' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
                         </div>
                       )}
                       <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe ? 'bg-green-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>

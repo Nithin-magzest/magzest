@@ -6,10 +6,40 @@ const upload = require('../middleware/upload');
 
 const router = express.Router();
 
+async function resolveDisplayRole(userId, userRole) {
+  if (userRole === 'admin') {
+    const u = await User.findById(userId).select('isAppTeam');
+    return u?.isAppTeam ? 'Application Team' : 'Admin Team';
+  }
+  if (userRole === 'counselor') return 'Counselor';
+  if (userRole === 'student') return 'Student';
+  return userRole;
+}
+
 // Get all rooms for current user
 router.get('/rooms', authMiddleware, async (req, res) => {
   try {
     const rooms = await ChatRoom.find({ participants: req.user.id.toString() });
+
+    // Auto-correct room types for admin/appteam rooms based on isAppTeam flag
+    const otherIds = [...new Set(rooms.flatMap(r => r.participants.filter(p => p !== req.user.id.toString())))];
+    const adminUsers = await User.find({ _id: { $in: otherIds }, role: 'admin' }).select('_id isAppTeam');
+    const adminMap = Object.fromEntries(adminUsers.map(u => [String(u._id), u.isAppTeam || false]));
+
+    const saves = [];
+    for (const room of rooms) {
+      const otherId = room.participants.find(p => p !== req.user.id.toString());
+      if (!otherId) continue;
+      // Only upgrade to appteam-counselor when there is positive evidence — never downgrade a manually-set room
+      const nameIndicatesAppTeam = room.participantNames?.includes('Application Team');
+      const isAppTeamUser = adminMap[String(otherId)];
+      if ((isAppTeamUser || nameIndicatesAppTeam) && room.type !== 'appteam-counselor') {
+        room.type = 'appteam-counselor';
+        saves.push(room.save());
+      }
+    }
+    if (saves.length > 0) await Promise.all(saves);
+
     res.json(rooms.map(r => r.toJSON()));
   } catch {
     res.status(500).json({ message: 'Server error' });
@@ -21,6 +51,17 @@ router.get('/rooms/:roomId', authMiddleware, async (req, res) => {
   try {
     const room = await ChatRoom.findById(req.params.roomId);
     if (!room) return res.status(404).json({ message: 'Room not found' });
+
+    // Auto-correct room type if participant is admin
+    const otherId = room.participants.find(p => p !== req.user.id.toString());
+    if (otherId) {
+      const other = await User.findById(otherId).select('role isAppTeam');
+      if (other?.role === 'admin') {
+        const expected = other.isAppTeam ? 'appteam-counselor' : 'admin-counselor';
+        if (room.type !== expected) { room.type = expected; await room.save(); }
+      }
+    }
+
     res.json(room.toJSON());
   } catch {
     res.status(500).json({ message: 'Server error' });
@@ -31,10 +72,11 @@ router.get('/rooms/:roomId', authMiddleware, async (req, res) => {
 router.post('/rooms/:roomId/messages', authMiddleware, async (req, res) => {
   const { content, senderName } = req.body;
   try {
+    const displayRole = await resolveDisplayRole(req.user.id, req.user.role);
     const message = {
       senderId: req.user.id.toString(),
       senderName,
-      senderRole: req.user.role,
+      senderRole: displayRole,
       content,
       timestamp: new Date(),
       read: false,
@@ -71,10 +113,11 @@ router.post('/rooms/call-log', authMiddleware, async (req, res) => {
       participants: { $all: participantIds.map(String), $size: participantIds.length },
     });
     if (!room) return res.status(404).json({ message: 'Room not found' });
+    const displayRole = await resolveDisplayRole(req.user.id, req.user.role);
     const message = {
       senderId: req.user.id.toString(),
       senderName: callerName,
-      senderRole: req.user.role,
+      senderRole: displayRole,
       content: '',
       type: 'call',
       callStatus,
@@ -113,11 +156,12 @@ router.post('/rooms/:roomId/files', authMiddleware, upload.single('file'), async
     const fileName = req.file?.originalname || 'File';
     const fileSize = req.file?.size || 0;
     const offerFlag = isOfferLetter === 'true';
+    const displayRole = await resolveDisplayRole(req.user.id, req.user.role);
 
     const message = {
       senderId: req.user.id.toString(),
       senderName,
-      senderRole: req.user.role,
+      senderRole: displayRole,
       content: fileName,
       type: 'file',
       fileUrl,
@@ -193,10 +237,11 @@ router.post('/rooms/:roomId/files', authMiddleware, upload.single('file'), async
 router.post('/rooms/:roomId/meetings', authMiddleware, async (req, res) => {
   const { senderName, meetingDate, meetingTime, meetingNotes } = req.body;
   try {
+    const displayRole = await resolveDisplayRole(req.user.id, req.user.role);
     const message = {
       senderId: req.user.id.toString(),
       senderName,
-      senderRole: req.user.role,
+      senderRole: displayRole,
       content: `Meeting on ${meetingDate} at ${meetingTime}`,
       type: 'meeting',
       meetingDate,
@@ -229,6 +274,20 @@ router.post('/rooms/:roomId/meetings', authMiddleware, async (req, res) => {
   }
 });
 
+// Update room type (counselor relabels admin vs appteam rooms)
+router.patch('/rooms/:roomId', authMiddleware, async (req, res) => {
+  const { type } = req.body;
+  try {
+    const room = await ChatRoom.findByIdAndUpdate(
+      req.params.roomId, { type }, { new: true }
+    );
+    if (!room) return res.status(404).json({ message: 'Room not found' });
+    res.json(room.toJSON());
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Mark all messages from others as read
 router.put('/rooms/:roomId/read', authMiddleware, async (req, res) => {
   try {
@@ -245,11 +304,19 @@ router.put('/rooms/:roomId/read', authMiddleware, async (req, res) => {
 
 // Create or get existing room
 router.post('/rooms', authMiddleware, async (req, res) => {
-  const { participantIds, participantNames } = req.body;
+  const { participantIds, participantNames, type } = req.body;
   try {
     const existing = await ChatRoom.findOne({ participants: { $all: participantIds, $size: participantIds.length } });
-    if (existing) return res.json(existing.toJSON());
-    const room = await ChatRoom.create({ participants: participantIds, participantNames, messages: [] });
+    if (existing) {
+      let changed = false;
+      if (type && existing.type !== type) { existing.type = type; changed = true; }
+      if (participantNames?.length && existing.participantNames?.join() !== participantNames.join()) {
+        existing.participantNames = participantNames; changed = true;
+      }
+      if (changed) await existing.save();
+      return res.json(existing.toJSON());
+    }
+    const room = await ChatRoom.create({ participants: participantIds, participantNames, type: type || 'student-counselor', messages: [] });
     res.json(room.toJSON());
   } catch {
     res.status(500).json({ message: 'Server error' });

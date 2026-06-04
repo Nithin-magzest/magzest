@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import {
   Search, X, ChevronRight, Download, FileText,
   User, UserCog, Layers, Calendar, Clock,
-  CheckCircle, AlertCircle, BookOpen, Globe, DollarSign,
+  CheckCircle, AlertCircle, BookOpen, Globe, DollarSign, MessageCircle,
 } from 'lucide-react';
 
 const STATUSES = [
@@ -70,6 +71,7 @@ function Section({ title, icon: Icon, children }: { title: string; icon: any; ch
 }
 
 export default function AppDashboard() {
+  const navigate = useNavigate();
   const [apps, setApps] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [counselors, setCounselors] = useState<any[]>([]);
@@ -424,16 +426,26 @@ export default function AppDashboard() {
             {/* Counselor section */}
             <Section title="Assigned Counselor" icon={UserCog}>
               {selected._counselor ? (
-                <div className="flex items-center gap-3">
-                  <Avi name={selected._counselor.name} className="w-10 h-10" bg="bg-teal-600" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-gray-900">{selected._counselor.name}</p>
-                    <p className="text-xs text-gray-400">{selected._counselor.email}</p>
-                    {selected._counselor.specialty && (
-                      <p className="text-xs text-teal-600 font-medium mt-0.5">{selected._counselor.specialty}</p>
-                    )}
+                <>
+                  <div className="flex items-center gap-3">
+                    <Avi name={selected._counselor.name} className="w-10 h-10" bg="bg-teal-600" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900">{selected._counselor.name}</p>
+                      <p className="text-xs text-gray-400">{selected._counselor.email}</p>
+                      {selected._counselor.specialty && (
+                        <p className="text-xs text-teal-600 font-medium mt-0.5">{selected._counselor.specialty}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/appteam/chat?counselorId=${selected._counselor._id}`)}
+                    className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Chat with Counselor
+                  </button>
+                </>
               ) : (
                 <p className="text-sm text-gray-400 italic">No counselor assigned to this student</p>
               )}

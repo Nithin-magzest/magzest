@@ -85,6 +85,31 @@ router.delete('/counselors/:id', authMiddleware, adminOnly, async (req, res) => 
   }
 });
 
+// List all admin-role users (including app team members)
+router.get('/appteam-users', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const users = await User.find({ role: 'admin' }).select('-password');
+    res.json(users.map(u => u.toJSON()));
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Toggle isAppTeam for an admin user
+router.put('/users/:id/appteam', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const user = await User.findOneAndUpdate(
+      { _id: req.params.id, role: 'admin' },
+      { isAppTeam: !!req.body.isAppTeam },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user.toJSON());
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Create student (admin only)
 router.post('/students', authMiddleware, adminOnly, async (req, res) => {
   const { name, email, password, phone, nationality, educationLevel, gpa, englishScore, budget, preferredCountries, interestedCourses, counselorId } = req.body;

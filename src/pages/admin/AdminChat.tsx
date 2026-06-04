@@ -16,6 +16,14 @@ const formatDuration = (s: number) => {
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+function getRoleBadgeClass(role: string) {
+  if (role === 'Admin Team') return 'text-purple-700 bg-purple-50';
+  if (role === 'Student') return 'text-sky-700 bg-sky-50';
+  if (role === 'Counselor') return 'text-teal-700 bg-teal-50';
+  if (role === 'Application Team') return 'text-orange-700 bg-orange-50';
+  return 'text-gray-600 bg-gray-100';
+}
+
 function CallMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   const { callStatus, callDuration, senderName, timestamp } = msg;
   let icon = <Phone className="w-3.5 h-3.5" />;
@@ -45,7 +53,7 @@ function CallMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   );
 }
 
-function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
+function FileMessage({ msg, isMe, senderRole }: { msg: any; isMe: boolean; senderRole?: string }) {
   const sizeKb = msg.fileSize ? (msg.fileSize / 1024).toFixed(0) : null;
   return (
     <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -53,7 +61,8 @@ function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
         {!isMe && (
           <div className="flex items-center gap-1.5 mb-1">
             <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
-            <span className="text-xs text-gray-500">{msg.senderName}</span>
+            <span className="text-xs font-medium text-gray-700">{msg.senderName}</span>
+            {senderRole && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
           </div>
         )}
         <div className={`rounded-2xl overflow-hidden border shadow-sm ${isMe ? 'border-purple-400' : 'border-gray-200'}`}>
@@ -83,14 +92,15 @@ function FileMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   );
 }
 
-function MeetingMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
+function MeetingMessage({ msg, isMe, senderRole }: { msg: any; isMe: boolean; senderRole?: string }) {
   return (
     <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
       <div className="max-w-[75%]">
         {!isMe && (
           <div className="flex items-center gap-1.5 mb-1">
             <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName.charAt(0)}</div>
-            <span className="text-xs text-gray-500">{msg.senderName}</span>
+            <span className="text-xs font-medium text-gray-700">{msg.senderName}</span>
+            {senderRole && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
           </div>
         )}
         <div className={`rounded-2xl overflow-hidden border shadow-sm ${isMe ? 'bg-purple-600 border-purple-400' : 'bg-white border-purple-200'}`}>
@@ -152,15 +162,18 @@ export default function AdminChat() {
           const pid = String(person._id || person.id);
           const isStudent = studentList.some((s: any) => String(s._id || s.id) === pid);
           setActiveTab(isStudent ? 'students' : 'counselors');
+          const isCounselorNav = !studentList.some((s: any) => String(s._id || s.id) === pid);
+          const expectedNavType = isCounselorNav ? 'admin-counselor' : undefined;
           const existing = roomList.find((r: any) => r.participants?.map(String).includes(pid));
-          if (existing) {
+          if (existing && (!expectedNavType || existing.type === expectedNavType)) {
             setSelectedRoom(existing);
           } else {
             const newRoom = await api.chat.createRoom(
               [String(user.id), pid],
-              [user.name || 'Admin', person.name]
+              [user.name || 'Admin Team', person.name],
+              expectedNavType
             );
-            setRooms(prev => [...prev, newRoom]);
+            setRooms(prev => prev.map((r: any) => r.id === newRoom.id ? newRoom : r).concat(prev.some((r: any) => r.id === newRoom.id) ? [] : [newRoom]));
             setSelectedRoom(newRoom);
           }
         } else if (roomList.length > 0) {
@@ -208,17 +221,18 @@ export default function AdminChat() {
   const openChat = async (person: any) => {
     const pid = String(person._id || person.id);
     const isStudentPerson = students.some((s: any) => String(s._id || s.id) === pid);
+    const isCounselorPerson = counselors.some((c: any) => String(c._id || c.id) === pid);
     setActiveTab(isStudentPerson ? 'students' : 'counselors');
-    const existing = rooms.find((r: any) =>
-      r.participants?.map(String).includes(pid)
-    );
-    if (existing) { setSelectedRoom(existing); return; }
+    const expectedType = isCounselorPerson ? 'admin-counselor' : undefined;
+    const existing = rooms.find((r: any) => r.participants?.map(String).includes(pid));
+    if (existing && (!expectedType || existing.type === expectedType)) { setSelectedRoom(existing); return; }
     try {
       const newRoom = await api.chat.createRoom(
         [String(user?.id), pid],
-        [user?.name || 'Admin', person.name]
+        [user?.name || 'Admin Team', person.name],
+        expectedType
       );
-      setRooms(prev => [...prev, newRoom]);
+      setRooms(prev => prev.map(r => r.id === newRoom.id ? newRoom : r).concat(prev.some(r => r.id === newRoom.id) ? [] : [newRoom]));
       setSelectedRoom(newRoom);
     } catch {}
   };
@@ -276,6 +290,13 @@ export default function AdminChat() {
   const remoteName = selectedRoom?.participantNames?.find((n: string) => n !== user?.name) || 'User';
   const remoteId = selectedRoom?.participants?.find((id: string) => id !== String(user?.id)) ?? '';
   const isStudent = students.some((s: any) => String(s._id || s.id) === remoteId);
+
+  const getSenderRole = (senderId: string) => {
+    if (String(user?.id) === senderId) return 'Admin Team';
+    if (students.some((s: any) => String(s._id || s.id) === senderId)) return 'Student';
+    if (counselors.some((c: any) => String(c._id || c.id) === senderId)) return 'Counselor';
+    return '';
+  };
 
   const list = activeTab === 'students' ? students : counselors;
   const filteredList = list
@@ -408,16 +429,23 @@ export default function AdminChat() {
               ) : (selectedRoom.messages || []).map((msg: any) => {
                 const key = msg._id || msg.id;
                 const isMe = msg.senderId === String(user?.id);
+                const senderRole = getSenderRole(msg.senderId);
                 if (msg.type === 'call') return <CallMessage key={key} msg={msg} isMe={isMe} />;
-                if (msg.type === 'file') return <FileMessage key={key} msg={msg} isMe={isMe} />;
-                if (msg.type === 'meeting') return <MeetingMessage key={key} msg={msg} isMe={isMe} />;
+                if (msg.type === 'file') return <FileMessage key={key} msg={msg} isMe={isMe} senderRole={senderRole} />;
+                if (msg.type === 'meeting') return <MeetingMessage key={key} msg={msg} isMe={isMe} senderRole={senderRole} />;
                 return (
                   <div key={key} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <div className="max-w-[70%]">
+                      {isMe && (
+                        <div className="flex items-center justify-end gap-1.5 mb-1">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass('Admin Team')}`}>Admin Team</span>
+                        </div>
+                      )}
                       {!isMe && (
                         <div className="flex items-center gap-1.5 mb-1">
                           <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{msg.senderName?.charAt(0)}</div>
-                          <span className="text-xs text-gray-500">{msg.senderName}</span>
+                          <span className="text-xs font-medium text-gray-700">{msg.senderName}</span>
+                          {senderRole && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
                         </div>
                       )}
                       <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe ? 'bg-purple-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
