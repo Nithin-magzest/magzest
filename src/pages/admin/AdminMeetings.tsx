@@ -28,6 +28,11 @@ function isFuture(date: string, time: string) {
   return dt > new Date();
 }
 
+function isSessionActive(date: string, time: string, duration: number) {
+  const end = new Date(`${date}T${time}`).getTime() + (duration || 60) * 60 * 1000;
+  return Date.now() <= end;
+}
+
 function formatDateTime(date: string, time: string) {
   const dt = new Date(`${date}T${time}`);
   return dt.toLocaleString('en-IN', {
@@ -238,8 +243,19 @@ function MeetingCard({ meeting, onDelete, onJoin }: {
   onJoin: (link: string) => void;
 }) {
   const upcoming = isFuture(meeting.scheduledDate, meeting.scheduledTime);
+  const active = isSessionActive(meeting.scheduledDate, meeting.scheduledTime, meeting.duration);
+  const [showExpired, setShowExpired] = useState(false);
   const meta = PLATFORM_META[meeting.platform] ?? PLATFORM_META.other;
   const [deleting, setDeleting] = useState(false);
+
+  const handleJoin = () => {
+    if (!active) {
+      setShowExpired(true);
+      setTimeout(() => setShowExpired(false), 3000);
+      return;
+    }
+    onJoin(meeting.meetingLink);
+  };
 
   const handleDelete = async () => {
     if (!window.confirm('Cancel this meeting?')) return;
@@ -308,18 +324,21 @@ function MeetingCard({ meeting, onDelete, onJoin }: {
         )}
 
         {/* Join button */}
-        <button
-          type="button"
-          onClick={() => onJoin(meeting.meetingLink)}
-          className={`w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all
-            ${upcoming
-              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg active:scale-[0.98]'
-              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-            }`}>
-          <Video className="w-4 h-4" />
-          Join {meta.label} Meeting
-          <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-        </button>
+        {showExpired ? (
+          <div className="w-full py-2.5 rounded-xl bg-red-50 border border-red-200 text-sm font-semibold text-red-600 text-center">
+            Session expired — this meeting has ended
+          </div>
+        ) : (
+          <button type="button" onClick={handleJoin}
+            className={`w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all
+              ${active
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg active:scale-[0.98]'
+                : 'bg-gray-100 text-gray-500 cursor-default'
+              }`}>
+            <Video className="w-4 h-4" />
+            {active ? <>Join {meta.label} Meeting<ExternalLink className="w-3.5 h-3.5 opacity-70" /></> : 'Session Ended'}
+          </button>
+        )}
       </div>
     </div>
   );

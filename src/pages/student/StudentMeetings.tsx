@@ -19,6 +19,11 @@ function isFuture(date: string, time: string) {
   return new Date(`${date}T${time}`) > new Date();
 }
 
+function isSessionActive(date: string, time: string, duration: number) {
+  const end = new Date(`${date}T${time}`).getTime() + (duration || 60) * 60 * 1000;
+  return Date.now() <= end;
+}
+
 function formatDateTime(date: string, time: string) {
   return new Date(`${date}T${time}`).toLocaleString('en-IN', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
@@ -28,7 +33,18 @@ function formatDateTime(date: string, time: string) {
 
 function MeetingCard({ meeting }: { meeting: any }) {
   const upcoming = isFuture(meeting.scheduledDate, meeting.scheduledTime);
+  const active = isSessionActive(meeting.scheduledDate, meeting.scheduledTime, meeting.duration);
+  const [showExpired, setShowExpired] = useState(false);
   const meta = PLATFORM_META[meeting.platform] ?? PLATFORM_META.other;
+
+  const handleJoin = () => {
+    if (!active) {
+      setShowExpired(true);
+      setTimeout(() => setShowExpired(false), 3000);
+      return;
+    }
+    window.open(meeting.meetingLink, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all hover:shadow-md ${upcoming ? 'border-gray-100' : 'border-gray-100 opacity-75'}`}>
@@ -75,17 +91,20 @@ function MeetingCard({ meeting }: { meeting: any }) {
           <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 mb-3 line-clamp-2">{meeting.notes}</p>
         )}
 
-        <button
-          type="button"
-          onClick={() => window.open(meeting.meetingLink, '_blank', 'noopener,noreferrer')}
-          className={`w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all
-            ${upcoming
-              ? 'bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-md hover:shadow-lg active:scale-[0.98]'
-              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-          <Video className="w-4 h-4" />
-          Join {meta.label} Meeting
-          <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-        </button>
+        {showExpired ? (
+          <div className="w-full py-2.5 rounded-xl bg-red-50 border border-red-200 text-sm font-semibold text-red-600 text-center">
+            Session expired — this meeting has ended
+          </div>
+        ) : (
+          <button type="button" onClick={handleJoin}
+            className={`w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all
+              ${active
+                ? 'bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-md hover:shadow-lg active:scale-[0.98]'
+                : 'bg-gray-100 text-gray-500 cursor-default'}`}>
+            <Video className="w-4 h-4" />
+            {active ? <>Join {meta.label} Meeting<ExternalLink className="w-3.5 h-3.5 opacity-70" /></> : 'Session Ended'}
+          </button>
+        )}
       </div>
     </div>
   );

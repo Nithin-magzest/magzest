@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import {
   Search, X, ChevronRight, Download, FileText,
@@ -310,8 +310,14 @@ export default function AppDashboard() {
                     </td>
 
                     {/* University & Course */}
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-800 truncate max-w-[200px]">{app.universityName || '—'}</p>
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      {app.universityId ? (
+                        <Link to={`/university/${app.universityId}`} className="font-medium text-gray-800 hover:text-orange-600 hover:underline truncate max-w-[200px] block">
+                          {app.universityName || '—'}
+                        </Link>
+                      ) : (
+                        <p className="font-medium text-gray-800 truncate max-w-[200px]">{app.universityName || '—'}</p>
+                      )}
                       <p className="text-xs text-gray-400 truncate max-w-[200px]">{app.courseName || '—'}</p>
                     </td>
 

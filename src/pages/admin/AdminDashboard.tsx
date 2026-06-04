@@ -278,14 +278,15 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: { st
                 {student.applications?.length > 0 ? (
                   <div className="space-y-2">
                     {student.applications.map((app: any, i: number) => (
-                      <div key={app._id || i} className="bg-gray-50 rounded-xl p-3 flex items-start gap-3 border border-gray-100">
+                      <Link key={app._id || i} to={`/university/${app.universityId}`}
+                        className="bg-gray-50 hover:bg-blue-50 rounded-xl p-3 flex items-start gap-3 border border-gray-100 transition-colors group">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900">{app.universityName}</p>
+                          <p className="text-sm font-semibold text-gray-900 group-hover:text-[#0d1b4b]">{app.universityName}</p>
                           <p className="text-xs text-gray-500">{app.courseName}</p>
                           {app.intake && <p className="text-xs text-gray-400">{app.intake}</p>}
                         </div>
                         <StatusBadge status={app.status} />
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 ) : (

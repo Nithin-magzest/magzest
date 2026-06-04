@@ -57,6 +57,11 @@ function isFuture(date: string, time: string) {
   return new Date(`${date}T${time}`) > new Date();
 }
 
+function isSessionActive(date: string, time: string, duration: number) {
+  const end = new Date(`${date}T${time}`).getTime() + (duration || 60) * 60 * 1000;
+  return Date.now() <= end;
+}
+
 function formatWhen(date: string, time: string) {
   const dt   = new Date(`${date}T${time}`);
   const now  = new Date();
@@ -259,6 +264,17 @@ function MeetingCard({ meeting, theme }: { meeting: any; theme: 'purple' | 'oran
   const tc   = THEME[theme];
   const meta = PLATFORM_META[meeting.platform] ?? PLATFORM_META.other;
   const upcoming = isFuture(meeting.scheduledDate, meeting.scheduledTime);
+  const active = isSessionActive(meeting.scheduledDate, meeting.scheduledTime, meeting.duration);
+  const [showExpired, setShowExpired] = useState(false);
+
+  const handleJoin = () => {
+    if (!active) {
+      setShowExpired(true);
+      setTimeout(() => setShowExpired(false), 3000);
+      return;
+    }
+    window.open(meeting.meetingLink, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className={`rounded-xl border bg-white overflow-hidden transition-all hover:shadow-sm ${
@@ -289,15 +305,19 @@ function MeetingCard({ meeting, theme }: { meeting: any; theme: 'purple' | 'oran
           </div>
         )}
 
-        <button type="button"
-          onClick={() => window.open(meeting.meetingLink, '_blank', 'noopener,noreferrer')}
-          className={`w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-            upcoming ? `${tc.joinBtn} shadow-sm` : 'bg-gray-100 text-gray-400'
-          }`}>
-          <Video className="w-3 h-3" />
-          Join {meta.label}
-          <ExternalLink className="w-3 h-3 opacity-70" />
-        </button>
+        {showExpired ? (
+          <div className="w-full py-2 rounded-lg bg-red-50 border border-red-200 text-xs font-semibold text-red-600 text-center">
+            Session expired — this meeting has ended
+          </div>
+        ) : (
+          <button type="button" onClick={handleJoin}
+            className={`w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+              active ? `${tc.joinBtn} shadow-sm` : 'bg-gray-100 text-gray-400 cursor-default'
+            }`}>
+            <Video className="w-3 h-3" />
+            {active ? <>Join {meta.label}<ExternalLink className="w-3 h-3 opacity-70" /></> : 'Session Ended'}
+          </button>
+        )}
       </div>
     </div>
   );

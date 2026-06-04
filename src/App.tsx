@@ -17,6 +17,7 @@ const Home             = lazy(() => import('./pages/Home'));
 const Login            = lazy(() => import('./pages/Login'));
 const Universities     = lazy(() => import('./pages/Universities'));
 const UniversityDetail = lazy(() => import('./pages/UniversityDetail'));
+const CourseDetail     = lazy(() => import('./pages/CourseDetail'));
 const Search           = lazy(() => import('./pages/Search'));
 const PublicLayout     = lazy(() => import('./pages/PublicLayout'));
 const ForgotPassword   = lazy(() => import('./pages/ForgotPassword'));
@@ -121,6 +122,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/universities" element={<Universities />} />
               <Route path="/university/:id" element={<UniversityDetail />} />
+              <Route path="/university/:uniId/course/:courseId" element={<CourseDetail />} />
               <Route path="/search" element={<Search />} />
             </Route>
             <Route path="/login" element={<Login />} />

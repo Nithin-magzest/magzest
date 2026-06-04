@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, ExternalLink, TrendingUp, Share2 } from 'lucide-react';
+import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, ExternalLink, TrendingUp, Share2, X, Plus } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import ApplicationModal from '../components/ApplicationModal';
@@ -23,6 +23,93 @@ function useWikipediaPhoto(name: string) {
   return photo;
 }
 
+function StaffApplyModal({ course, uni, students, onClose }: {
+  course: any; uni: any; students: any[]; onClose: () => void;
+}) {
+  const [studentId, setStudentId] = useState('');
+  const [intake, setIntake] = useState(course.intake?.[0] || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleApply = async () => {
+    if (!studentId) { setError('Please select a student.'); return; }
+    setSaving(true); setError('');
+    try {
+      await api.admin.createApplication({
+        studentId,
+        universityId: uni.id || uni._id,
+        universityName: uni.name,
+        courseName: course.name,
+        intake,
+      });
+      setSuccess(true);
+      setTimeout(() => onClose(), 1200);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create application.');
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+        <div className="flex items-start justify-between p-5 border-b border-gray-100">
+          <div className="flex-1 min-w-0 pr-3">
+            <h2 className="text-base font-bold text-gray-900">Apply for Course</h2>
+            <p className="text-sm font-semibold text-blue-700 mt-0.5 truncate">{course.name}</p>
+            <p className="text-xs text-gray-500 truncate">{uni.name}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 flex-shrink-0">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Student <span className="text-red-500">*</span></label>
+            <select value={studentId} onChange={e => setStudentId(e.target.value)} aria-label="Select student"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="">— Choose a student —</option>
+              {students.map(s => (
+                <option key={s._id || s.id} value={s._id || s.id}>{s.name} ({s.email})</option>
+              ))}
+            </select>
+          </div>
+          {course.intake?.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Intake</label>
+              <select value={intake} onChange={e => setIntake(e.target.value)} aria-label="Select intake"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                {course.intake.map((i: string) => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+          )}
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2.5 rounded-xl">{error}</p>}
+          {success && (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2.5 rounded-xl">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" /> Application created successfully!
+            </div>
+          )}
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+              Cancel
+            </button>
+            <button type="button" onClick={handleApply} disabled={saving || success}
+              className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              {saving
+                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
+                : <><Plus className="w-4 h-4" />Apply</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UniversityDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -30,6 +117,8 @@ export default function UniversityDetail() {
   const [uni, setUni] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applyModal, setApplyModal] = useState<any>(null);
+  const [staffApplyModal, setStaffApplyModal] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
 
   const wikiPhoto = useWikipediaPhoto(uni?.name || '');
 
@@ -41,6 +130,12 @@ export default function UniversityDetail() {
         .finally(() => setLoading(false));
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (user?.role === 'counselor') api.students.list().then(setStudents).catch(() => {});
+    else if (user?.role === 'admin') (api.admin as any).students().then(setStudents).catch(() => {});
+  }, [isAuthenticated, user?.role]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -64,7 +159,7 @@ export default function UniversityDetail() {
 
   const student = user?.role === 'student' ? user as any : null;
   const hasApplied = (course: any) =>
-    (student?.applications || []).some((a: any) => a.universityId === uni?.id && a.courseId === course.id);
+    (student?.applications || []).some((a: any) => a.universityId === uni?.id && a.courseId === (course._id || course.id));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -74,6 +169,14 @@ export default function UniversityDetail() {
           uni={uni}
           onClose={() => setApplyModal(null)}
           onSuccess={() => setApplyModal(null)}
+        />
+      )}
+      {staffApplyModal && (
+        <StaffApplyModal
+          course={staffApplyModal}
+          uni={uni}
+          students={students}
+          onClose={() => setStaffApplyModal(null)}
         />
       )}
       <div className="relative h-72 bg-gradient-to-br from-blue-600 to-indigo-700 overflow-hidden">
@@ -145,8 +248,10 @@ export default function UniversityDetail() {
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 mb-5">Available Courses</h2>
               <div className="space-y-4">
-                {uni.courses.map((course: any, idx: number) => (
-                  <div key={course._id || course.id || idx} className="border border-gray-100 rounded-xl p-5 hover:border-blue-200 hover:shadow-sm transition-all">
+                {uni.courses.map((course: any, idx: number) => {
+                  const courseId = course._id || course.id;
+                  return (
+                  <div key={courseId || idx} className="border border-gray-100 rounded-xl p-5 hover:border-blue-200 hover:shadow-sm transition-all">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -172,20 +277,33 @@ export default function UniversityDetail() {
                         </span>
                       ))}
                     </div>
-                    {isAuthenticated && user?.role === 'student' && (
-                      hasApplied(course) ? (
-                        <span className="mt-4 inline-flex items-center gap-1 text-sm text-green-700 font-medium">
-                          <CheckCircle className="w-4 h-4" /> Applied
-                        </span>
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      {isAuthenticated && user?.role === 'student' ? (
+                        hasApplied(course) ? (
+                          <span className="inline-flex items-center gap-1.5 text-sm text-green-700 font-medium bg-green-50 border border-green-200 px-4 py-2 rounded-lg">
+                            <CheckCircle className="w-4 h-4" /> Applied
+                          </span>
+                        ) : (
+                          <button type="button" onClick={() => setApplyModal(course)}
+                            className="flex items-center gap-1.5 bg-[#0d1b4b] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#152258] transition-colors font-medium">
+                            Apply to this Course
+                          </button>
+                        )
+                      ) : !isAuthenticated ? (
+                        <Link to="/login"
+                          className="flex items-center gap-1.5 bg-[#0d1b4b] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#152258] transition-colors font-medium">
+                          Sign In to Apply
+                        </Link>
                       ) : (
-                        <button type="button" onClick={() => setApplyModal(course)}
-                          className="mt-4 bg-[#0d1b4b] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#152258] transition-colors font-medium">
-                          Apply to this Course
+                        <button type="button" onClick={() => setStaffApplyModal(course)}
+                          className="flex items-center gap-1.5 bg-[#0d1b4b] text-white text-sm px-4 py-2 rounded-lg hover:bg-[#152258] transition-colors font-medium">
+                          <Plus className="w-4 h-4" /> Apply for Student
                         </button>
-                      )
-                    )}
+                      )}
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -221,7 +339,11 @@ export default function UniversityDetail() {
                   Start Application
                 </button>
               ) : isAuthenticated ? (
-                <Link to="/student/applications" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">View Applications</Link>
+                <button type="button"
+                  onClick={() => uni?.courses?.[0] && setStaffApplyModal(uni.courses[0])}
+                  className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">
+                  Apply for Student
+                </button>
               ) : (
                 <Link to="/login" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">Sign In to Apply</Link>
               )}

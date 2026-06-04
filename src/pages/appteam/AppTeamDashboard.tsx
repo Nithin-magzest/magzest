@@ -219,7 +219,12 @@ export default function AppTeamDashboard() {
                       <span className="text-xs text-gray-400">· {student.nationality}</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 truncate">{app.universityName} — {app.courseName}</p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {app.universityId ? (
+                      <Link to={`/university/${app.universityId}`} onClick={e => e.stopPropagation()} className="hover:text-orange-600 hover:underline">{app.universityName}</Link>
+                    ) : app.universityName}
+                    {app.courseName ? ` — ${app.courseName}` : ''}
+                  </p>
                 </div>
                 <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                   {counselor && (

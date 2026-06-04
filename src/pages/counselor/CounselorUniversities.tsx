@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Star, BookOpen, ChevronDown, ChevronUp, DollarSign, Calendar, CheckCircle, ExternalLink, Users, Award, X, Plus, GraduationCap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, MapPin, Star, BookOpen, DollarSign, Calendar, CheckCircle, ExternalLink, Users, Award, X, Plus, GraduationCap } from 'lucide-react';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -187,7 +188,7 @@ function CourseRow({ course, universityName, universityId, onApply }: {
   course: any; universityName: string; universityId: string; onApply: (course: any, universityName: string, universityId: string) => void;
 }) {
   return (
-    <div className="border border-gray-100 rounded-xl p-4 bg-white hover:border-blue-200 hover:shadow-sm transition-all">
+    <div className="border border-gray-100 rounded-xl p-4 bg-white hover:border-green-200 hover:shadow-sm transition-all">
       <div className="flex items-start justify-between gap-3 mb-1.5">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -195,8 +196,13 @@ function CourseRow({ course, universityName, universityId, onApply }: {
               {course.level}
             </span>
             {course.department && <span className="text-xs text-gray-400 truncate">{course.department}</span>}
+            {course.scholarshipAvailable && (
+              <span className="text-xs font-semibold text-yellow-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Award className="w-3 h-3" />Scholarship
+              </span>
+            )}
           </div>
-          <p className="font-bold text-gray-900 text-sm">{course.name}</p>
+          <p className="font-bold text-gray-900 text-sm leading-snug">{course.name}</p>
         </div>
         <div className="flex items-start gap-2 flex-shrink-0">
           {course.tuitionFee > 0 && (
@@ -206,7 +212,7 @@ function CourseRow({ course, universityName, universityId, onApply }: {
             </div>
           )}
           <button type="button" onClick={() => onApply(course, universityName, universityId)}
-            className="flex items-center gap-1 bg-white hover:bg-green-50 text-green-700 border-2 border-gray-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+            className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
             <Plus className="w-3.5 h-3.5" />Apply
           </button>
         </div>
@@ -220,7 +226,7 @@ function CourseRow({ course, universityName, universityId, onApply }: {
         {course.paymentPlan && <span className="text-purple-600">{course.paymentPlan} billing</span>}
       </div>
 
-      {(course.applicationFee > 0 || course.registrationFee > 0 || course.scholarshipAvailable) && (
+      {(course.applicationFee > 0 || course.registrationFee > 0) && (
         <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 mb-2 flex flex-wrap gap-x-4 gap-y-1">
           {course.applicationFee > 0 && (
             <span className="text-xs text-gray-600">App fee: <span className="font-semibold text-gray-800">{course.currency || 'USD'} {Number(course.applicationFee).toLocaleString()}</span></span>
@@ -228,17 +234,11 @@ function CourseRow({ course, universityName, universityId, onApply }: {
           {course.registrationFee > 0 && (
             <span className="text-xs text-gray-600">Reg fee: <span className="font-semibold text-gray-800">{course.currency || 'USD'} {Number(course.registrationFee).toLocaleString()}</span></span>
           )}
-          {course.scholarshipAvailable && (
-            <span className="text-xs font-semibold text-yellow-700 flex items-center gap-1">
-              <Award className="w-3 h-3" />
-              {course.scholarshipAmount || 'Scholarship available'}
-            </span>
-          )}
         </div>
       )}
 
       {course.requirements?.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 mt-1">
           {course.requirements.map((req: string) => (
             <span key={req} className="flex items-center gap-1 text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">
               <CheckCircle className="w-3 h-3 text-green-500" />{req}
@@ -246,6 +246,109 @@ function CourseRow({ course, universityName, universityId, onApply }: {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Courses Popup Modal ───────────────────────────────────────────────────────
+
+function CoursesModal({ uni, onClose, onApply }: {
+  uni: any; onClose: () => void;
+  onApply: (course: any, universityName: string, universityId: string) => void;
+}) {
+  const [search, setSearch] = useState('');
+  const [levelFilter, setLevelFilter] = useState('');
+
+  const filtered = (uni.courses || []).filter((c: any) => {
+    const q = search.toLowerCase();
+    const matchQ = !search || c.name?.toLowerCase().includes(q) || c.department?.toLowerCase().includes(q);
+    const matchL = !levelFilter || c.level === levelFilter;
+    return matchQ && matchL;
+  });
+
+  const levels = [...new Set((uni.courses || []).map((c: any) => c.level).filter(Boolean))] as string[];
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl">
+        {/* Header */}
+        <div className="flex items-start gap-4 p-5 border-b border-gray-100 flex-shrink-0">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <MapPin className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-xs text-gray-500">{uni.city}, {uni.country}</span>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">#{uni.ranking}</span>
+            </div>
+            <h2 className="text-lg font-bold text-gray-900 leading-tight">{uni.name}</h2>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {uni.courses?.length || 0} courses available
+            </p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close"
+            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors flex-shrink-0">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className="px-5 py-3 border-b border-gray-100 flex gap-3 flex-shrink-0">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search courses..."
+              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          {levels.length > 1 && (
+            <select
+              aria-label="Filter by level"
+              value={levelFilter}
+              onChange={e => setLevelFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">All Levels</option>
+              {levels.map(l => <option key={l}>{l}</option>)}
+            </select>
+          )}
+        </div>
+
+        {/* Course list */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {filtered.length === 0 ? (
+            <div className="text-center py-12">
+              <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-400">No courses found</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((course: any) => (
+                <CourseRow
+                  key={course._id || course.id}
+                  course={course}
+                  universityName={uni.name}
+                  universityId={(uni._id || uni.id || '').toString()}
+                  onApply={(c, n, id) => { onApply(c, n, id); }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0 flex items-center justify-between">
+          <span className="text-xs text-gray-400">{filtered.length} of {uni.courses?.length || 0} courses</span>
+          <button type="button" onClick={onClose}
+            className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -274,156 +377,87 @@ function UniLogoImg({ name, website }: { name: string; website?: string }) {
 function UniversityCard({ uni, onApply }: {
   uni: any; onApply: (course: any, universityName: string, universityId: string) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const [tab, setTab] = useState<'courses' | 'details'>('courses');
+  const [showCoursesModal, setShowCoursesModal] = useState(false);
+  const navigate = useNavigate();
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-      {/* Header */}
-      <div className="flex gap-4 p-5">
-        <div className="w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0">
-          <UniLogoImg name={uni.name} website={uni.website} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-gray-900 leading-tight">{uni.name}</h3>
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap font-semibold">#{uni.ranking}</span>
+    <>
+      {showCoursesModal && (
+        <CoursesModal
+          uni={uni}
+          onClose={() => setShowCoursesModal(false)}
+          onApply={(course, name, id) => {
+            setShowCoursesModal(false);
+            onApply(course, name, id);
+          }}
+        />
+      )}
+
+      <div
+        onClick={() => navigate(`/university/${uni.id}`)}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all cursor-pointer overflow-hidden group">
+        {/* Header */}
+        <div className="flex gap-4 p-5">
+          <div className="w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0">
+            <UniLogoImg name={uni.name} website={uni.website} />
           </div>
-          <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
-            <MapPin className="w-3 h-3" /> {uni.city}, {uni.country}
-            {uni.type && <span className="text-gray-400 ml-1">• {uni.type}</span>}
-          </div>
-          <div className="flex flex-wrap items-center gap-3 mt-2">
-            <span className="flex items-center gap-1 text-xs text-gray-600">
-              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />{uni.rating}
-            </span>
-            <span className="flex items-center gap-1 text-xs text-gray-600">
-              <BookOpen className="w-3 h-3" />{uni.courses?.length || 0} courses
-            </span>
-            {uni.acceptanceRate && (
-              <span className="text-xs text-gray-600">{uni.acceptanceRate}% acceptance</span>
-            )}
-            {uni.averageFees?.postgraduate > 0 && (
-              <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                <DollarSign className="w-3 h-3" />
-                {uni.averageFees.currency} {Number(uni.averageFees.postgraduate).toLocaleString()}/yr PG
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-bold text-gray-900 leading-tight group-hover:text-green-700 transition-colors">{uni.name}</h3>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap font-semibold">#{uni.ranking}</span>
+            </div>
+            <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
+              <MapPin className="w-3 h-3" /> {uni.city}, {uni.country}
+              {uni.type && <span className="text-gray-400 ml-1">• {uni.type}</span>}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              <span className="flex items-center gap-1 text-xs text-gray-600">
+                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />{uni.rating}
               </span>
-            )}
+              <span className="flex items-center gap-1 text-xs text-gray-600">
+                <BookOpen className="w-3 h-3" />{uni.courses?.length || 0} courses
+              </span>
+              {uni.acceptanceRate && (
+                <span className="text-xs text-gray-600">{uni.acceptanceRate}% acceptance</span>
+              )}
+              {uni.averageFees?.postgraduate > 0 && (
+                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                  <DollarSign className="w-3 h-3" />
+                  {uni.averageFees.currency} {Number(uni.averageFees.postgraduate).toLocaleString()}/yr PG
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {uni.tags?.length > 0 && (
-        <div className="px-5 pb-3 flex flex-wrap gap-1">
-          {uni.tags.slice(0, 4).map((t: string) => (
-            <span key={t} className="text-xs bg-sky-50 text-blue-700 px-2 py-0.5 rounded-full">{t}</span>
-          ))}
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="px-5 pb-4 flex gap-2">
-        <button type="button" onClick={() => { setExpanded(!expanded); if (!expanded) setTab('courses'); }}
-          className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-green-50 text-green-700 border-2 border-gray-300 py-2 rounded-xl text-sm font-semibold transition-colors">
-          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          {expanded ? 'Collapse' : 'View Courses & Info'}
-        </button>
-        {uni.website && (
-          <a href={uni.website} target="_blank" rel="noopener noreferrer"
-            title="Visit university website"
-            className="flex items-center gap-1 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-            <ExternalLink className="w-4 h-4" />
-          </a>
+        {uni.tags?.length > 0 && (
+          <div className="px-5 pb-3 flex flex-wrap gap-1">
+            {uni.tags.slice(0, 4).map((t: string) => (
+              <span key={t} className="text-xs bg-sky-50 text-blue-700 px-2 py-0.5 rounded-full">{t}</span>
+            ))}
+          </div>
         )}
-      </div>
 
-      {expanded && (
-        <div className="border-t border-gray-100">
-          <div className="flex border-b border-gray-100 bg-gray-50">
-            <button type="button" onClick={() => setTab('courses')}
-              className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${tab === 'courses' ? 'text-blue-700 border-b-2 border-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}>
-              Courses ({uni.courses?.length || 0})
-            </button>
-            <button type="button" onClick={() => setTab('details')}
-              className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${tab === 'details' ? 'text-blue-700 border-b-2 border-blue-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}>
-              University Details
-            </button>
-          </div>
-
-          {tab === 'courses' && (
-            <div className="bg-gray-50/50 px-5 py-4">
-              {(!uni.courses || uni.courses.length === 0) ? (
-                <div className="text-center py-6 text-gray-400">
-                  <BookOpen className="w-6 h-6 mx-auto mb-1 opacity-40" />
-                  <p className="text-xs">No courses listed yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {uni.courses.map((course: any) => (
-                    <CourseRow
-                      key={course.id || course._id}
-                      course={course}
-                      universityName={uni.name}
-                      universityId={(uni._id || uni.id || '').toString()}
-                      onApply={onApply}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === 'details' && (
-            <div className="bg-gray-50/50 px-5 py-4 space-y-4">
-              {uni.description && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">About</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{uni.description}</p>
-                </div>
-              )}
-              {(uni.averageFees?.undergraduate > 0 || uni.averageFees?.postgraduate > 0) && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Average Tuition Fees / Year</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {uni.averageFees?.undergraduate > 0 && (
-                      <div className="bg-white rounded-lg border border-gray-100 px-3 py-2">
-                        <p className="text-xs text-gray-400">Undergraduate</p>
-                        <p className="font-bold text-gray-900 text-sm">{uni.averageFees.currency} {Number(uni.averageFees.undergraduate).toLocaleString()}</p>
-                      </div>
-                    )}
-                    {uni.averageFees?.postgraduate > 0 && (
-                      <div className="bg-white rounded-lg border border-gray-100 px-3 py-2">
-                        <p className="text-xs text-gray-400">Postgraduate</p>
-                        <p className="font-bold text-gray-900 text-sm">{uni.averageFees.currency} {Number(uni.averageFees.postgraduate).toLocaleString()}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Statistics</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {uni.acceptanceRate && <div className="flex justify-between bg-white rounded-lg border border-gray-100 px-3 py-2"><span className="text-xs text-gray-500">Acceptance Rate</span><span className="font-semibold text-xs text-gray-900">{uni.acceptanceRate}%</span></div>}
-                  {uni.founded && <div className="flex justify-between bg-white rounded-lg border border-gray-100 px-3 py-2"><span className="text-xs text-gray-500">Founded</span><span className="font-semibold text-xs text-gray-900">{uni.founded}</span></div>}
-                  {uni.totalStudents && <div className="flex justify-between bg-white rounded-lg border border-gray-100 px-3 py-2"><span className="text-xs text-gray-500 flex items-center gap-1"><Users className="w-3 h-3" />Total Students</span><span className="font-semibold text-xs text-gray-900">{Number(uni.totalStudents).toLocaleString()}</span></div>}
-                  {uni.internationalStudents && <div className="flex justify-between bg-white rounded-lg border border-gray-100 px-3 py-2"><span className="text-xs text-gray-500">Intl. Students</span><span className="font-semibold text-xs text-gray-900">{Number(uni.internationalStudents).toLocaleString()}</span></div>}
-                </div>
-              </div>
-              {uni.facilities?.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Campus Facilities</p>
-                  <div className="grid grid-cols-2 gap-1">
-                    {uni.facilities.map((f: string) => (
-                      <span key={f} className="flex items-center gap-1 text-xs text-gray-700"><CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />{f}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+        {/* Actions */}
+        <div className="px-5 pb-4 flex gap-2" onClick={e => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setShowCoursesModal(true)}
+            className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+          >
+            <BookOpen className="w-4 h-4" />
+            View Courses ({uni.courses?.length || 0})
+          </button>
+          {uni.website && (
+            <a href={uni.website} target="_blank" rel="noopener noreferrer"
+              title="Visit university website"
+              className="flex items-center gap-1 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+              <ExternalLink className="w-4 h-4" />
+            </a>
           )}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }
 
