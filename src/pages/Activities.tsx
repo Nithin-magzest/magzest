@@ -4,6 +4,7 @@ import { api } from '../api';
 import {
   Calendar, CheckSquare, Star, Phone, Plus, ChevronLeft, ChevronRight,
   Check, Clock, Video, PhoneCall, PhoneOff, Trash2, X, Bell, BellOff, Users,
+  MessageCircle, Send,
 } from 'lucide-react';
 import MeetingPanel from '../components/MeetingPanel';
 
@@ -174,9 +175,14 @@ export default function Activities() {
   const [calMonth, setCalMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState(today.getDate());
 
-  const [tasks, setTasks]           = useState(INITIAL_TASKS);
-  const [newTask, setNewTask]       = useState({ title: '', studentName: '' });
-  const [showAddTask, setShowAddTask] = useState(false);
+  const [apiTasks, setApiTasks]           = useState<any[]>([]);
+  const [meetingTasks, setMeetingTasks]   = useState<any[]>([]);
+  const [tasksLoading, setTasksLoading]   = useState(false);
+  const [newTask, setNewTask]             = useState({ title: '', description: '', priority: 'medium', dueDate: '', assignedTo: '' });
+  const [showAddTask, setShowAddTask]     = useState(false);
+  const [expandedTask, setExpandedTask]   = useState<string | null>(null);
+  const [commentTexts, setCommentTexts]   = useState<Record<string, string>>({});
+  const [commentSaving, setCommentSaving] = useState<string | null>(null);
 
   const [events, setEvents]           = useState(INITIAL_EVENTS);
   const [showAddEvent, setShowAddEvent] = useState(false);
@@ -200,6 +206,11 @@ export default function Activities() {
     }
   }, [role]);
 
+  useEffect(() => {
+    setTasksLoading(true);
+    api.tasks.list().then(setApiTasks).catch(() => {}).finally(() => setTasksLoading(false));
+  }, [role]);
+
   // Track meeting IDs already added so we never duplicate them
   const addedMeetingIds = useRef(new Set<string>());
 
@@ -212,6 +223,7 @@ export default function Activities() {
 
     setEvents(prev => [...prev, {
       id: parseInt(id.slice(-8), 16) || Date.now(),
+      _meetingId: id,
       title: m.title,
       date: m.scheduledDate,
       time: fmt12h(m.scheduledTime),
@@ -220,14 +232,27 @@ export default function Activities() {
     }]);
 
     if (isUpcoming) {
-      setTasks(prev => [...prev, {
+      setMeetingTasks(prev => [...prev, {
         id: Date.now(),
+        _meetingId: id,
         title: `Meeting: ${m.title}`,
         done: false,
         priority: 'high',
         due: m.scheduledDate,
         page: 'activities',
       }]);
+
+      // Auto-add a reminder on the meeting date
+      setReminders(prev => {
+        if (prev.some(r => (r as any)._meetingId === id)) return prev;
+        return [...prev, {
+          id: Date.now() + 1,
+          _meetingId: id,
+          date: m.scheduledDate,
+          text: `📅 ${m.title} · via ${m.platform?.toUpperCase() ?? 'Online'}`,
+          time: fmt12h(m.scheduledTime),
+        } as any];
+      });
     }
   }, []);
 
@@ -238,12 +263,49 @@ export default function Activities() {
     }).catch(() => {});
   }, [addMeetingToActivities]);
 
-  // Listen for real-time meeting creation from MeetingPanel
+  // Real-time new meeting (from MeetingPanel creator OR socket recipient)
   useEffect(() => {
-    const handler = (e: Event) => addMeetingToActivities((e as CustomEvent).detail);
+    const handler = (e: Event) => {
+      const m = (e as CustomEvent).detail;
+      addMeetingToActivities(m);
+      // Auto-navigate calendar to the meeting's date
+      if (m.scheduledDate) {
+        const [y, mo, d] = m.scheduledDate.split('-').map(Number);
+        setCalYear(y);
+        setCalMonth(mo - 1);
+        setSelectedDay(d);
+        setTab('calendar');
+      }
+    };
     window.addEventListener('meeting:scheduled', handler);
     return () => window.removeEventListener('meeting:scheduled', handler);
   }, [addMeetingToActivities]);
+
+  // Real-time meeting reschedule — update calendar event, task due date, and reminder in place
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const m = (e as CustomEvent).detail;
+      const mId = (m._id || m.id)?.toString();
+      if (!mId) return;
+      setEvents(prev => prev.map(ev =>
+        (ev as any)._meetingId === mId
+          ? { ...ev, title: m.title, date: m.scheduledDate, time: fmt12h(m.scheduledTime), desc: `${m.platform?.toUpperCase() ?? 'Online'} · ${m.duration ?? 60} min` }
+          : ev
+      ));
+      setMeetingTasks(prev => prev.map(mt =>
+        (mt as any)._meetingId === mId
+          ? { ...mt, title: `Meeting: ${m.title}`, due: m.scheduledDate }
+          : mt
+      ));
+      setReminders(prev => prev.map(r =>
+        (r as any)._meetingId === mId
+          ? { ...r, date: m.scheduledDate, text: `📅 ${m.title} · via ${m.platform?.toUpperCase() ?? 'Online'}`, time: fmt12h(m.scheduledTime) }
+          : r
+      ));
+    };
+    window.addEventListener('meeting:updated', handler);
+    return () => window.removeEventListener('meeting:updated', handler);
+  }, []);
 
   const daysInMonth = getDaysInMonth(calYear, calMonth);
   const firstDay    = getFirstDay(calYear, calMonth);
@@ -255,14 +317,51 @@ export default function Activities() {
   const dayEvents    = events.filter(e => e.date === selectedDateStr);
   const dayReminders = reminders.filter(r => r.date === selectedDateStr);
 
-  const toggleTask  = (id: number) => setTasks(ts => ts.map(t => t.id === id ? { ...t, done: !t.done } : t));
-  const deleteTask  = (id: number) => setTasks(ts => ts.filter(t => t.id !== id));
-  const addTask = () => {
-    if (!newTask.title.trim()) return;
-    setTasks(ts => [...ts, { id: Date.now(), title: newTask.title.trim(), done: false, priority: 'medium', due: '', page: 'activities', studentName: newTask.studentName }]);
-    setNewTask({ title: '', studentName: '' });
-    setShowAddTask(false);
+  const toggleApiTask = async (taskId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    try {
+      const updated = await api.tasks.update(taskId, { status: newStatus });
+      setApiTasks(ts => ts.map(t => t._id === taskId ? updated : t));
+    } catch {}
   };
+
+  const deleteApiTask = async (taskId: string) => {
+    try {
+      await api.tasks.delete(taskId);
+      setApiTasks(ts => ts.filter(t => t._id !== taskId));
+    } catch {}
+  };
+
+  const createTask = async () => {
+    if (!newTask.title.trim()) return;
+    try {
+      const created = await api.tasks.create({
+        title: newTask.title.trim(),
+        description: newTask.description.trim(),
+        priority: newTask.priority,
+        dueDate: newTask.dueDate,
+        assignedTo: newTask.assignedTo || null,
+      });
+      setApiTasks(ts => [created, ...ts]);
+      setNewTask({ title: '', description: '', priority: 'medium', dueDate: '', assignedTo: '' });
+      setShowAddTask(false);
+    } catch {}
+  };
+
+  const submitComment = async (taskId: string) => {
+    const text = (commentTexts[taskId] || '').trim();
+    if (!text) return;
+    setCommentSaving(taskId);
+    try {
+      const updated = await api.tasks.addComment(taskId, text);
+      setApiTasks(ts => ts.map(t => t._id === taskId ? updated : t));
+      setCommentTexts(prev => ({ ...prev, [taskId]: '' }));
+    } catch {}
+    setCommentSaving(null);
+  };
+
+  const toggleMeetingTask = (id: number) => setMeetingTasks(ts => ts.map(mt => mt.id === id ? { ...mt, done: !mt.done } : mt));
+  const deleteMeetingTask = (id: number) => setMeetingTasks(ts => ts.filter(mt => mt.id !== id));
 
   const addEvent = () => {
     if (!newEvent.title.trim() || !newEvent.date) return;
@@ -295,7 +394,7 @@ export default function Activities() {
 
   const TABS: { key: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
     { key: 'calendar', label: 'Calendar', icon: <Calendar className="w-4 h-4" /> },
-    { key: 'tasks',    label: 'Tasks',    icon: <CheckSquare className="w-4 h-4" />, count: tasks.filter(t => !t.done).length },
+    { key: 'tasks',    label: 'Tasks',    icon: <CheckSquare className="w-4 h-4" />, count: apiTasks.filter(at => at.status !== 'completed').length + meetingTasks.filter(mt => !mt.done).length },
     { key: 'events',   label: 'Events',   icon: <Star className="w-4 h-4" />,        count: events.length },
     { key: 'calls',    label: 'Calls',    icon: <Phone className="w-4 h-4" />,       count: calls.filter(c => c.status === 'scheduled').length },
     { key: 'meetings', label: 'Meetings', icon: <Users className="w-4 h-4" /> },
@@ -528,8 +627,12 @@ export default function Activities() {
         <div className="max-w-2xl">
           <div className="flex items-center justify-between mb-5">
             <div className="flex gap-4">
-              <span className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{tasks.filter(t => !t.done).length}</span> pending</span>
-              <span className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{tasks.filter(t => t.done).length}</span> completed</span>
+              <span className="text-sm text-gray-500">
+                <span className="font-semibold text-gray-800">{apiTasks.filter(at => at.status !== 'completed').length + meetingTasks.filter(mt => !mt.done).length}</span> pending
+              </span>
+              <span className="text-sm text-gray-500">
+                <span className="font-semibold text-gray-800">{apiTasks.filter(at => at.status === 'completed').length + meetingTasks.filter(mt => mt.done).length}</span> completed
+              </span>
             </div>
             {!isStudent && (
               <button type="button" onClick={() => setShowAddTask(true)}
@@ -542,72 +645,243 @@ export default function Activities() {
           {isStudent && (
             <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 mb-4">
               <CheckSquare className="w-3.5 h-3.5 flex-shrink-0" />
-              Tasks are assigned to you by your counselor or admin.
+              Tasks assigned to you by your counselor or admin appear here. Use comments to update your progress.
             </div>
           )}
 
           {!isStudent && showAddTask && (
             <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-md mb-4">
               <input value={newTask.title} onChange={e => setNewTask(n => ({ ...n, title: e.target.value }))}
-                onKeyDown={e => e.key === 'Enter' && addTask()}
+                onKeyDown={e => e.key === 'Enter' && createTask()}
                 placeholder="What needs to be done?" autoFocus
                 className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none ${t.formBorder} text-gray-900 placeholder-gray-400 mb-3`} />
-              <select
-                title="Assign to student"
-                value={newTask.studentName}
-                onChange={e => setNewTask(n => ({ ...n, studentName: e.target.value }))}
+              <textarea value={newTask.description} onChange={e => setNewTask(n => ({ ...n, description: e.target.value }))}
+                placeholder="Description (optional)" rows={2}
+                className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none ${t.formBorder} text-gray-700 placeholder-gray-400 mb-3 resize-none`} />
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <select title="Priority" value={newTask.priority} onChange={e => setNewTask(n => ({ ...n, priority: e.target.value }))}
+                  className={`text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none ${t.formBorder} text-gray-700`}>
+                  <option value="high">High Priority</option>
+                  <option value="medium">Medium Priority</option>
+                  <option value="low">Low Priority</option>
+                </select>
+                <input type="date" title="Due date" value={newTask.dueDate} onChange={e => setNewTask(n => ({ ...n, dueDate: e.target.value }))}
+                  className={`text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none ${t.formBorder} text-gray-700`} />
+              </div>
+              <select title="Assign to student" value={newTask.assignedTo} onChange={e => setNewTask(n => ({ ...n, assignedTo: e.target.value }))}
                 className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none ${t.formBorder} text-gray-700 mb-3`}>
                 <option value="">Assign to student (optional)</option>
-                {students.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
+                {students.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
               </select>
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowAddTask(false)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><X className="w-3 h-3" /> Cancel</button>
-                <button type="button" onClick={addTask} className={`px-4 py-1.5 ${t.actionBtn} text-white text-sm rounded-lg ${t.actionBtnHover}`}>Add</button>
+                <button type="button" onClick={createTask} className={`px-4 py-1.5 ${t.actionBtn} text-white text-sm rounded-lg ${t.actionBtnHover}`}>Add</button>
               </div>
             </div>
           )}
 
-          <div className="space-y-2">
-            {tasks.filter(t => !t.done).map(task => (
-              <div key={task.id} className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-4 py-3.5 shadow-sm hover:border-gray-200 transition-all">
-                <button type="button" title="Mark complete" onClick={() => toggleTask(task.id)}
-                  className="w-5 h-5 rounded-md border-2 border-gray-300 flex items-center justify-center flex-shrink-0 hover:border-gray-500 transition-colors" />
-                <Link to={`/${role}/${task.page}`} className="flex-1 min-w-0 group">
-                  <p className="text-sm font-medium text-gray-900 group-hover:underline">{task.title}</p>
-                  <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                    {task.due && <p className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" />Due {task.due}</p>}
-                    {(task as any).studentName && (
-                      <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                        <Users className="w-3 h-3" />{(task as any).studentName}
-                      </span>
+          {tasksLoading ? (
+            <div className="flex justify-center py-10">
+              <span className="w-6 h-6 border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {/* Pending API tasks */}
+              {apiTasks.filter(task => task.status !== 'completed').map(task => (
+                <div key={task._id}>
+                  <div className={`flex items-center gap-3 bg-white border border-gray-100 px-4 py-3.5 shadow-sm hover:border-gray-200 transition-all ${expandedTask === task._id ? 'rounded-t-xl' : 'rounded-xl'}`}>
+                    <button type="button" title="Mark complete" onClick={() => toggleApiTask(task._id, task.status)}
+                      className="w-5 h-5 rounded-md border-2 border-gray-300 flex items-center justify-center flex-shrink-0 hover:border-gray-500 transition-colors" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{task.title}</p>
+                      {task.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{task.description}</p>}
+                      <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                        {task.dueDate && <p className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" />Due {task.dueDate}</p>}
+                        {task.assignedToName && (
+                          <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                            <Users className="w-3 h-3" />{task.assignedToName}
+                          </span>
+                        )}
+                        {isStudent && task.assignedByName && (
+                          <span className="text-xs text-gray-400">by {task.assignedByName}</span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLOR[task.priority]}`}>{task.priority}</span>
+                    <button type="button" title="Comments" onClick={() => setExpandedTask(expandedTask === task._id ? null : task._id)}
+                      className={`relative p-1.5 rounded-lg transition-colors ${expandedTask === task._id ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}>
+                      <MessageCircle className="w-4 h-4" />
+                      {task.comments?.length > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                          {task.comments.length}
+                        </span>
+                      )}
+                    </button>
+                    {!isStudent && (
+                      <button type="button" onClick={() => deleteApiTask(task._id)} title="Delete task"
+                        className="p-1 text-gray-300 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
-                </Link>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLOR[task.priority]}`}>{task.priority}</span>
-                {!isStudent && <button type="button" onClick={() => deleteTask(task.id)} title="Delete task" className="p-1 text-gray-300 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>}
-              </div>
-            ))}
-            {tasks.filter(t => t.done).length > 0 && (
-              <>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1 pt-3 pb-1">Completed</p>
-                {tasks.filter(t => t.done).map(task => (
-                  <div key={task.id} className="flex items-center gap-3 bg-gray-50 rounded-xl border border-gray-100 px-4 py-3 opacity-60">
-                    <button type="button" title="Mark incomplete" onClick={() => toggleTask(task.id)}
-                      className="w-5 h-5 rounded-md bg-green-500 border-2 border-green-500 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-white" />
-                    </button>
-                    <Link to={`/${role}/${task.page}`} className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-400 line-through hover:underline">{task.title}</p>
-                      {(task as any).studentName && (
-                        <span className="text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-medium">{(task as any).studentName}</span>
+
+                  {/* Comments panel */}
+                  {expandedTask === task._id && (
+                    <div className="bg-gray-50 border border-gray-100 border-t-0 rounded-b-xl px-4 pb-4 pt-3 space-y-3">
+                      {task.comments?.length === 0 ? (
+                        <p className="text-xs text-gray-400 text-center py-2">No comments yet. Add one below.</p>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {task.comments.map((c: any) => (
+                            <div key={c._id} className="bg-white rounded-xl p-3 border border-gray-100">
+                              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                <span className="text-xs font-semibold text-gray-800">{c.author}</span>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium capitalize ${
+                                  c.authorRole === 'admin'     ? 'bg-purple-100 text-purple-700' :
+                                  c.authorRole === 'counselor' ? 'bg-green-100 text-green-700' :
+                                  'bg-blue-100 text-blue-700'
+                                }`}>{c.authorRole}</span>
+                                <span className="text-[10px] text-gray-400 ml-auto">
+                                  {new Date(c.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700 leading-relaxed">{c.text}</p>
+                            </div>
+                          ))}
+                        </div>
                       )}
-                    </Link>
-                    {!isStudent && <button type="button" onClick={() => deleteTask(task.id)} title="Delete task" className="p-1 text-gray-300 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>}
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
+                      <div className="flex gap-2">
+                        <input
+                          value={commentTexts[task._id] || ''}
+                          onChange={e => setCommentTexts(prev => ({ ...prev, [task._id]: e.target.value }))}
+                          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(task._id); } }}
+                          placeholder="Add a comment or update..."
+                          className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-400 text-gray-900 placeholder-gray-400 bg-white"
+                        />
+                        <button type="button" onClick={() => submitComment(task._id)}
+                          disabled={commentSaving === task._id || !commentTexts[task._id]?.trim()}
+                          className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors flex items-center gap-1.5">
+                          {commentSaving === task._id
+                            ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            : <Send className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Pending meeting tasks */}
+              {meetingTasks.filter(mt => !mt.done).map(task => (
+                <div key={task.id} className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-4 py-3.5 shadow-sm hover:border-gray-200 transition-all">
+                  <button type="button" title="Mark complete" onClick={() => toggleMeetingTask(task.id)}
+                    className="w-5 h-5 rounded-md border-2 border-gray-300 flex items-center justify-center flex-shrink-0 hover:border-gray-500 transition-colors" />
+                  <Link to={`/${role}/${task.page}`} className="flex-1 min-w-0 group">
+                    <p className="text-sm font-medium text-gray-900 group-hover:underline">{task.title}</p>
+                    {task.due && <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3" />Due {task.due}</p>}
+                  </Link>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLOR[task.priority]}`}>{task.priority}</span>
+                  {!isStudent && (
+                    <button type="button" onClick={() => deleteMeetingTask(task.id)} title="Delete task"
+                      className="p-1 text-gray-300 hover:text-red-400 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {/* Empty state */}
+              {apiTasks.filter(at => at.status !== 'completed').length === 0 && meetingTasks.filter(mt => !mt.done).length === 0 && (
+                <div className="text-center py-10">
+                  <CheckSquare className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+                  <p className="text-sm text-gray-400">
+                    {isStudent ? 'No tasks assigned to you yet.' : 'No pending tasks. Click "Add Task" to create one.'}
+                  </p>
+                </div>
+              )}
+
+              {/* Completed tasks */}
+              {(apiTasks.filter(at => at.status === 'completed').length > 0 || meetingTasks.filter(mt => mt.done).length > 0) && (
+                <>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1 pt-3 pb-1">Completed</p>
+                  {apiTasks.filter(task => task.status === 'completed').map(task => (
+                    <div key={task._id}>
+                      <div className={`flex items-center gap-3 bg-gray-50 border border-gray-100 px-4 py-3 opacity-60 ${expandedTask === task._id ? 'rounded-t-xl' : 'rounded-xl'}`}>
+                        <button type="button" title="Mark incomplete" onClick={() => toggleApiTask(task._id, task.status)}
+                          className="w-5 h-5 rounded-md bg-green-500 border-2 border-green-500 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-3 h-3 text-white" />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-400 line-through">{task.title}</p>
+                          {task.assignedToName && (
+                            <span className="text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-medium">{task.assignedToName}</span>
+                          )}
+                        </div>
+                        <button type="button" title="Comments" onClick={() => setExpandedTask(expandedTask === task._id ? null : task._id)}
+                          className={`relative p-1.5 rounded-lg transition-colors ${expandedTask === task._id ? 'bg-blue-100 text-blue-600' : 'text-gray-300 hover:text-gray-500'}`}>
+                          <MessageCircle className="w-4 h-4" />
+                          {task.comments?.length > 0 && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                              {task.comments.length}
+                            </span>
+                          )}
+                        </button>
+                        {!isStudent && (
+                          <button type="button" onClick={() => deleteApiTask(task._id)} title="Delete task"
+                            className="p-1 text-gray-300 hover:text-red-400 transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      {expandedTask === task._id && (
+                        <div className="bg-gray-50 border border-gray-100 border-t-0 rounded-b-xl px-4 pb-4 pt-3 space-y-3 opacity-80">
+                          {task.comments?.length === 0 ? (
+                            <p className="text-xs text-gray-400 text-center py-2">No comments.</p>
+                          ) : (
+                            <div className="space-y-2 max-h-36 overflow-y-auto">
+                              {task.comments.map((c: any) => (
+                                <div key={c._id} className="bg-white rounded-xl p-3 border border-gray-100">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className="text-xs font-semibold text-gray-700">{c.author}</span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium capitalize ${
+                                      c.authorRole === 'admin'     ? 'bg-purple-100 text-purple-700' :
+                                      c.authorRole === 'counselor' ? 'bg-green-100 text-green-700' :
+                                      'bg-blue-100 text-blue-700'
+                                    }`}>{c.authorRole}</span>
+                                    <span className="text-[10px] text-gray-400 ml-auto">
+                                      {new Date(c.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600">{c.text}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {meetingTasks.filter(mt => mt.done).map(task => (
+                    <div key={task.id} className="flex items-center gap-3 bg-gray-50 rounded-xl border border-gray-100 px-4 py-3 opacity-60">
+                      <button type="button" title="Mark incomplete" onClick={() => toggleMeetingTask(task.id)}
+                        className="w-5 h-5 rounded-md bg-green-500 border-2 border-green-500 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3 h-3 text-white" />
+                      </button>
+                      <Link to={`/${role}/${task.page}`} className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-400 line-through">{task.title}</p>
+                      </Link>
+                      {!isStudent && (
+                        <button type="button" onClick={() => deleteMeetingTask(task.id)} title="Delete task"
+                          className="p-1 text-gray-300 hover:text-red-400 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 

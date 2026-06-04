@@ -165,7 +165,8 @@ function ScheduleModal({ onClose, onCreated, students }: {
         const s = students.find(st => normalId(st) === id);
         return { userId: id, name: s?.name || s?.user?.name || 'Student', role: 'student' };
       });
-      await api.meetings.create({ ...form, participants });
+      const m = await api.meetings.create({ ...form, participants });
+      window.dispatchEvent(new CustomEvent('meeting:scheduled', { detail: m }));
       onCreated();
       onClose();
     } catch (err: any) {

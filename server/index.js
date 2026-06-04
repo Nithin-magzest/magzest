@@ -129,6 +129,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/meetings', require('./routes/meetings'));
 app.use('/api/favicon', require('./routes/favicon'));
 app.use('/api/activity', require('./routes/activity'));
+app.use('/api/tasks',   require('./routes/tasks'));
 
 // WebRTC signaling
 io.on('connection', (socket) => {

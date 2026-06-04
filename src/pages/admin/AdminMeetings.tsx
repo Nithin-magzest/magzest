@@ -91,6 +91,7 @@ function ScheduleModal({
         .filter(p => selectedIds.has(normalId(p)))
         .map(p => ({ userId: normalId(p), name: p.name, role: p._role, email: p.email }));
       const meeting = await api.meetings.create({ title, scheduledDate: date, scheduledTime: time, duration: parseInt(duration), platform, meetingLink: link, participants, notes });
+      window.dispatchEvent(new CustomEvent('meeting:scheduled', { detail: meeting }));
       onCreated(meeting);
     } catch (err: any) {
       setError(err.message || 'Failed to schedule meeting.');

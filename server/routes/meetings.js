@@ -58,11 +58,13 @@ router.post('/', auth, async (req, res) => {
           const sids = userSockets.get(String(p.userId));
           if (sids) {
             sids.forEach(sid => io.to(sid).emit('meeting:scheduled', {
+              _id: meeting._id,
               title,
               scheduledDate,
               scheduledTime,
               platform: platform || 'teams',
               meetingLink,
+              duration: meeting.duration,
             }));
           }
         });
@@ -83,6 +85,29 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Forbidden' });
     }
     const updated = await Meeting.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    // Notify all participants (except the person making the update)
+    const io = req.app.get('io');
+    const userSockets = req.app.get('userSockets');
+    if (io && userSockets && updated) {
+      updated.participants
+        .filter(p => p.userId?.toString() !== req.user.id?.toString())
+        .forEach(p => {
+          const sids = userSockets.get(String(p.userId));
+          if (sids) {
+            sids.forEach(sid => io.to(sid).emit('meeting:updated', {
+              _id:           updated._id,
+              title:         updated.title,
+              scheduledDate: updated.scheduledDate,
+              scheduledTime: updated.scheduledTime,
+              platform:      updated.platform,
+              meetingLink:   updated.meetingLink,
+              duration:      updated.duration,
+            }));
+          }
+        });
+    }
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Bell, CheckCircle, AlertTriangle, Info, ExternalLink } from 'lucide-react';
+import { X, Bell, CheckCircle, AlertTriangle, Info, ExternalLink, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { AppNotification } from '../context/NotificationContext';
 
@@ -30,12 +30,13 @@ const PRIORITY_STYLES = {
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  meeting:   <Bell className="w-4 h-4" />,
+  meeting:     <Bell className="w-4 h-4" />,
   application: <CheckCircle className="w-4 h-4" />,
-  discount:  <Info className="w-4 h-4" />,
-  subscriber: <Bell className="w-4 h-4" />,
-  counselor: <CheckCircle className="w-4 h-4" />,
-  urgent:    <AlertTriangle className="w-4 h-4" />,
+  discount:    <Info className="w-4 h-4" />,
+  subscriber:  <Bell className="w-4 h-4" />,
+  counselor:   <CheckCircle className="w-4 h-4" />,
+  task:        <ClipboardList className="w-4 h-4" />,
+  urgent:      <AlertTriangle className="w-4 h-4" />,
 };
 
 function Toast({ notification: n, onDismiss }: ToastProps) {
@@ -44,7 +45,7 @@ function Toast({ notification: n, onDismiss }: ToastProps) {
   const [progress, setProgress] = useState(100);
   const priority = (n as any).priority || 'normal';
   const styles = PRIORITY_STYLES[priority as keyof typeof PRIORITY_STYLES] || PRIORITY_STYLES.normal;
-  const duration = priority === 'urgent' ? 8000 : 5000;
+  const duration = (n.type === 'task' || n.type === 'meeting') ? 30000 : priority === 'urgent' ? 8000 : 5000;
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));

@@ -246,6 +246,22 @@ export const api = {
     }),
   },
 
+  tasks: {
+    list: () => req<any[]>('/tasks', { headers: authHeaders() }),
+    create: (data: any) => req<any>('/tasks', {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    update: (id: string, data: any) => req<any>(`/tasks/${id}`, {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify(data),
+    }),
+    delete: (id: string) => req<any>(`/tasks/${id}`, {
+      method: 'DELETE', headers: authHeaders(),
+    }),
+    addComment: (id: string, text: string) => req<any>(`/tasks/${id}/comments`, {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({ text }),
+    }),
+  },
+
   subscribe: (data: { name: string; email: string; phone: string }) =>
     req<{ message: string }>('/subscribe', {
       method: 'POST',

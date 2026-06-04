@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { api } from '../api';
 import { useAuth } from './AuthContext';
 
-export type NotifType = 'meeting' | 'application' | 'discount' | 'subscriber' | 'counselor';
+export type NotifType = 'meeting' | 'application' | 'discount' | 'subscriber' | 'counselor' | 'task';
 export type NotifPriority = 'urgent' | 'normal' | 'info';
 
 export interface AppNotification {
@@ -338,7 +338,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!isAuthenticated || !userId) return;
 
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+    const socket = import.meta.env.VITE_API_URL
+      ? io(import.meta.env.VITE_API_URL)
+      : io();
     socket.emit('register', userId);
 
     // Admin: new subscriber
@@ -354,14 +356,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     // Student: new meeting scheduled
+    const meetingsLink = userRole === 'counselor' ? '/counselor/meetings' : userRole === 'admin' ? '/admin/meetings' : '/student/meetings';
     if (userRole === 'student') {
       socket.on('meeting:scheduled', (m: any) => {
         addNotif({
           type: 'meeting', priority: 'urgent',
           title: '📅 New Meeting Scheduled',
           message: `"${m.title}" has been scheduled for ${m.scheduledDate} at ${m.scheduledTime} via ${m.platform}.`,
-          link: '/student/meetings',
+          link: meetingsLink,
         });
+        // Push into Activities calendar + reminders in real-time
+        window.dispatchEvent(new CustomEvent('meeting:scheduled', { detail: m }));
       });
 
       // Student: real-time application status update
@@ -393,6 +398,30 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           link: userRole === 'admin' ? '/admin/live-feed' : '/counselor/activities',
         });
       }
+    });
+
+    // All roles: meeting rescheduled / updated
+    socket.on('meeting:updated', (m: any) => {
+      addNotif({
+        type: 'meeting', priority: 'urgent',
+        title: '📅 Meeting Rescheduled',
+        message: `"${m.title}" has been updated — ${m.scheduledDate} at ${m.scheduledTime} via ${m.platform}.`,
+        link: meetingsLink,
+      });
+      // Sync updated details into Activities calendar
+      window.dispatchEvent(new CustomEvent('meeting:updated', { detail: m }));
+    });
+
+    // All roles: task assigned to me
+    socket.on('task:assigned', (data: any) => {
+      const priorityLabel = data.priority === 'high' ? '🔴 High' : data.priority === 'low' ? '🟢 Low' : '🟡 Medium';
+      const dueText = data.dueDate ? ` · Due ${data.dueDate}` : '';
+      addNotif({
+        type: 'task', priority: 'urgent',
+        title: '📋 New Task Assigned',
+        message: `${data.assignedByName} assigned you "${data.title}" [${priorityLabel}]${dueText}.`,
+        link: '/student/activities',
+      });
     });
 
     return () => { socket.disconnect(); };
