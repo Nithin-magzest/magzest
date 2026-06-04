@@ -290,9 +290,7 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
                   <label className={labelCls}>Graduation Year <span className="text-red-500">*</span></label>
                   <select value={academic.graduationYear} onChange={e => setAcademic(a => ({ ...a, graduationYear: e.target.value }))} className={`${inputCls} bg-white`}>
                     <option value="">Select year</option>
-                    <option>2026</option>
-                    <option>2027</option>
-                    {Array.from({ length: 15 }, (_, i) => 2025 - i).map(y => <option key={y}>{y}</option>)}
+                    {Array.from({ length: 17 }, (_, i) => 2027 - i).map(y => <option key={y}>{y}</option>)}
                   </select>
                 </div>
               </div>
