@@ -235,6 +235,7 @@ export default function StudentDashboard() {
     total: apps.length,
     underReview: apps.filter((a: any) => a.status === 'under_review').length,
     offers: apps.filter((a: any) => ['offer_received', 'accepted'].includes(a.status)).length,
+    pendingOffers: apps.filter((a: any) => a.status === 'offer_received').length,
   };
   const docStats = {
     total: docs.length,
@@ -294,14 +295,14 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Offer alert */}
-      {appStats.offers > 0 && (
+      {/* Offer alert — only shown when there are pending (unresponded) offers */}
+      {appStats.pendingOffers > 0 && (
         <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
             <Bell className="w-5 h-5 text-green-600" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-green-800">You have {appStats.offers} offer(s)!</p>
+            <p className="font-semibold text-green-800">You have {appStats.pendingOffers} offer(s)!</p>
             <p className="text-green-600 text-sm">Check your applications and respond to offers.</p>
           </div>
           <Link to="/student/applications" className="text-green-700 font-medium text-sm hover:underline whitespace-nowrap">View offers</Link>
