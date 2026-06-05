@@ -297,8 +297,53 @@ export default function Activities() {
   useEffect(() => {
     api.meetings.list().then((meetings: any[]) => {
       meetings.forEach(addMeetingToActivities);
-    }).catch(() => {});
+    }).catch((err: any) => console.error('[Activities] meetings.list error:', err));
   }, [addMeetingToActivities]);
+
+  // Student-only: poll for scheduled calls every 15 s so new calls appear without needing
+  // a socket event. Uses state-level dedup only (_meetingId check inside setCalls).
+  useEffect(() => {
+    if (!isStudent) return;
+    const loadStudentCalls = () => {
+      api.meetings.list().then((meetings: any[]) => {
+        const todayD = new Date(); todayD.setHours(0, 0, 0, 0);
+        const tomD   = new Date(todayD); tomD.setDate(todayD.getDate() + 1);
+        const yestD  = new Date(todayD); yestD.setDate(todayD.getDate() - 1);
+
+        meetings.forEach((m: any) => {
+          const id = (m._id || m.id)?.toString();
+          if (!id || !(m.title || '').includes('📞')) return;
+
+          const callDate = new Date(m.scheduledDate + 'T00:00:00');
+          const dateLabel = callDate.getTime() === todayD.getTime() ? 'Today'
+            : callDate.getTime() === tomD.getTime() ? 'Tomorrow'
+            : callDate.getTime() === yestD.getTime() ? 'Yesterday'
+            : callDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+          const isAudio    = (m.notes || '').toLowerCase().includes('audio') || (m.title || '').toLowerCase().includes('audio');
+          const isUpcoming = new Date(`${m.scheduledDate}T${m.scheduledTime}`) > new Date();
+
+          setCalls(prev => {
+            if (prev.some(c => (c as any)._meetingId === id)) return prev;
+            return [...prev, {
+              id: parseInt(id.slice(-8), 16) || Date.now(),
+              _meetingId: id,
+              name: m.createdByName || m.schedulerName || 'Your Counselor',
+              type: isAudio ? 'audio' : 'video',
+              status: isUpcoming ? 'scheduled' : 'completed',
+              duration: isUpcoming ? '-' : `${m.duration ?? 30} min`,
+              time: fmt12h(m.scheduledTime),
+              date: dateLabel,
+            } as any];
+          });
+        });
+      }).catch((err: any) => console.error('[Activities] student calls refresh error:', err));
+    };
+
+    loadStudentCalls(); // immediate
+    const interval = setInterval(loadStudentCalls, 15_000);
+    return () => clearInterval(interval);
+  }, [isStudent]);
 
   // Real-time new meeting (from MeetingPanel creator OR socket recipient)
   useEffect(() => {
@@ -474,7 +519,9 @@ export default function Activities() {
       // Prevent addMeetingToActivities from double-adding this to events/reminders
       const meetingId = (created._id || created.id)?.toString();
       if (meetingId) addedMeetingIds.current.add(meetingId);
-    } catch {}
+    } catch (err: any) {
+      console.error('[Activities] meeting create failed:', err?.message || err);
+    }
 
     setNewCall({ name: '', studentId: '', type: 'video', time: '', date: '' });
     setShowScheduleCall(false);
