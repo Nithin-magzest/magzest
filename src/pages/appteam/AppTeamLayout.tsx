@@ -32,7 +32,7 @@ export default function AppTeamLayout() {
       <div className="flex">
 
         {/* Sidebar */}
-        <aside className="hidden md:flex flex-col w-60 min-h-[calc(100vh-64px)] bg-white border-r border-gray-200 flex-shrink-0">
+        <aside className="hidden md:flex flex-col w-60 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto bg-white border-r border-gray-200 flex-shrink-0">
           <nav className="flex-1 px-3 py-5 flex flex-col gap-0.5">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.14em] px-3 mb-2">Application Team</p>
             {navItems.map(({ to, label, icon: Icon, end }) => (

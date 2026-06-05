@@ -39,7 +39,7 @@ export default function CounselorLayout() {
       <Navbar />
       <div className="flex">
         {/* Sidebar */}
-        <aside className="hidden md:flex flex-col w-64 min-h-[calc(100vh-64px)] bg-white border-r border-gray-200 p-4 gap-1">
+        <aside className="hidden md:flex flex-col w-64 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto bg-white border-r border-gray-200 p-4 gap-1">
           <div className="mb-4 px-3 py-3 bg-green-50 rounded-xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold">

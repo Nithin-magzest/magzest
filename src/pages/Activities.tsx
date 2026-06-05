@@ -493,14 +493,6 @@ export default function Activities() {
     const [y, mo, d] = newCall.date.split('-').map(Number);
     setCalYear(y); setCalMonth(mo - 1); setSelectedDay(d);
 
-    // 5. Notify the scheduler (current user) immediately
-    addNotif({
-      type: 'meeting', priority: 'normal',
-      title: '📞 Call Scheduled',
-      message: `${newCall.type === 'video' ? 'Video' : 'Audio'} call with ${newCall.name} on ${newCall.date} at ${callTimeFormatted}. Added to your calendar & reminders.`,
-      link: `/${role}/activities`,
-    });
-
     // 6. Persist as a meeting — triggers socket notification to the other participant
     try {
       const meetingPayload = {
