@@ -468,7 +468,7 @@ function FeaturedCard({ resource: r, completed, onToggle, comment, onComment }: 
           </button>
         </div>
 
-        <h3 className="font-bold text-gray-900 text-sm leading-snug mb-1.5">{r.title}</h3>
+        <a href={r.url} target="_blank" rel="noopener noreferrer" className="font-bold text-gray-900 text-sm leading-snug mb-1.5 block hover:text-green-700 hover:underline">{r.title}</a>
         <p className="text-xs text-gray-500 line-clamp-2 mb-3">{r.description}</p>
 
         <div className="flex items-center justify-between">
@@ -522,9 +522,9 @@ function ResourceRow({ resource: r, completed, onToggle, comment, onComment }: {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-            <h3 className={`font-semibold text-sm ${completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+            <a href={r.url} target="_blank" rel="noopener noreferrer" className={`font-semibold text-sm hover:underline ${completed ? 'text-gray-400 line-through' : 'text-gray-900 hover:text-green-700'}`}>
               {r.title}
-            </h3>
+            </a>
             {r.featured && (
               <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">Featured</span>
             )}

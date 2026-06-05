@@ -454,7 +454,7 @@ function ResourceCard({ r, done, onToggle, comment, onComment }: {
           </button>
         </div>
 
-        <h3 className={`font-bold text-gray-900 text-sm leading-snug mb-1.5 ${done ? 'line-through text-gray-400' : ''}`}>{r.title}</h3>
+        <a href={r.url} target="_blank" rel="noopener noreferrer" className={`font-bold text-sm leading-snug mb-1.5 block hover:underline ${done ? 'line-through text-gray-400' : 'text-gray-900 hover:text-blue-700'}`}>{r.title}</a>
         <p className="text-xs text-gray-500 leading-relaxed mb-3">{r.description}</p>
 
         <div className="flex flex-wrap gap-1 mb-3">
