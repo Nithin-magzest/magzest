@@ -23,6 +23,7 @@ const RESOURCES = [
     title: 'Application Processing: End-to-End Flow',
     description: 'A complete walkthrough of how an application moves from Submitted → Accepted. Understand every handoff and who is responsible at each stage.',
     duration: '10 min',
+    url: 'https://www.youtube.com/results?search_query=university+application+processing+end+to+end+workflow',
     tags: ['workflow', 'overview'],
   },
   {
@@ -34,6 +35,7 @@ const RESOURCES = [
     title: 'Understanding Every Application Status',
     description: 'Draft, Submitted, Under Review, Offer Received, Accepted, Enrolled, Rejected — what each status means, when to use it, and who triggers the change.',
     duration: '8 min',
+    url: 'https://www.youtube.com/results?search_query=university+application+status+explained',
     tags: ['statuses', 'reference'],
   },
   {
@@ -44,6 +46,7 @@ const RESOURCES = [
     title: 'How to Update an Application Status',
     description: 'Step-by-step guide to updating application status in the system, adding processing notes, and notifying the student and counselor.',
     duration: '5 min',
+    url: 'https://www.youtube.com/results?search_query=how+to+update+university+application+status',
     tags: ['statuses', 'how-to'],
   },
   {
@@ -55,6 +58,7 @@ const RESOURCES = [
     title: 'Document Verification Checklist',
     description: 'How to review Passports, Transcripts, SOP, LOR, and bank statements. What to look for, common issues, and how to mark documents verified or rejected.',
     duration: '12 min',
+    url: 'https://www.youtube.com/results?search_query=international+student+document+verification+checklist',
     tags: ['documents', 'checklist'],
   },
   {
@@ -65,6 +69,7 @@ const RESOURCES = [
     title: 'Spotting Fraudulent or Incomplete Documents',
     description: 'Red flags to watch for in transcripts, degrees, and bank statements. How to escalate suspected issues to senior admin.',
     duration: '10 min',
+    url: 'https://www.youtube.com/results?search_query=how+to+spot+fraudulent+academic+documents',
     tags: ['documents', 'quality'],
   },
   {
@@ -75,6 +80,7 @@ const RESOURCES = [
     title: 'Writing Effective Processing Notes',
     description: 'How to write clear, actionable notes when updating an application. Best practices that help counselors and students understand the next step.',
     duration: '6 min',
+    url: 'https://www.youtube.com/results?search_query=writing+effective+professional+notes+best+practices',
     tags: ['processing', 'notes'],
   },
   {
@@ -85,6 +91,7 @@ const RESOURCES = [
     title: 'Handling a High Volume of Applications',
     description: 'Prioritisation strategies, batch processing tips, and how to use filters in the applications view to work through a large queue efficiently.',
     duration: '8 min',
+    url: 'https://www.youtube.com/results?search_query=handling+high+volume+applications+prioritization+strategies',
     tags: ['processing', 'efficiency'],
   },
   {
@@ -95,6 +102,7 @@ const RESOURCES = [
     title: 'Working with Counselors on Applications',
     description: 'When to involve a counselor, how to use the in-app chat to coordinate, and escalating issues that need counselor action.',
     duration: '7 min',
+    url: 'https://www.youtube.com/results?search_query=working+with+education+counselors+student+applications',
     tags: ['counselors', 'collaboration'],
   },
   {
@@ -105,6 +113,7 @@ const RESOURCES = [
     title: 'Escalation Procedures',
     description: 'When and how to escalate an application to senior admin. What information to include, and expected response times.',
     duration: '6 min',
+    url: 'https://www.youtube.com/results?search_query=escalation+procedures+best+practices+workflow',
     tags: ['escalation', 'admin'],
   },
   {
@@ -115,6 +124,7 @@ const RESOURCES = [
     title: 'Responding to Student Questions',
     description: 'How to use the comment thread on an application to respond to student queries. Tone guidelines and response time expectations.',
     duration: '5 min',
+    url: 'https://www.youtube.com/results?search_query=responding+to+student+queries+professional+communication',
     tags: ['students', 'communication'],
   },
   {
@@ -125,6 +135,7 @@ const RESOURCES = [
     title: 'Processing Offer Letters',
     description: 'What to do when a university sends an offer. How to update the status, attach documents, and guide the student towards acceptance.',
     duration: '8 min',
+    url: 'https://www.youtube.com/results?search_query=university+offer+letter+processing+international+students',
     tags: ['offers', 'processing'],
   },
   {
@@ -135,6 +146,7 @@ const RESOURCES = [
     title: 'Handling Rejections and Reapplications',
     description: 'How to record a rejection, communicate sensitively, and help the student understand reapplication options.',
     duration: '7 min',
+    url: 'https://www.youtube.com/results?search_query=handling+university+rejection+reapplication+guide',
     tags: ['rejection', 'student-support'],
   },
   {
@@ -145,6 +157,7 @@ const RESOURCES = [
     title: 'Using the Live Feed and Activity Logs',
     description: 'How to read the live feed for real-time updates, export activity logs, and prepare summary reports for management.',
     duration: '10 min',
+    url: 'https://www.youtube.com/results?search_query=activity+logs+live+feed+monitoring+reports',
     tags: ['reporting', 'analytics'],
   },
   {
@@ -155,6 +168,7 @@ const RESOURCES = [
     title: 'Generating and Sharing PDF Application Reports',
     description: 'How to generate the PDF report for any application, what it includes, and when to share it with counselors, students, or admin.',
     duration: '4 min',
+    url: 'https://www.youtube.com/results?search_query=generating+sharing+pdf+reports+professional',
     tags: ['pdf', 'reporting'],
   },
   {
@@ -165,6 +179,7 @@ const RESOURCES = [
     title: 'Mastering the Applications Filter & Search',
     description: 'Advanced use of status tabs, counselor filters, and the search bar to quickly locate specific applications and build working queues.',
     duration: '6 min',
+    url: 'https://www.youtube.com/results?search_query=advanced+search+filter+techniques+application+management',
     tags: ['filters', 'efficiency'],
   },
 ];
@@ -214,7 +229,7 @@ function ResourceCard({ resource, completed, onToggle, comment, onComment }: {
             <TypeIcon className="w-4 h-4 text-orange-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight">{resource.title}</h3>
+            <a href={resource.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-sm leading-tight block hover:underline text-gray-900 hover:text-orange-600">{resource.title}</a>
             <p className="text-xs text-gray-500 mt-1 leading-relaxed">{resource.description}</p>
           </div>
         </div>
