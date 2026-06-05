@@ -6,8 +6,8 @@ import { Student } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 
 const EDUCATION_LEVELS = ['10th Grade', '12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
-type AcademicEntry = { id: string; level: string; institution: string; board: string; year: string; percentage: string; city: string; comment: string; };
-function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', institution: '', board: '', year: '', percentage: '', city: '', comment: '' }; }
+type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; year: string; percentage: string; city: string; comment: string; };
+function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', year: '', percentage: '', city: '', comment: '' }; }
 
 const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
 
@@ -414,6 +414,15 @@ export default function StudentProfile() {
                               {EDUCATION_LEVELS.map(l => <option key={l}>{l}</option>)}
                             </select>
                           </div>
+                          {entry.level === 'Other' && (
+                            <div className="sm:col-span-2">
+                              <label className="block text-xs font-medium text-gray-500 mb-1">Specify Class / Level Name</label>
+                              <input aria-label="Custom Level Name" value={entry.customLevel}
+                                placeholder="e.g. ITI, Certificate Course, Vocational Training…"
+                                onChange={e => updateAcademicEntry(entry.id, 'customLevel', e.target.value)}
+                                className="w-full px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            </div>
+                          )}
                           <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">Institution Name</label>
                             <input aria-label="Institution Name" value={entry.institution} placeholder="e.g. St. Joseph's High School"
@@ -458,7 +467,9 @@ export default function StudentProfile() {
                     academicEntries.map(entry => (
                       <div key={entry.id} className="border border-gray-100 bg-gray-50 rounded-xl p-4">
                         <div className="flex items-start gap-3">
-                          <span className="text-xs font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full flex-shrink-0 mt-0.5">{entry.level}</span>
+                          <span className="text-xs font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full flex-shrink-0 mt-0.5">
+                            {entry.level === 'Other' && entry.customLevel ? entry.customLevel : entry.level}
+                          </span>
                           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
                             {entry.institution && <div><p className="text-xs text-gray-400">Institution</p><p className="font-medium text-gray-800">{entry.institution}</p></div>}
                             {entry.board && <div><p className="text-xs text-gray-400">Board / University</p><p className="font-medium text-gray-800">{entry.board}</p></div>}
