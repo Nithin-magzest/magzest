@@ -401,7 +401,7 @@ export default function AdminMeetings() {
           students={students}
           counselors={counselors}
           onClose={() => setShowSchedule(false)}
-          onCreated={m => { setMeetings(prev => [...prev, m]); setShowSchedule(false); setTab('upcoming'); }}
+          onCreated={m => { setMeetings(prev => [m, ...prev]); setShowSchedule(false); setTab('upcoming'); }}
         />
       )}
 

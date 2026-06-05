@@ -6,14 +6,7 @@ import { api } from '../../api';
 import { Counselor } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 
-const EDUCATION_LEVELS = [
-  '10th Grade (Completed)',
-  '12th Grade (Completed)',
-  "Bachelor's (In Progress)",
-  "Bachelor's (Completed)",
-  "Master's (In Progress)",
-  "Master's (Completed)",
-];
+const EDUCATION_LEVELS = ['10th Grade (Completed)', '12th Grade (Completed)', 'Diploma (Completed)', "Bachelor's (In Progress)", "Bachelor's (Completed)", "Master's (In Progress)", "Master's (Completed)", 'PhD (In Progress)', 'PhD (Completed)', 'Other'];
 
 const COUNTRIES = ['Australia', 'Canada', 'Germany', 'Netherlands', 'Singapore', 'United Kingdom', 'United States'];
 

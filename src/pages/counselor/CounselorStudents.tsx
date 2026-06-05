@@ -62,7 +62,7 @@ function RequestDocumentModal({ studentId, onClose, onRequested }: { studentId: 
   );
 }
 
-const EDUCATION_LEVELS = ['High School', 'Diploma', "Bachelor's", "Master's", 'PhD', 'Other'];
+const EDUCATION_LEVELS = ['10th Grade (Completed)', '12th Grade (Completed)', 'Diploma (Completed)', "Bachelor's (In Progress)", "Bachelor's (Completed)", "Master's (In Progress)", "Master's (Completed)", 'PhD (In Progress)', 'PhD (Completed)', 'Other'];
 const ENGLISH_TYPES = ['IELTS', 'TOEFL', 'PTE', 'Duolingo', 'Other'];
 const COUNTRIES = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'New Zealand', 'Ireland', 'Netherlands', 'Singapore', 'France', 'Other'];
 
@@ -282,7 +282,7 @@ function StudentsList() {
     const matchQuery = !query || s.name.toLowerCase().includes(query.toLowerCase()) || s.email.toLowerCase().includes(query.toLowerCase()) || s.nationality?.toLowerCase().includes(query.toLowerCase());
     const matchStatus = !statusFilter || s.status === statusFilter;
     return matchQuery && matchStatus;
-  });
+  }).sort((a: any, b: any) => new Date(b.joinedDate || b.createdAt || 0).getTime() - new Date(a.joinedDate || a.createdAt || 0).getTime());
 
   return (
     <div className="space-y-6">

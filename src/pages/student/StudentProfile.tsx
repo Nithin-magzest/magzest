@@ -10,6 +10,8 @@ type AcademicEntry = { id: string; level: string; customLevel: string; instituti
 function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', year: '', percentage: '', city: '', comment: '' }; }
 
 const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
+const ALL_COUNTRIES = ['Australia', 'Canada', 'France', 'Germany', 'Ireland', 'Netherlands', 'New Zealand', 'Singapore', 'United Kingdom', 'United States', 'Other'];
+const ALL_COURSES = ['Arts & Humanities', 'Business', 'Computer Science', 'Data Science', 'Engineering', 'Finance', 'Law', 'Medicine', 'MBA', 'Pharmacy', 'Psychology', 'Other'];
 
 function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onUploaded: () => void }) {
   const [name, setName] = useState('');
@@ -132,6 +134,11 @@ export default function StudentProfile() {
     },
     educationLevel: student?.educationLevel || '',
     gpa: student?.gpa || 0,
+    englishTestType: student?.englishScore?.type || '',
+    englishTestScore: student?.englishScore?.score || '',
+    budget: student?.budget || '',
+    preferredCountries: student?.preferredCountries || [] as string[],
+    interestedCourses: student?.interestedCourses || [] as string[],
   });
 
   if (!student) return null;
@@ -163,6 +170,10 @@ export default function StudentProfile() {
         passport: form.passport.number ? form.passport : undefined,
         address: form.address.city ? form.address : undefined,
         academicDetails: academicEntries.map(({ id, ...rest }) => rest),
+        englishScore: form.englishTestType ? { type: form.englishTestType, score: Number(form.englishTestScore) } : undefined,
+        budget: form.budget ? Number(form.budget) : undefined,
+        preferredCountries: form.preferredCountries,
+        interestedCourses: form.interestedCourses,
       });
       await refreshUser();
       setEditing(false);
@@ -349,9 +360,17 @@ export default function StudentProfile() {
                 {editing ? (
                   <select aria-label="Education level" value={form.educationLevel} onChange={e => setForm(f => ({ ...f, educationLevel: e.target.value }))}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">Select education level</option>
+                    <option>10th Grade (Completed)</option>
                     <option>12th Grade (Completed)</option>
+                    <option>Diploma (Completed)</option>
+                    <option>Bachelor's (In Progress)</option>
                     <option>Bachelor's (Completed)</option>
+                    <option>Master's (In Progress)</option>
                     <option>Master's (Completed)</option>
+                    <option>PhD (In Progress)</option>
+                    <option>PhD (Completed)</option>
+                    <option>Other</option>
                   </select>
                 ) : <p className="text-gray-900 font-medium">{student.educationLevel || '—'}</p>}
               </div>
@@ -365,11 +384,30 @@ export default function StudentProfile() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">English Test</label>
-                <p className="text-gray-900 font-medium">{student.englishScore ? `${student.englishScore.type}: ${student.englishScore.score}` : '—'}</p>
+                {editing ? (
+                  <div className="flex gap-2">
+                    <select aria-label="English test type" value={form.englishTestType} onChange={e => setForm(f => ({ ...f, englishTestType: e.target.value }))}
+                      className="w-1/2 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                      <option value="">Select test</option>
+                      <option>IELTS</option>
+                      <option>TOEFL</option>
+                      <option>PTE</option>
+                      <option>Duolingo</option>
+                      <option>Other</option>
+                    </select>
+                    <input type="number" aria-label="English test score" value={form.englishTestScore} step={0.5}
+                      onChange={e => setForm(f => ({ ...f, englishTestScore: e.target.value }))}
+                      placeholder="Score" className="w-1/2 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  </div>
+                ) : <p className="text-gray-900 font-medium">{student.englishScore ? `${student.englishScore.type}: ${student.englishScore.score}` : '—'}</p>}
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Annual Budget</label>
-                <p className="text-gray-900 font-medium">${(student.budget || 0).toLocaleString()}</p>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Annual Budget (USD)</label>
+                {editing ? (
+                  <input type="number" aria-label="Annual budget" value={form.budget}
+                    onChange={e => setForm(f => ({ ...f, budget: e.target.value }))}
+                    placeholder="e.g. 30000" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                ) : <p className="text-gray-900 font-medium">${(student.budget || 0).toLocaleString()}</p>}
               </div>
             </div>
 
@@ -499,19 +537,59 @@ export default function StudentProfile() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-2">Preferred Countries</label>
-                <div className="flex flex-wrap gap-2">
-                  {(student.preferredCountries || []).map((c: string) => (
-                    <span key={c} className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
-                  ))}
-                </div>
+                {editing ? (
+                  <div className="flex flex-wrap gap-2">
+                    {ALL_COUNTRIES.map(c => {
+                      const selected = form.preferredCountries.includes(c);
+                      return (
+                        <button key={c} type="button"
+                          onClick={() => setForm(f => ({
+                            ...f,
+                            preferredCountries: selected ? f.preferredCountries.filter(x => x !== c) : [...f.preferredCountries, c]
+                          }))}
+                          className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'}`}>
+                          {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {(student.preferredCountries || []).length > 0
+                      ? (student.preferredCountries || []).map((c: string) => (
+                          <span key={c} className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
+                        ))
+                      : <span className="text-gray-400 text-sm">No countries selected</span>}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-2">Interested Courses</label>
-                <div className="flex flex-wrap gap-2">
-                  {(student.interestedCourses || []).map((c: string) => (
-                    <span key={c} className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
-                  ))}
-                </div>
+                {editing ? (
+                  <div className="flex flex-wrap gap-2">
+                    {ALL_COURSES.map(c => {
+                      const selected = form.interestedCourses.includes(c);
+                      return (
+                        <button key={c} type="button"
+                          onClick={() => setForm(f => ({
+                            ...f,
+                            interestedCourses: selected ? f.interestedCourses.filter(x => x !== c) : [...f.interestedCourses, c]
+                          }))}
+                          className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-300 hover:border-purple-400'}`}>
+                          {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {(student.interestedCourses || []).length > 0
+                      ? (student.interestedCourses || []).map((c: string) => (
+                          <span key={c} className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
+                        ))
+                      : <span className="text-gray-400 text-sm">No courses selected</span>}
+                  </div>
+                )}
               </div>
             </div>
           </div>

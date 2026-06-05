@@ -17,7 +17,7 @@ const SPECIALIZATIONS = [
 ];
 const COUNTRIES = ['UK', 'Canada', 'Australia', 'Germany', 'Netherlands', 'Singapore', 'USA', 'Ireland', 'New Zealand'];
 const COURSES = ['Computer Science', 'Engineering', 'Business', 'Medicine', 'Law', 'Arts', 'Data Science', 'Finance', 'Psychology'];
-const EDUCATION_LEVELS = ['High School', "Bachelor's", "Master's", 'PhD'];
+const EDUCATION_LEVELS = ['10th Grade (Completed)', '12th Grade (Completed)', 'Diploma (Completed)', "Bachelor's (In Progress)", "Bachelor's (Completed)", "Master's (In Progress)", "Master's (Completed)", 'PhD (In Progress)', 'PhD (Completed)', 'Other'];
 const ENGLISH_TYPES = ['IELTS', 'TOEFL', 'PTE', 'Duolingo'];
 const LANGUAGES = ['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'French', 'German', 'Spanish', 'Arabic', 'Mandarin', 'Japanese'];
 const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
@@ -1488,12 +1488,12 @@ export default function AdminDashboard() {
       s.joinedDate && s.joinedDate.slice(0, 10) === studentDateFilter
     );
     return matchesText && matchesDate;
-  });
+  }).sort((a, b) => new Date(b.joinedDate || b.createdAt || 0).getTime() - new Date(a.joinedDate || a.createdAt || 0).getTime());
 
   const filteredCounselors = counselors.filter(c =>
     c.name?.toLowerCase().includes(counselorSearch.toLowerCase()) ||
     c.email?.toLowerCase().includes(counselorSearch.toLowerCase())
-  );
+  ).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   return (
     <>
@@ -1501,7 +1501,7 @@ export default function AdminDashboard() {
         <NewCounselorModal
           onClose={() => setShowNewCounselor(false)}
           onCreated={c => {
-            setCounselors(prev => [...prev, c]);
+            setCounselors(prev => [c, ...prev]);
             setStats((s: any) => s ? { ...s, totalCounselors: s.totalCounselors + 1 } : s);
             setShowNewCounselor(false);
           }}
@@ -1512,7 +1512,7 @@ export default function AdminDashboard() {
           counselors={counselors}
           onClose={() => setShowNewStudent(false)}
           onCreated={s => {
-            setStudents(prev => [...prev, s]);
+            setStudents(prev => [s, ...prev]);
             setStats((st: any) => st ? { ...st, totalStudents: st.totalStudents + 1, activeStudents: st.activeStudents + 1 } : st);
             setShowNewStudent(false);
           }}

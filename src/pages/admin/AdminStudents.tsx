@@ -14,7 +14,7 @@ import StatusBadge from '../../components/StatusBadge';
 // ── Constants ────────────────────────────────────────────────────────────────
 const COUNTRIES = ['UK', 'Canada', 'Australia', 'Germany', 'Netherlands', 'Singapore', 'USA', 'Ireland', 'New Zealand'];
 const COURSES = ['Computer Science', 'Engineering', 'Business', 'Medicine', 'Law', 'Arts', 'Data Science', 'Finance', 'Psychology'];
-const EDUCATION_LEVELS = ['High School', "Bachelor's", "Master's", 'PhD'];
+const EDUCATION_LEVELS = ['10th Grade (Completed)', '12th Grade (Completed)', 'Diploma (Completed)', "Bachelor's (In Progress)", "Bachelor's (Completed)", "Master's (In Progress)", "Master's (Completed)", 'PhD (In Progress)', 'PhD (Completed)', 'Other'];
 const ENGLISH_TYPES = ['IELTS', 'TOEFL', 'PTE', 'Duolingo'];
 const INTAKE_OPTIONS = ['2025 Jan', '2025 May', '2025 Sep', '2026 Jan', '2026 May', '2026 Sep'];
 const DEFAULT_STUDENT_FORM = {
@@ -525,7 +525,7 @@ export default function AdminStudents() {
       if (!s.name?.toLowerCase().includes(q) && !s.email?.toLowerCase().includes(q) && !s.phone?.toLowerCase().includes(q)) return false;
     }
     return true;
-  });
+  }).sort((a, b) => new Date(b.joinedDate || b.createdAt || 0).getTime() - new Date(a.joinedDate || a.createdAt || 0).getTime());
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -608,7 +608,7 @@ export default function AdminStudents() {
 
   return (
     <>
-      {showNewStudent && <NewStudentModal counselors={counselors} onClose={() => setShowNewStudent(false)} onCreated={s => { setStudents(prev => [...prev, s]); setShowNewStudent(false); }} />}
+      {showNewStudent && <NewStudentModal counselors={counselors} onClose={() => setShowNewStudent(false)} onCreated={s => { setStudents(prev => [s, ...prev]); setShowNewStudent(false); }} />}
       {selectedStudent && (
         <StudentDetailModal student={selectedStudent} onClose={() => setSelectedStudent(null)}
           onChat={() => { navigate('/admin/chat', { state: { openChatWith: { _id: normalId(selectedStudent), name: selectedStudent.name } } }); setSelectedStudent(null); }}

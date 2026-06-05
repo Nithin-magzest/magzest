@@ -417,6 +417,7 @@ export default function StudentApplications() {
     offer_received: apps.filter((a: any) => a.status === 'offer_received').length,
     accepted: apps.filter((a: any) => a.status === 'accepted').length,
     rejected: apps.filter((a: any) => a.status === 'rejected').length,
+    enrolled: apps.filter((a: any) => a.status === 'enrolled').length,
   };
 
   const acceptOffer = async (appId: string) => {
@@ -473,13 +474,14 @@ export default function StudentApplications() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
         {([
           { key: 'all',            label: 'All',            inactive: 'bg-blue-50 border-blue-200 text-blue-800',       active: 'bg-[#0d1b4b] border-[#0d1b4b] text-white' },
           { key: 'submitted',      label: 'Submitted',      inactive: 'bg-sky-50 border-sky-200 text-sky-800',           active: 'bg-sky-500 border-sky-500 text-white' },
           { key: 'under_review',   label: 'Under Review',   inactive: 'bg-amber-50 border-amber-200 text-amber-800',     active: 'bg-amber-400 border-amber-400 text-white' },
           { key: 'offer_received', label: 'Offer Received', inactive: 'bg-purple-50 border-purple-200 text-purple-800',  active: 'bg-purple-500 border-purple-500 text-white' },
           { key: 'accepted',       label: 'Accepted',       inactive: 'bg-green-50 border-green-200 text-green-800',     active: 'bg-green-500 border-green-500 text-white' },
+          { key: 'enrolled',       label: 'Enrolled',       inactive: 'bg-teal-50 border-teal-200 text-teal-800',        active: 'bg-teal-500 border-teal-500 text-white' },
           { key: 'rejected',       label: 'Rejected',       inactive: 'bg-red-50 border-red-200 text-red-800',           active: 'bg-red-500 border-red-500 text-white' },
         ] as const).map(({ key, label, inactive, active }) => (
           <button type="button" key={key} onClick={() => setFilter(key)}
