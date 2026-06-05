@@ -135,7 +135,7 @@ export default function AppDashboard() {
         if (!haystack.includes(q)) return false;
       }
       return true;
-    });
+    }).sort((a, b) => new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime() - new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime());
   }, [enriched, search, statusFilter, counselorFilter]);
 
   const handleSelect = useCallback(async (app: any) => {
