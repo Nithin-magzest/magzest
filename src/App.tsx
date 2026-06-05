@@ -48,6 +48,7 @@ const CounselorCourses      = lazy(() => import('./pages/counselor/CounselorCour
 const CounselorCountries    = lazy(() => import('./pages/counselor/CounselorCountries'));
 const CounselorApplications = lazy(() => import('./pages/counselor/CounselorApplications'));
 const CounselorMeetings     = lazy(() => import('./pages/counselor/CounselorMeetings'));
+const CounselorLearning     = lazy(() => import('./pages/counselor/CounselorLearning'));
 
 // Admin module
 const AdminLayout            = lazy(() => import('./pages/admin/AdminLayout'));
@@ -154,6 +155,7 @@ export default function App() {
               <Route path="activities" element={<Activities />} />
               <Route path="meetings" element={<CounselorMeetings />} />
               <Route path="applications" element={<CounselorApplications />} />
+              <Route path="learning" element={<CounselorLearning />} />
             </Route>
 
             {/* Admin module */}
