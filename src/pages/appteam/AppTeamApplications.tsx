@@ -7,7 +7,7 @@ import {
   Search, X, ChevronRight, Download, FileText,
   User, UserCog, Layers, Calendar, Clock, CheckCircle,
   AlertCircle, BookOpen, Globe, DollarSign, MessageSquare,
-  Send, ChevronDown, ChevronUp,
+  Send, ChevronDown, ChevronUp, GraduationCap,
 } from 'lucide-react';
 
 const STATUSES = [
@@ -530,6 +530,10 @@ export default function AppTeamApplications() {
             <option value="all">All Counselors</option>
             {counselors.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
+          <Link to="/appteam/learning"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 rounded-lg text-xs font-semibold transition-colors flex-shrink-0">
+            <GraduationCap className="w-3.5 h-3.5" /> Learning Hub
+          </Link>
           <span className="text-xs text-gray-400 ml-auto">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
           {(search || statusFilter !== 'all' || counselorFilter !== 'all') && (
             <button type="button" onClick={() => { setSearch(''); setStatusFilter('all'); setCounselorFilter('all'); }}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Layers, Users, UserCog, CalendarDays, Activity, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Layers, Users, UserCog, CalendarDays, Activity, MessageSquare, GraduationCap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
 
@@ -12,6 +12,7 @@ const navItems: { to: string; label: string; icon: React.ComponentType<{ classNa
   { to: '/appteam/chat',         label: 'Chat',         icon: MessageSquare },
   { to: '/appteam/activities',   label: 'Activities',   icon: CalendarDays },
   { to: '/appteam/live-feed',    label: 'Live Feed',    icon: Activity },
+  { to: '/appteam/learning',     label: 'Learning Hub', icon: GraduationCap },
 ];
 
 export default function AppTeamLayout() {

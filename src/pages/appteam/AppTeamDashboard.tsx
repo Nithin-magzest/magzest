@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
-import { Layers, Users, UserCog, TrendingUp, Clock, CheckCircle, ArrowRight } from 'lucide-react';
+import { Layers, Users, UserCog, TrendingUp, Clock, CheckCircle, ArrowRight, GraduationCap } from 'lucide-react';
 import ActivityFeed from '../../components/ActivityFeed';
 import MeetingPanel from '../../components/MeetingPanel';
 
@@ -252,6 +252,23 @@ export default function AppTeamDashboard() {
         <div>
           <MeetingPanel theme="orange" meetingsPagePath="/admin/meetings" />
         </div>
+      </div>
+
+      {/* Learning Hub CTA */}
+      <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <GraduationCap className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-white font-bold text-base leading-tight">Application Team Training</p>
+            <p className="text-orange-100 text-xs mt-0.5">Learn processing workflows, status rules, document checks, and escalation procedures.</p>
+          </div>
+        </div>
+        <Link to="/appteam/learning"
+          className="flex items-center gap-2 bg-white text-orange-600 font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-orange-50 transition-colors whitespace-nowrap flex-shrink-0">
+          Open Learning Hub <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* Quick stats footer */}
