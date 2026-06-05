@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X, Award, Edit3, CheckCircle2, Target, ClipboardList, MessageCircle, Send, UserCog, GraduationCap } from 'lucide-react';
+import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X, Award, Edit3, CheckCircle2, Target, ClipboardList, MessageCircle, Send, UserCog, GraduationCap, MapPin, BookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -160,6 +160,7 @@ export default function CounselorDashboard() {
   const { user } = useAuth();
   const counselor = user as Counselor;
   const [students, setStudents] = useState<any[]>([]);
+  const [universities, setUniversities] = useState<any[]>([]);
   const [showNewStudent, setShowNewStudent] = useState(false);
   const [workNote, setWorkNote] = useState((user as any)?.bio || '');
   const [editingNote, setEditingNote] = useState(false);
@@ -174,7 +175,10 @@ export default function CounselorDashboard() {
       setStudents(mine);
     }).catch(() => {});
 
-  useEffect(() => { refreshStudents(); }, []);
+  useEffect(() => {
+    refreshStudents();
+    api.universities.list().then(setUniversities).catch(() => {});
+  }, []);
 
   const submitReply = async (appId: string) => {
     const text = (replyTexts[appId] || '').trim();
@@ -537,6 +541,73 @@ export default function CounselorDashboard() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* University Board */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-green-600" />
+            <h2 className="text-lg font-bold text-gray-900">University Board</h2>
+            <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">
+              {universities.length} partners
+            </span>
+          </div>
+          <Link
+            to="/counselor/universities"
+            className="flex items-center gap-1.5 bg-green-500 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-green-600 transition-colors"
+          >
+            View All <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+        {universities.length === 0 ? (
+          <div className="text-center py-10 text-gray-400">
+            <GraduationCap className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">No universities loaded yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {universities.slice(0, 4).map((uni: any) => (
+              <Link
+                key={uni._id || uni.id}
+                to="/counselor/universities"
+                className="group flex flex-col gap-3 bg-gray-50 hover:bg-green-50 border border-gray-100 hover:border-green-200 rounded-xl p-4 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center text-[#0d1b4b] font-bold text-lg flex-shrink-0 shadow-sm">
+                    {uni.name?.charAt(0) || '?'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 text-sm leading-tight line-clamp-1 group-hover:text-green-800">{uni.name}</p>
+                    <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                      <MapPin className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">{uni.city}, {uni.country}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" /> {uni.rating ?? '—'}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" /> {uni.courses?.length ?? 0} courses
+                  </span>
+                  <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold">#{uni.ranking}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+        {universities.length > 4 && (
+          <div className="mt-4 text-center">
+            <Link
+              to="/counselor/universities"
+              className="inline-flex items-center gap-1.5 text-sm text-green-700 font-semibold hover:text-green-800 transition-colors"
+            >
+              +{universities.length - 4} more universities — View All <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
