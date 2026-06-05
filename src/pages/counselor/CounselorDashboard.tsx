@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X, Award, Edit3, CheckCircle2, Target, ClipboardList, MessageCircle, Send, UserCog } from 'lucide-react';
+import { Users, FileText, MessageSquare, TrendingUp, AlertCircle, ArrowRight, Star, Plus, X, Award, Edit3, CheckCircle2, Target, ClipboardList, MessageCircle, Send, UserCog, GraduationCap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -541,12 +541,13 @@ export default function CounselorDashboard() {
 
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
             { label: 'View All Students', icon: Users, to: '/counselor/students', color: 'bg-green-50 text-green-700 border-green-200' },
             { label: 'Open Chat', icon: MessageSquare, to: '/counselor/chat', color: 'bg-green-50 text-green-700 border-green-200' },
             { label: 'Browse Universities', icon: TrendingUp, to: '/counselor/universities', color: 'bg-green-50 text-green-700 border-green-200' },
             { label: 'Search Engine', icon: FileText, to: '/search', color: 'bg-green-50 text-green-700 border-green-200' },
+            { label: 'Learning Hub', icon: GraduationCap, to: '/counselor/learning', color: 'bg-amber-50 text-amber-700 border-amber-200' },
           ].map(action => (
             <Link key={action.label} to={action.to} className={`flex flex-col items-center p-5 rounded-xl border-2 hover:shadow-md transition-all gap-2 ${action.color}`}>
               <action.icon className="w-6 h-6" />

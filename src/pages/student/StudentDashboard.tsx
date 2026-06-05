@@ -1,6 +1,6 @@
 ﻿import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Clock, CheckCircle, Bell, ArrowRight, Star, MapPin, Upload, X, AlertCircle, ExternalLink, CalendarDays } from 'lucide-react';
+import { FileText, Clock, CheckCircle, Bell, ArrowRight, Star, MapPin, Upload, X, AlertCircle, ExternalLink, CalendarDays, GraduationCap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Student } from '../../types';
@@ -450,6 +450,23 @@ export default function StudentDashboard() {
           </div>
         </div>
       )}
+
+      {/* Learning Hub CTA */}
+      <div className="bg-gradient-to-r from-[#0d1b4b] to-indigo-700 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <GraduationCap className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-white font-bold text-base leading-tight">New to university applications?</p>
+            <p className="text-blue-200 text-xs mt-0.5">Learn how to apply — from choosing a university to getting your visa.</p>
+          </div>
+        </div>
+        <Link to="/student/learning"
+          className="flex items-center gap-2 bg-white text-[#0d1b4b] font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-colors whitespace-nowrap flex-shrink-0">
+          Open Learning Hub <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
 
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
         <div className="flex items-center justify-between mb-5">
