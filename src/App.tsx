@@ -36,6 +36,7 @@ const StudentChat         = lazy(() => import('./pages/student/StudentChat'));
 const StudentCourses      = lazy(() => import('./pages/student/StudentCourses'));
 const StudentCountries    = lazy(() => import('./pages/student/StudentCountries'));
 const StudentMeetings     = lazy(() => import('./pages/student/StudentMeetings'));
+const StudentLearning     = lazy(() => import('./pages/student/StudentLearning'));
 
 // Counselor module
 const CounselorLayout       = lazy(() => import('./pages/counselor/CounselorLayout'));
@@ -141,6 +142,7 @@ export default function App() {
               <Route path="countries" element={<StudentCountries />} />
               <Route path="activities" element={<Activities />} />
               <Route path="meetings" element={<StudentMeetings />} />
+              <Route path="learning" element={<StudentLearning />} />
             </Route>
 
             {/* Counselor module */}

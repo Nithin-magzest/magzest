@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   FileText, RefreshCw, Search, X, ChevronDown, AlertTriangle,
   CheckCircle, Clock, Send, Award, XCircle, BookOpen, Edit2,
-  GraduationCap, Plus, Trash2, ChevronUp,
+  GraduationCap, Plus, Trash2, ChevronUp, ArrowRight,
 } from 'lucide-react';
 import { api } from '../../api';
 import StatusBadge from '../../components/StatusBadge';
@@ -428,11 +428,17 @@ export default function CounselorApplications() {
                 <h1 className="text-2xl font-bold leading-tight">Student Applications</h1>
               </div>
             </div>
-            <button type="button" onClick={loadData} disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors disabled:opacity-50">
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <Link to="/counselor/learning"
+                className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors">
+                <GraduationCap className="w-4 h-4" /> Learning Hub
+              </Link>
+              <button type="button" onClick={loadData} disabled={loading}
+                className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors disabled:opacity-50">
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
           </div>
 
           {/* Status strip */}
