@@ -233,6 +233,7 @@ const TYPE_CONFIG: Record<ResourceType, { label: string; color: string; icon: Re
 };
 
 const STORAGE_KEY = 'counselor_learning_completed';
+const COMMENTS_KEY = 'counselor_learning_comments';
 
 function loadCompleted(): Set<string> {
   try {
@@ -252,6 +253,10 @@ export default function CounselorLearning() {
   const [search, setSearch] = useState('');
   const [completed, setCompleted] = useState<Set<string>>(loadCompleted);
   const [typeFilter, setTypeFilter] = useState<ResourceType | 'all'>('all');
+  const [comments, setComments] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem(COMMENTS_KEY) || '{}'); }
+    catch { return {}; }
+  });
 
   useEffect(() => { saveCompleted(completed); }, [completed]);
 
@@ -259,6 +264,14 @@ export default function CounselorLearning() {
     setCompleted(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const setComment = (id: string, text: string) => {
+    setComments(prev => {
+      const next = { ...prev, [id]: text };
+      localStorage.setItem(COMMENTS_KEY, JSON.stringify(next));
       return next;
     });
   };
@@ -338,7 +351,7 @@ export default function CounselorLearning() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {featured.map(r => (
-            <FeaturedCard key={r.id} resource={r} completed={completed.has(r.id)} onToggle={() => toggleComplete(r.id)} />
+            <FeaturedCard key={r.id} resource={r} completed={completed.has(r.id)} onToggle={() => toggleComplete(r.id)} comment={comments[r.id] || ''} onComment={v => setComment(r.id, v)} />
           ))}
         </div>
       </div>
@@ -409,7 +422,7 @@ export default function CounselorLearning() {
             </div>
           ) : (
             filtered.map(r => (
-              <ResourceRow key={r.id} resource={r} completed={completed.has(r.id)} onToggle={() => toggleComplete(r.id)} />
+              <ResourceRow key={r.id} resource={r} completed={completed.has(r.id)} onToggle={() => toggleComplete(r.id)} comment={comments[r.id] || ''} onComment={v => setComment(r.id, v)} />
             ))
           )}
         </div>
@@ -418,7 +431,13 @@ export default function CounselorLearning() {
   );
 }
 
-function FeaturedCard({ resource: r, completed, onToggle }: { resource: Resource; completed: boolean; onToggle: () => void }) {
+function FeaturedCard({ resource: r, completed, onToggle, comment, onComment }: {
+  resource: Resource;
+  completed: boolean;
+  onToggle: () => void;
+  comment: string;
+  onComment: (val: string) => void;
+}) {
   const typeConf = TYPE_CONFIG[r.type];
   const TypeIcon = typeConf.icon;
   const catConf = CATEGORIES.find(c => c.id === r.category);
@@ -467,71 +486,97 @@ function FeaturedCard({ resource: r, completed, onToggle }: { resource: Resource
         </div>
       </div>
       {completed && (
-        <div className="px-5 py-2 bg-green-50 border-t border-green-100 text-xs text-green-700 font-medium flex items-center gap-1.5">
-          <CheckCircle className="w-3.5 h-3.5" /> Completed
+        <div className="border-t border-green-100 bg-green-50/40 px-5 py-3">
+          <p className="text-[11px] font-semibold text-gray-500 mb-1.5">Notes</p>
+          <textarea
+            value={comment}
+            onChange={e => onComment(e.target.value)}
+            placeholder="Add a note about this resource…"
+            rows={2}
+            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-green-400 text-gray-700 placeholder-gray-300 bg-white"
+          />
         </div>
       )}
     </div>
   );
 }
 
-function ResourceRow({ resource: r, completed, onToggle }: { resource: Resource; completed: boolean; onToggle: () => void }) {
+function ResourceRow({ resource: r, completed, onToggle, comment, onComment }: {
+  resource: Resource;
+  completed: boolean;
+  onToggle: () => void;
+  comment: string;
+  onComment: (val: string) => void;
+}) {
   const typeConf = TYPE_CONFIG[r.type];
   const TypeIcon = typeConf.icon;
 
   return (
-    <div className={`flex items-center gap-4 px-5 py-4 transition-colors ${completed ? 'bg-green-50/40' : 'hover:bg-gray-50/50'}`}>
-      {/* Type icon */}
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeConf.color}`}>
-        <TypeIcon className="w-5 h-5" />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <h3 className={`font-semibold text-sm ${completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-            {r.title}
-          </h3>
-          {r.featured && (
-            <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">Featured</span>
-          )}
+    <div className={`transition-colors ${completed ? 'bg-green-50/40' : 'hover:bg-gray-50/50'}`}>
+      <div className="flex items-center gap-4 px-5 py-4">
+        {/* Type icon */}
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeConf.color}`}>
+          <TypeIcon className="w-5 h-5" />
         </div>
-        <p className="text-xs text-gray-500 line-clamp-1">{r.description}</p>
-        <div className="flex items-center gap-3 mt-1">
-          <span className="flex items-center gap-1 text-xs text-gray-400">
-            <Clock className="w-3 h-3" />{r.duration}
-          </span>
-          <div className="flex gap-1 flex-wrap">
-            {r.tags.slice(0, 2).map(tag => (
-              <span key={tag} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">{tag}</span>
-            ))}
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+            <h3 className={`font-semibold text-sm ${completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+              {r.title}
+            </h3>
+            {r.featured && (
+              <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">Featured</span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 line-clamp-1">{r.description}</p>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="flex items-center gap-1 text-xs text-gray-400">
+              <Clock className="w-3 h-3" />{r.duration}
+            </span>
+            <div className="flex gap-1 flex-wrap">
+              {r.tags.slice(0, 2).map(tag => (
+                <span key={tag} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">{tag}</span>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <a
-          href={r.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          <ExternalLink className="w-3.5 h-3.5" /> Open
-        </a>
-        <button
-          type="button"
-          onClick={onToggle}
-          title={completed ? 'Mark incomplete' : 'Mark complete'}
-          className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${
-            completed
-              ? 'bg-green-600 border-green-600 text-white'
-              : 'border-gray-200 hover:border-green-400 text-transparent hover:text-green-400'
-          }`}
-        >
-          <CheckCircle className="w-4 h-4" />
-        </button>
+        {/* Actions */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <a
+            href={r.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <ExternalLink className="w-3.5 h-3.5" /> Open
+          </a>
+          <button
+            type="button"
+            onClick={onToggle}
+            title={completed ? 'Mark incomplete' : 'Mark complete'}
+            className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${
+              completed
+                ? 'bg-green-600 border-green-600 text-white'
+                : 'border-gray-200 hover:border-green-400 text-transparent hover:text-green-400'
+            }`}
+          >
+            <CheckCircle className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+      {completed && (
+        <div className="px-5 pb-4">
+          <textarea
+            value={comment}
+            onChange={e => onComment(e.target.value)}
+            placeholder="Add a note about this resource…"
+            rows={2}
+            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-green-400 text-gray-700 placeholder-gray-300 bg-white"
+          />
+        </div>
+      )}
     </div>
   );
 }

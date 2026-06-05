@@ -282,6 +282,7 @@ const TYPE_CONFIG: Record<ResourceType, { label: string; color: string; icon: Re
 };
 
 const STORAGE_KEY = 'student_learning_completed';
+const COMMENTS_KEY = 'student_learning_comments';
 
 function loadCompleted(): Set<string> {
   try {
@@ -297,12 +298,24 @@ export default function StudentLearning() {
   const [activeCategory, setActiveCategory] = useState<Category>('all');
   const [search, setSearch] = useState('');
   const [completed, setCompleted] = useState<Set<string>>(loadCompleted);
+  const [comments, setComments] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem(COMMENTS_KEY) || '{}'); }
+    catch { return {}; }
+  });
 
   const toggle = (id: string) => {
     setCompleted(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       saveCompleted(next);
+      return next;
+    });
+  };
+
+  const setComment = (id: string, text: string) => {
+    setComments(prev => {
+      const next = { ...prev, [id]: text };
+      localStorage.setItem(COMMENTS_KEY, JSON.stringify(next));
       return next;
     });
   };
@@ -393,7 +406,7 @@ export default function StudentLearning() {
             <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" /> Featured
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {featured.map(r => <ResourceCard key={r.id} r={r} done={completed.has(r.id)} onToggle={toggle} />)}
+            {featured.map(r => <ResourceCard key={r.id} r={r} done={completed.has(r.id)} onToggle={toggle} comment={comments[r.id] || ''} onComment={v => setComment(r.id, v)} />)}
           </div>
         </div>
       )}
@@ -405,7 +418,7 @@ export default function StudentLearning() {
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">More Resources</h2>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {rest.map(r => <ResourceCard key={r.id} r={r} done={completed.has(r.id)} onToggle={toggle} />)}
+            {rest.map(r => <ResourceCard key={r.id} r={r} done={completed.has(r.id)} onToggle={toggle} comment={comments[r.id] || ''} onComment={v => setComment(r.id, v)} />)}
           </div>
         </div>
       )}
@@ -413,7 +426,13 @@ export default function StudentLearning() {
   );
 }
 
-function ResourceCard({ r, done, onToggle }: { r: Resource; done: boolean; onToggle: (id: string) => void }) {
+function ResourceCard({ r, done, onToggle, comment, onComment }: {
+  r: Resource;
+  done: boolean;
+  onToggle: (id: string) => void;
+  comment: string;
+  onComment: (val: string) => void;
+}) {
   const typeCfg = TYPE_CONFIG[r.type];
   const TypeIcon = typeCfg.icon;
 
@@ -454,6 +473,18 @@ function ResourceCard({ r, done, onToggle }: { r: Resource; done: boolean; onTog
           </a>
         </div>
       </div>
+      {done && (
+        <div className="border-t border-green-100 bg-green-50/40 px-5 py-3">
+          <p className="text-[11px] font-semibold text-gray-500 mb-1.5">Notes</p>
+          <textarea
+            value={comment}
+            onChange={e => onComment(e.target.value)}
+            placeholder="Add a note about this resource…"
+            rows={2}
+            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 text-gray-700 placeholder-gray-300 bg-white"
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { GraduationCap, BookOpen, CheckCircle, Search, X, Play, FileText, Layers, UserCog, MessageSquare, TrendingUp, AlertCircle, Zap } from 'lucide-react';
 
 const STORAGE_KEY = 'appteam_learning_completed';
+const COMMENTS_KEY = 'appteam_learning_comments';
 
 const CATEGORIES = [
   { id: 'all',           label: 'All Resources', icon: Layers },
@@ -181,43 +182,63 @@ const LEVEL_COLORS: Record<string, string> = {
   Advanced:     'bg-red-50 text-red-700 border-red-200',
 };
 
-function ResourceCard({ resource, completed, onToggle }: { resource: typeof RESOURCES[0]; completed: boolean; onToggle: () => void }) {
+function ResourceCard({ resource, completed, onToggle, comment, onComment }: {
+  resource: typeof RESOURCES[0];
+  completed: boolean;
+  onToggle: () => void;
+  comment: string;
+  onComment: (val: string) => void;
+}) {
   const TypeIcon = TYPE_ICONS[resource.type] || FileText;
   return (
-    <div className={`bg-white rounded-xl border p-5 flex flex-col gap-3 shadow-sm transition-all ${completed ? 'border-green-300 bg-green-50/30' : 'border-gray-100 hover:border-orange-200 hover:shadow-md'}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${LEVEL_COLORS[resource.level]}`}>{resource.level}</span>
-          <span className="text-xs text-gray-400 capitalize">{resource.type}</span>
+    <div className={`bg-white rounded-xl border shadow-sm transition-all overflow-hidden ${completed ? 'border-green-300 bg-green-50/30' : 'border-gray-100 hover:border-orange-200 hover:shadow-md'}`}>
+      <div className="p-5 flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${LEVEL_COLORS[resource.level]}`}>{resource.level}</span>
+            <span className="text-xs text-gray-400 capitalize">{resource.type}</span>
+          </div>
+          <button
+            type="button"
+            onClick={onToggle}
+            title={completed ? 'Mark as incomplete' : 'Mark as complete'}
+            className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-colors ${
+              completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-green-400'
+            }`}
+          >
+            {completed && <CheckCircle className="w-4 h-4" />}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          title={completed ? 'Mark as incomplete' : 'Mark as complete'}
-          className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-colors ${
-            completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-green-400'
-          }`}
-        >
-          {completed && <CheckCircle className="w-4 h-4" />}
-        </button>
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
+            <TypeIcon className="w-4 h-4 text-orange-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 text-sm leading-tight">{resource.title}</h3>
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">{resource.description}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex flex-wrap gap-1">
+            {resource.tags.map(tag => (
+              <span key={tag} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">#{tag}</span>
+            ))}
+          </div>
+          <span className="text-xs text-gray-400 flex-shrink-0">{resource.duration}</span>
+        </div>
       </div>
-      <div className="flex items-start gap-3">
-        <div className="w-9 h-9 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
-          <TypeIcon className="w-4 h-4 text-orange-500" />
+      {completed && (
+        <div className="border-t border-green-100 bg-green-50/40 px-5 py-3">
+          <p className="text-[11px] font-semibold text-gray-500 mb-1.5">Notes</p>
+          <textarea
+            value={comment}
+            onChange={e => onComment(e.target.value)}
+            placeholder="Add a note about this resource…"
+            rows={2}
+            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700 placeholder-gray-300 bg-white"
+          />
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm leading-tight">{resource.title}</h3>
-          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{resource.description}</p>
-        </div>
-      </div>
-      <div className="flex items-center justify-between pt-1">
-        <div className="flex flex-wrap gap-1">
-          {resource.tags.map(tag => (
-            <span key={tag} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">#{tag}</span>
-          ))}
-        </div>
-        <span className="text-xs text-gray-400 flex-shrink-0">{resource.duration}</span>
-      </div>
+      )}
     </div>
   );
 }
@@ -229,12 +250,24 @@ export default function AppTeamLearning() {
     try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
     catch { return new Set(); }
   });
+  const [comments, setComments] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem(COMMENTS_KEY) || '{}'); }
+    catch { return {}; }
+  });
 
   const toggle = (id: string) => {
     setCompleted(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  const setComment = (id: string, text: string) => {
+    setComments(prev => {
+      const next = { ...prev, [id]: text };
+      localStorage.setItem(COMMENTS_KEY, JSON.stringify(next));
       return next;
     });
   };
@@ -331,7 +364,7 @@ export default function AppTeamLearning() {
               <h2 className="text-sm font-bold text-gray-700 mb-3">Start Here</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {featured.map(r => (
-                  <ResourceCard key={r.id} resource={r} completed={completed.has(r.id)} onToggle={() => toggle(r.id)} />
+                  <ResourceCard key={r.id} resource={r} completed={completed.has(r.id)} onToggle={() => toggle(r.id)} comment={comments[r.id] || ''} onComment={v => setComment(r.id, v)} />
                 ))}
               </div>
             </div>
@@ -341,7 +374,7 @@ export default function AppTeamLearning() {
               {featured.length > 0 && !search && <h2 className="text-sm font-bold text-gray-700 mb-3">All Resources</h2>}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {(search ? visible : rest).map(r => (
-                  <ResourceCard key={r.id} resource={r} completed={completed.has(r.id)} onToggle={() => toggle(r.id)} />
+                  <ResourceCard key={r.id} resource={r} completed={completed.has(r.id)} onToggle={() => toggle(r.id)} comment={comments[r.id] || ''} onComment={v => setComment(r.id, v)} />
                 ))}
               </div>
             </div>
