@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import {
   FileText, RefreshCw, Search, X, ChevronDown, AlertTriangle,
@@ -429,7 +430,7 @@ export default function AdminApplications() {
 
                       {/* University + course */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{app.universityName}</p>
+                        <Link to={`/university/${app.universityId}`} className="text-sm font-semibold text-gray-800 hover:text-purple-700 hover:underline truncate block">{app.universityName}</Link>
                         <p className="text-xs text-gray-500 truncate">{app.courseName}</p>
                         {app.intake && <p className="text-xs text-gray-400">{app.intake}</p>}
                       </div>

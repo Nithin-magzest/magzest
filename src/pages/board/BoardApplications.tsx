@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../api';
 import {
   Search, X, LayoutGrid, List, Download, ChevronRight,
@@ -185,7 +186,7 @@ export default function BoardApplications() {
                                 <p className="text-[10px] text-gray-400 truncate">{app.studentEmail}</p>
                               </div>
                             </div>
-                            <p className="text-xs font-medium text-gray-800 truncate">{app.universityName}</p>
+                            <Link to={`/university/${app.universityId}`} onClick={e => e.stopPropagation()} className="text-xs font-medium text-gray-800 hover:text-indigo-700 hover:underline truncate block">{app.universityName}</Link>
                             <p className="text-[11px] text-gray-500 truncate">{app.courseName}</p>
                             {app.intake && <p className="text-[10px] text-gray-400 mt-1">{app.intake}</p>}
                           </button>
@@ -219,7 +220,7 @@ export default function BoardApplications() {
                         <Avi name={app.studentName} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">{app.studentName}</p>
-                          <p className="text-xs text-gray-500 truncate">{app.universityName} · {app.courseName}</p>
+                          <p className="text-xs text-gray-500 truncate"><Link to={`/university/${app.universityId}`} onClick={e => e.stopPropagation()} className="hover:text-indigo-700 hover:underline">{app.universityName}</Link> · {app.courseName}</p>
                         </div>
                         <span className={`hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${s.bg} ${s.color}`}>
                           <Icon className="w-3 h-3" />{s.label}

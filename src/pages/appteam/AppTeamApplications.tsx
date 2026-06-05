@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
@@ -571,7 +572,7 @@ export default function AppTeamApplications() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-gray-800 truncate max-w-[180px]">{app.universityName || '—'}</p>
+                      <Link to={`/university/${app.universityId}`} className="font-medium text-gray-800 hover:text-teal-700 hover:underline truncate max-w-[180px] block">{app.universityName || '—'}</Link>
                       <p className="text-xs text-gray-400 truncate max-w-[180px]">{app.courseName || '—'}</p>
                     </td>
                     <td className="px-4 py-3">

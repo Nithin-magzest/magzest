@@ -63,7 +63,11 @@ function ApplicationCard({ app, onAccept, onReject, accepting, rejecting, onComm
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-gray-900 text-lg">{app.universityName || <span className="text-gray-400 font-normal italic text-base">University not specified</span>}</h3>
+                <h3 className="font-bold text-gray-900 text-lg">
+                  {app.universityName
+                    ? <Link to={`/university/${app.universityId}`} className="hover:text-blue-700 hover:underline">{app.universityName}</Link>
+                    : <span className="text-gray-400 font-normal italic text-base">University not specified</span>}
+                </h3>
                 {isRecentlyUpdated && (
                   <span className="text-[10px] font-bold bg-blue-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">Updated</span>
                 )}

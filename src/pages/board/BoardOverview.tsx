@@ -145,7 +145,7 @@ export default function BoardOverview() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{app.studentName}</p>
-                    <p className="text-xs text-gray-400 truncate">{app.universityName} · {app.courseName}</p>
+                    <p className="text-xs text-gray-400 truncate"><Link to={`/university/${app.universityId}`} className="hover:text-indigo-600 hover:underline">{app.universityName}</Link> · {app.courseName}</p>
                   </div>
                   <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${cfg.bg} ${cfg.color}`}>
                     {cfg.label}
