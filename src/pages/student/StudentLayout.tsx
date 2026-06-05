@@ -37,7 +37,7 @@ export default function StudentLayout() {
       <Navbar />
       <div className="flex">
         {/* Sidebar */}
-        <aside className="hidden md:flex flex-col w-64 min-h-[calc(100vh-64px)] bg-white border-r border-gray-200 sticky top-16 p-4 gap-1">
+        <aside className="hidden md:flex flex-col w-64 min-h-[calc(100vh-64px)] bg-white border-r border-gray-200 p-4 gap-1">
           <div className="mb-4 px-3 py-3 bg-[#f0f4ff] rounded-xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white font-bold">
