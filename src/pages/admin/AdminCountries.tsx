@@ -823,7 +823,9 @@ export default function AdminCountries() {
     const matchQ = !q || c.name?.toLowerCase().includes(q) || c.capital?.toLowerCase().includes(q) || c.region?.toLowerCase().includes(q);
     const matchR = !regionFilter || c.region === regionFilter;
     return matchQ && matchR;
-  });
+  }).sort((a, b) =>
+    new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()
+  );
 
   const withVisaCount = countries.filter(c => c.visa?.type).length;
   const regionCount = new Set(countries.map(c => c.region).filter(Boolean)).size;

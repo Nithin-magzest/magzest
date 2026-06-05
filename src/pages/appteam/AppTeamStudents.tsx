@@ -104,15 +104,19 @@ export default function AppTeamStudents() {
     }
 
     const q = search.trim().toLowerCase();
-    if (!q) return list;
+    if (q) {
+      list = list.filter(s => {
+        if (searchField === 'name')        return s.name?.toLowerCase().includes(q);
+        if (searchField === 'email')       return s.email?.toLowerCase().includes(q);
+        if (searchField === 'phone')       return s.phone?.toLowerCase().includes(q);
+        if (searchField === 'nationality') return s.nationality?.toLowerCase().includes(q);
+        return [s.name, s.email, s.phone, s.nationality].some(v => v?.toLowerCase().includes(q));
+      });
+    }
 
-    return list.filter(s => {
-      if (searchField === 'name')        return s.name?.toLowerCase().includes(q);
-      if (searchField === 'email')       return s.email?.toLowerCase().includes(q);
-      if (searchField === 'phone')       return s.phone?.toLowerCase().includes(q);
-      if (searchField === 'nationality') return s.nationality?.toLowerCase().includes(q);
-      return [s.name, s.email, s.phone, s.nationality].some(v => v?.toLowerCase().includes(q));
-    });
+    return [...list].sort((a, b) =>
+      new Date(b.createdAt || b.joinedDate || 0).getTime() - new Date(a.createdAt || a.joinedDate || 0).getTime()
+    );
   }, [students, search, searchField, statusFilter]);
 
   const handleSelect = useCallback(async (s: any) => {

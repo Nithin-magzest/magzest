@@ -477,6 +477,7 @@ export default function AdminCourses() {
       _uniName: uni.name,
       website: uni.website,
       _uniLogo: uni.logo,
+      _uniUpdatedAt: uni.updatedAt || uni.createdAt || 0,
     }))
   );
 
@@ -486,7 +487,7 @@ export default function AdminCourses() {
     const matchLevel = !levelFilter || c.level === levelFilter;
     const matchUni = !uniFilter || c._uniId === uniFilter;
     return matchQ && matchLevel && matchUni;
-  });
+  }).sort((a, b) => new Date(b._uniUpdatedAt).getTime() - new Date(a._uniUpdatedAt).getTime());
 
   const handleDelete = async (uniId: string, courseId: string) => {
     if (!window.confirm('Delete this course? This cannot be undone.')) return;

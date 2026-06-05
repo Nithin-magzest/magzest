@@ -56,9 +56,11 @@ export default function BoardStudents() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return students;
-    return students.filter(s =>
+    const list = !q ? students : students.filter(s =>
       [s.name, s.email, s.nationality, s.phone].some(v => v?.toLowerCase().includes(q))
+    );
+    return [...list].sort((a, b) =>
+      new Date(b.createdAt || b.joinedDate || 0).getTime() - new Date(a.createdAt || a.joinedDate || 0).getTime()
     );
   }, [students, search]);
 

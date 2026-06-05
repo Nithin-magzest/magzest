@@ -118,7 +118,9 @@ export default function StudentUniversities() {
     }
     if (country) result = result.filter(u => u.country === country);
     if (level) result = result.filter(u => u.courses?.some((c: any) => c.level === level));
-    return result;
+    return [...result].sort((a, b) =>
+      new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()
+    );
   }, [allUniversities, query, country, level]);
 
   return (

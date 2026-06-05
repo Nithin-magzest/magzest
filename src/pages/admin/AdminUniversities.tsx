@@ -926,7 +926,9 @@ export default function AdminUniversities() {
     const matchQ = !q || u.name?.toLowerCase().includes(q) || u.city?.toLowerCase().includes(q) || u.country?.toLowerCase().includes(q);
     const matchC = !countryFilter || u.country === countryFilter;
     return matchQ && matchC;
-  });
+  }).sort((a, b) =>
+    new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()
+  );
 
   return (
     <>

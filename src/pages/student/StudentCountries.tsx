@@ -214,7 +214,9 @@ export default function StudentCountries() {
     const matchQ = !q || c.name?.toLowerCase().includes(q) || c.capital?.toLowerCase().includes(q) || c.region?.toLowerCase().includes(q);
     const matchR = !regionFilter || c.region === regionFilter;
     return matchQ && matchR;
-  });
+  }).sort((a: any, b: any) =>
+    new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()
+  );
 
   return (
     <div className="space-y-6">

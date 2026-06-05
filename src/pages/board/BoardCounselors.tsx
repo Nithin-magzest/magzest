@@ -53,9 +53,11 @@ export default function BoardCounselors() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return counselors;
-    return counselors.filter(c =>
+    const list = !q ? counselors : counselors.filter(c =>
       [c.name, c.email, c.specialty, c.phone].some(v => v?.toLowerCase().includes(q))
+    );
+    return [...list].sort((a, b) =>
+      new Date(b.createdAt || b.updatedAt || 0).getTime() - new Date(a.createdAt || a.updatedAt || 0).getTime()
     );
   }, [counselors, search]);
 

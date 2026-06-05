@@ -374,7 +374,9 @@ export default function CounselorUniversities() {
     const matchCountry = !country || u.country === country;
     const matchLevel = !level || u.courses?.some((c: any) => c.level === level);
     return matchQuery && matchCountry && matchLevel;
-  });
+  }).sort((a: any, b: any) =>
+    new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()
+  );
 
   const hasFilters = query || country || level;
 

@@ -45,7 +45,7 @@ export default function StudentCourses() {
   }, []);
 
   const allCourses = universities.flatMap(uni =>
-    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, uniId: uni.id || uni._id, city: uni.city, country: uni.country, website: uni.website, uniLogo: uni.logo }))
+    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, uniId: uni.id || uni._id, city: uni.city, country: uni.country, website: uni.website, uniLogo: uni.logo, _uniUpdatedAt: uni.updatedAt || uni.createdAt || 0 }))
   );
 
   const uniNames = [...new Set(universities.map(u => u.name))].sort() as string[];
@@ -56,7 +56,7 @@ export default function StudentCourses() {
     const matchLevel = !level || c.level === level;
     const matchUni = !uniFilter || c.uniName === uniFilter;
     return matchQ && matchLevel && matchUni;
-  });
+  }).sort((a, b) => new Date(b._uniUpdatedAt).getTime() - new Date(a._uniUpdatedAt).getTime());
 
   const hasFilters = query || level || uniFilter;
 
