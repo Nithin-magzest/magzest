@@ -25,28 +25,34 @@ router.post('/', auth, async (req, res) => {
   if (!['admin', 'counselor'].includes(req.user.role)) return res.status(403).json({ message: 'Forbidden' });
   try {
     const { title, scheduledDate, scheduledTime, duration, platform, meetingLink, participants, notes } = req.body;
-    if (!title || !scheduledDate || !scheduledTime || !meetingLink) {
-      return res.status(400).json({ message: 'Title, date, time and meeting link are required' });
+    if (!title || !scheduledDate || !scheduledTime) {
+      return res.status(400).json({ message: 'Title, date, and time are required' });
     }
     let allParticipants = participants || [];
-    // Auto-add counselor as participant if not already included
+    let creatorName = req.user.name || '';
+    // Auto-add counselor as participant and fetch their name
     if (req.user.role === 'counselor') {
       const alreadyIn = allParticipants.some(p => p.userId?.toString() === req.user.id?.toString());
+      const User = require('../models/User');
+      const self = await User.findById(req.user.id).select('name');
+      creatorName = self?.name || req.user.name || '';
       if (!alreadyIn) {
-        const User = require('../models/User');
-        const self = await User.findById(req.user.id).select('name');
-        allParticipants = [{ userId: req.user.id, name: self?.name || '', role: 'counselor' }, ...allParticipants];
+        allParticipants = [{ userId: req.user.id, name: creatorName, role: 'counselor' }, ...allParticipants];
       }
     }
     const meeting = await Meeting.create({
       title, scheduledDate, scheduledTime,
       duration: duration || 60,
-      platform: platform || 'teams',
-      meetingLink,
+      platform: platform || 'other',
+      meetingLink: meetingLink || '',
       participants: allParticipants,
       notes: notes || '',
       createdBy: req.user.id,
+      createdByName: creatorName,
     });
+
+    const isCallType = title.includes('📞');
+    const callType = title.toLowerCase().includes('audio') ? 'audio' : 'video';
 
     // Notify each student participant via socket in real-time
     const io = req.app.get('io');
@@ -57,15 +63,30 @@ router.post('/', auth, async (req, res) => {
         .forEach(p => {
           const sids = userSockets.get(String(p.userId));
           if (sids) {
-            sids.forEach(sid => io.to(sid).emit('meeting:scheduled', {
-              _id: meeting._id,
-              title,
-              scheduledDate,
-              scheduledTime,
-              platform: platform || 'teams',
-              meetingLink,
-              duration: meeting.duration,
-            }));
+            sids.forEach(sid => {
+              // Always send meeting:scheduled
+              io.to(sid).emit('meeting:scheduled', {
+                _id: meeting._id,
+                title,
+                scheduledDate,
+                scheduledTime,
+                platform: platform || 'other',
+                meetingLink: meetingLink || '',
+                duration: meeting.duration,
+                createdByName: creatorName,
+              });
+              // For call-type meetings also send call:scheduled with richer data
+              if (isCallType) {
+                io.to(sid).emit('call:scheduled', {
+                  _id: meeting._id,
+                  scheduledDate,
+                  scheduledTime,
+                  callType,
+                  schedulerName: creatorName,
+                  scheduledForName: p.name,
+                });
+              }
+            });
           }
         });
     }

@@ -464,7 +464,7 @@ export default function Activities() {
         scheduledTime: newCall.time,
         duration: 30,
         platform: 'other' as const,
-        meetingLink: '',
+        meetingLink: 'call',
         notes: `${newCall.type === 'video' ? 'Video' : 'Audio'} call`,
         participants: newCall.studentId
           ? [{ userId: newCall.studentId, name: newCall.name, role: 'student', email: '' }]

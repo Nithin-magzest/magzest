@@ -5,8 +5,8 @@ const MeetingSchema = new mongoose.Schema({
   scheduledDate: { type: String, required: true }, // YYYY-MM-DD
   scheduledTime: { type: String, required: true }, // HH:MM
   duration: { type: Number, default: 60 }, // minutes
-  platform: { type: String, enum: ['teams', 'zoom', 'meet', 'other'], default: 'teams' },
-  meetingLink: { type: String, required: true },
+  platform: { type: String, enum: ['teams', 'zoom', 'meet', 'other'], default: 'other' },
+  meetingLink: { type: String, default: '' },
   participants: [{
     userId: String,
     name: String,
@@ -15,7 +15,8 @@ const MeetingSchema = new mongoose.Schema({
   }],
   status: { type: String, enum: ['scheduled', 'ongoing', 'completed', 'cancelled'], default: 'scheduled' },
   notes: String,
-  createdBy: String, // admin userId
+  createdBy: String,
+  createdByName: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Meeting', MeetingSchema);
