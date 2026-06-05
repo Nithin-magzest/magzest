@@ -28,6 +28,7 @@ export interface Student extends User {
   counselorId?: string;
   joinedDate: string;
   status: 'active' | 'inactive' | 'enrolled';
+  academicDetails?: { level: string; institution: string; board: string; year: string; percentage: string; city: string; }[];
 }
 
 export interface Counselor extends User {

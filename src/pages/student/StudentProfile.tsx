@@ -1,9 +1,13 @@
 ﻿import { useRef, useState } from 'react';
-import { User, GraduationCap, BookOpen, Upload, Edit3, Save, X, FileText, Trash2, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, GraduationCap, BookOpen, Upload, Edit3, Save, X, FileText, Trash2, ExternalLink, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Student } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
+
+const EDUCATION_LEVELS = ['10th Grade', '12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
+type AcademicEntry = { id: string; level: string; institution: string; board: string; year: string; percentage: string; city: string; };
+function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', institution: '', board: '', year: '', percentage: '', city: '' }; }
 
 const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
 
@@ -100,6 +104,13 @@ export default function StudentProfile() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [academicEntries, setAcademicEntries] = useState<AcademicEntry[]>(
+    (student?.academicDetails || []).map((e: any) => ({ ...e, id: e.id || crypto.randomUUID() }))
+  );
+  const addAcademicEntry = () => setAcademicEntries(prev => [...prev, newAcademicEntry()]);
+  const updateAcademicEntry = (id: string, field: keyof Omit<AcademicEntry, 'id'>, value: string) =>
+    setAcademicEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+  const removeAcademicEntry = (id: string) => setAcademicEntries(prev => prev.filter(e => e.id !== id));
   const [form, setForm] = useState({
     name: student?.name || '',
     phone: student?.phone || '',
@@ -151,6 +162,7 @@ export default function StudentProfile() {
         ...form,
         passport: form.passport.number ? form.passport : undefined,
         address: form.address.city ? form.address : undefined,
+        academicDetails: academicEntries.map(({ id, ...rest }) => rest),
       });
       await refreshUser();
       setEditing(false);
@@ -331,9 +343,9 @@ export default function StudentProfile() {
 
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2"><GraduationCap className="w-5 h-5 text-blue-600" /> Academic Background</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Education Level</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Highest Education Level</label>
                 {editing ? (
                   <select aria-label="Education level" value={form.educationLevel} onChange={e => setForm(f => ({ ...f, educationLevel: e.target.value }))}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
@@ -341,15 +353,15 @@ export default function StudentProfile() {
                     <option>Bachelor's (Completed)</option>
                     <option>Master's (Completed)</option>
                   </select>
-                ) : <p className="text-gray-900 font-medium">{student.educationLevel}</p>}
+                ) : <p className="text-gray-900 font-medium">{student.educationLevel || '—'}</p>}
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">GPA / Percentage</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Overall GPA / Percentage</label>
                 {editing ? (
                   <input type="number" aria-label="GPA" value={form.gpa} step={0.1} max={10}
                     onChange={e => setForm(f => ({ ...f, gpa: Number(e.target.value) }))}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                ) : <p className="text-gray-900 font-medium">{student.gpa}/10</p>}
+                ) : <p className="text-gray-900 font-medium">{student.gpa ? `${student.gpa}/10` : '—'}</p>}
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">English Test</label>
@@ -359,6 +371,107 @@ export default function StudentProfile() {
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Annual Budget</label>
                 <p className="text-gray-900 font-medium">${(student.budget || 0).toLocaleString()}</p>
               </div>
+            </div>
+
+            {/* Academic History */}
+            <div className="border-t border-gray-100 pt-5">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-blue-500" /> Academic History
+                </h4>
+                {editing && (
+                  <button type="button" onClick={addAcademicEntry}
+                    className="flex items-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                    <Plus className="w-3.5 h-3.5" /> Add Academic Entry
+                  </button>
+                )}
+              </div>
+
+              {academicEntries.length === 0 ? (
+                <div className="text-center py-6">
+                  <GraduationCap className="w-8 h-8 mx-auto mb-2 text-gray-200" />
+                  {editing
+                    ? <p className="text-sm text-gray-400">Click "Add Academic Entry" to add your 10th, 12th, Degree details one by one</p>
+                    : <p className="text-sm text-gray-400">No academic history added yet</p>}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {editing ? (
+                    academicEntries.map((entry, idx) => (
+                      <div key={entry.id} className="border border-blue-100 bg-blue-50/40 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full">Education {idx + 1}</span>
+                          <button type="button" aria-label="Remove entry" onClick={() => removeAcademicEntry(entry.id)}
+                            className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Education Level</label>
+                            <select aria-label="Education Level" value={entry.level} onChange={e => updateAcademicEntry(entry.id, 'level', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                              {EDUCATION_LEVELS.map(l => <option key={l}>{l}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Institution Name</label>
+                            <input aria-label="Institution Name" value={entry.institution} placeholder="e.g. St. Joseph's High School"
+                              onChange={e => updateAcademicEntry(entry.id, 'institution', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Board / University</label>
+                            <input aria-label="Board or University" value={entry.board} placeholder="e.g. CBSE, Anna University"
+                              onChange={e => updateAcademicEntry(entry.id, 'board', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Year of Passing</label>
+                            <input aria-label="Year of Passing" value={entry.year} placeholder="e.g. 2022"
+                              onChange={e => updateAcademicEntry(entry.id, 'year', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Percentage / GPA</label>
+                            <input aria-label="Percentage or GPA" value={entry.percentage} placeholder="e.g. 85% or 8.5 CGPA"
+                              onChange={e => updateAcademicEntry(entry.id, 'percentage', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-medium text-gray-500 mb-1">City</label>
+                            <input aria-label="City" value={entry.city} placeholder="e.g. Chennai"
+                              onChange={e => updateAcademicEntry(entry.id, 'city', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    academicEntries.map(entry => (
+                      <div key={entry.id} className="border border-gray-100 bg-gray-50 rounded-xl p-4">
+                        <div className="flex items-start gap-3">
+                          <span className="text-xs font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full flex-shrink-0 mt-0.5">{entry.level}</span>
+                          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
+                            {entry.institution && <div><p className="text-xs text-gray-400">Institution</p><p className="font-medium text-gray-800">{entry.institution}</p></div>}
+                            {entry.board && <div><p className="text-xs text-gray-400">Board / University</p><p className="font-medium text-gray-800">{entry.board}</p></div>}
+                            {entry.year && <div><p className="text-xs text-gray-400">Year</p><p className="font-medium text-gray-800">{entry.year}</p></div>}
+                            {entry.percentage && <div><p className="text-xs text-gray-400">Score</p><p className="font-medium text-gray-800">{entry.percentage}</p></div>}
+                            {entry.city && <div><p className="text-xs text-gray-400">City</p><p className="font-medium text-gray-800">{entry.city}</p></div>}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {editing && academicEntries.length > 0 && (
+                <button type="button" onClick={addAcademicEntry}
+                  className="mt-4 w-full flex items-center justify-center gap-2 border-2 border-dashed border-blue-200 text-blue-500 hover:border-blue-400 hover:text-blue-700 py-3 rounded-xl transition-colors text-sm font-medium">
+                  <Plus className="w-4 h-4" /> Add Another Academic Entry
+                </button>
+              )}
             </div>
           </div>
 
