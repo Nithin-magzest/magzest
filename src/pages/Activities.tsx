@@ -192,7 +192,7 @@ export default function Activities() {
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [newEvent, setNewEvent]       = useState({ title: '', date: '', time: '', type: 'meeting', desc: '', studentName: '' });
 
-  const [calls, setCalls]               = useState(INITIAL_CALLS);
+  const [calls, setCalls]               = useState(isStudent ? [] as typeof INITIAL_CALLS : INITIAL_CALLS);
   const [showScheduleCall, setShowScheduleCall] = useState(false);
   const [newCall, setNewCall]           = useState({ name: '', studentId: '', type: 'video', time: '', date: '' });
   const [newCallCount, setNewCallCount] = useState(0);
@@ -224,7 +224,39 @@ export default function Activities() {
     if (!id || addedMeetingIds.current.has(id)) return;
     addedMeetingIds.current.add(id);
 
+    const isCall = (m.title || '').includes('📞');
     const isUpcoming = new Date(`${m.scheduledDate}T${m.scheduledTime}`) > new Date();
+
+    // If this is a call-type meeting, populate the Calls tab
+    if (isCall) {
+      const todayD = new Date(); todayD.setHours(0, 0, 0, 0);
+      const tomD = new Date(todayD); tomD.setDate(todayD.getDate() + 1);
+      const yestD = new Date(todayD); yestD.setDate(todayD.getDate() - 1);
+      const callDate = new Date(m.scheduledDate + 'T00:00:00');
+      const dateLabel = callDate.getTime() === todayD.getTime() ? 'Today'
+        : callDate.getTime() === tomD.getTime() ? 'Tomorrow'
+        : callDate.getTime() === yestD.getTime() ? 'Yesterday'
+        : callDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+      const isAudio = (m.notes || '').toLowerCase().includes('audio') || (m.title || '').toLowerCase().includes('audio');
+      const partnerName = isStudent
+        ? (m.createdByName || m.schedulerName || 'Your Counselor')
+        : (m.participants?.[0]?.name || m.scheduledForName || 'Student');
+
+      setCalls(prev => {
+        if (prev.some(c => (c as any)._meetingId === id)) return prev;
+        return [...prev, {
+          id: parseInt(id.slice(-8), 16) || Date.now(),
+          _meetingId: id,
+          name: partnerName,
+          type: isAudio ? 'audio' : 'video',
+          status: isUpcoming ? 'scheduled' : 'completed',
+          duration: isUpcoming ? '-' : `${m.duration ?? 30} min`,
+          time: fmt12h(m.scheduledTime),
+          date: dateLabel,
+        } as any];
+      });
+    }
 
     setEvents(prev => [...prev, {
       id: parseInt(id.slice(-8), 16) || Date.now(),
@@ -259,7 +291,7 @@ export default function Activities() {
         } as any];
       });
     }
-  }, []);
+  }, [isStudent]);
 
   // Load all meetings from backend on mount and sync calendar + tasks
   useEffect(() => {
