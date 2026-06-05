@@ -222,20 +222,34 @@ function ApplicationCard({ app, onAccept, onReject, accepting, rejecting, onComm
           )}
 
           {/* Academic */}
-          {(app.previousInstitution || app.previousDegree) && (
+          {(app.previousInstitution || app.previousDegree || app.academicDetails?.length > 0) && (
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen className="w-4 h-4 text-purple-600" />
                 <h4 className="text-sm font-semibold text-gray-700">Academic Background</h4>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
-                <DetailRow label="Education Level" value={app.educationLevel} />
-                <DetailRow label="Institution" value={app.previousInstitution} />
-                <DetailRow label="Degree" value={app.previousDegree} />
-                <DetailRow label="Major" value={app.previousMajor} />
-                <DetailRow label="Graduation Year" value={app.graduationYear} />
-                <DetailRow label="GPA / Grade" value={app.percentage} />
-              </div>
+              {app.academicDetails?.length > 0 ? (
+                <div className="pl-6 space-y-2">
+                  {app.academicDetails.map((entry: any, i: number) => (
+                    <div key={i} className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                      <span className="font-semibold text-purple-700 text-xs bg-purple-50 px-2 py-0.5 rounded-full self-start">{entry.level}</span>
+                      {entry.institution && <DetailRow label="Institution" value={entry.institution} />}
+                      {entry.board && <DetailRow label="Board / University" value={entry.board} />}
+                      {entry.year && <DetailRow label="Year" value={entry.year} />}
+                      {entry.score && <DetailRow label="Score" value={entry.score} />}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
+                  <DetailRow label="Education Level" value={app.educationLevel} />
+                  <DetailRow label="Institution" value={app.previousInstitution} />
+                  <DetailRow label="Degree" value={app.previousDegree} />
+                  <DetailRow label="Major" value={app.previousMajor} />
+                  <DetailRow label="Graduation Year" value={app.graduationYear} />
+                  <DetailRow label="GPA / Grade" value={app.percentage} />
+                </div>
+              )}
             </div>
           )}
 

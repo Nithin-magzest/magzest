@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   FileText, RefreshCw, Search, X, ChevronDown, AlertTriangle,
   CheckCircle, Clock, Send, Award, XCircle, BookOpen, Edit2,
+  GraduationCap, Plus, Trash2, ChevronUp,
 } from 'lucide-react';
 import { api } from '../../api';
 import StatusBadge from '../../components/StatusBadge';
@@ -36,6 +37,29 @@ const STATUS_COLORS: Record<string, string> = {
   enrolled:       'bg-purple-100 text-purple-700 border-purple-200',
 };
 
+const ACADEMIC_LEVELS = [
+  'School (10th)',
+  'Intermediate (12th)',
+  "Diploma",
+  "Bachelor's",
+  "Master's",
+  'PhD',
+  'Other',
+];
+
+type AcademicEntry = {
+  id: string;
+  level: string;
+  institution: string;
+  board: string;
+  year: string;
+  score: string;
+};
+
+function newEntry(): AcademicEntry {
+  return { id: crypto.randomUUID(), level: "School (10th)", institution: '', board: '', year: '', score: '' };
+}
+
 function Spinner({ size = 4, white = false }: { size?: number; white?: boolean }) {
   return (
     <span
@@ -58,6 +82,25 @@ function UpdateStatusModal({
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
   const [comments, setComments] = useState<any[]>(app.comments || []);
+  const [academicDetails, setAcademicDetails] = useState<AcademicEntry[]>(
+    (app.academicDetails || []).map((e: any) => ({ ...e, id: e.id || crypto.randomUUID() }))
+  );
+  const [showAcademic, setShowAcademic] = useState((app.academicDetails?.length || 0) > 0);
+
+  const addEntry = () => {
+    const taken = new Set(academicDetails.map(e => e.level));
+    const next = ACADEMIC_LEVELS.find(l => !taken.has(l)) || 'Other';
+    setAcademicDetails(prev => [...prev, { ...newEntry(), level: next }]);
+    setShowAcademic(true);
+  };
+
+  const updateEntry = (id: string, field: keyof AcademicEntry, value: string) => {
+    setAcademicDetails(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+  };
+
+  const removeEntry = (id: string) => {
+    setAcademicDetails(prev => prev.filter(e => e.id !== id));
+  };
 
   const submitReply = async () => {
     if (!replyText.trim() || replying) return;
@@ -77,8 +120,9 @@ function UpdateStatusModal({
     setError('');
     try {
       const appId = app._id || app.id;
-      const updated = await api.applications.update(appId, { status, notes });
-      onUpdated({ ...app, ...updated, status, notes });
+      const payload = { status, notes, academicDetails: academicDetails.map(({ id, ...rest }) => rest) };
+      const updated = await api.applications.update(appId, payload);
+      onUpdated({ ...app, ...updated, ...payload });
       onClose();
     } catch (e: any) {
       setError(e.message || 'Failed to update application.');
@@ -91,8 +135,8 @@ function UpdateStatusModal({
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[92vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
           <div>
             <h2 className="text-base font-bold text-gray-900">Update Application Stage</h2>
             <p className="text-xs text-gray-500 mt-0.5">{app.studentName} · {app.universityName}</p>
@@ -103,7 +147,7 @@ function UpdateStatusModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <p className="text-xs font-medium text-gray-500 mb-1">Course</p>
             <p className="text-sm font-semibold text-gray-800">{app.courseName}</p>
@@ -135,6 +179,109 @@ function UpdateStatusModal({
               placeholder="Add a note about this status update…"
               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-600 resize-none placeholder:text-gray-400"
             />
+          </div>
+
+          {/* Academic Details */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <button
+                type="button"
+                onClick={() => setShowAcademic(v => !v)}
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-green-700 transition-colors"
+              >
+                <GraduationCap className="w-4 h-4 text-green-600" />
+                Academic Details
+                {academicDetails.length > 0 && (
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">{academicDetails.length}</span>
+                )}
+                {showAcademic ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+              </button>
+              <button
+                type="button"
+                onClick={addEntry}
+                className="flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Entry
+              </button>
+            </div>
+
+            {showAcademic && (
+              <div className="space-y-3">
+                {academicDetails.length === 0 && (
+                  <div className="text-center py-6 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+                    <GraduationCap className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">No academic entries yet.</p>
+                    <button type="button" onClick={addEntry}
+                      className="mt-2 text-xs text-green-600 hover:text-green-700 font-semibold">
+                      + Add first entry
+                    </button>
+                  </div>
+                )}
+                {academicDetails.map((entry, idx) => (
+                  <div key={entry.id} className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                        {idx + 1}. {entry.level}
+                      </span>
+                      <button type="button" onClick={() => removeEntry(entry.id)}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors" title="Remove entry">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Level</label>
+                      <select
+                        value={entry.level}
+                        onChange={e => updateEntry(entry.id, 'level', e.target.value)}
+                        aria-label="Education level"
+                        className="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                      >
+                        {ACADEMIC_LEVELS.map(l => <option key={l}>{l}</option>)}
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Institution Name</label>
+                        <input
+                          value={entry.institution}
+                          onChange={e => updateEntry(entry.id, 'institution', e.target.value)}
+                          placeholder="e.g. St. Joseph's School"
+                          className="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Board / University</label>
+                        <input
+                          value={entry.board}
+                          onChange={e => updateEntry(entry.id, 'board', e.target.value)}
+                          placeholder="e.g. CBSE, Pune Univ."
+                          className="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Year of Passing</label>
+                        <input
+                          value={entry.year}
+                          onChange={e => updateEntry(entry.id, 'year', e.target.value)}
+                          placeholder="e.g. 2022"
+                          maxLength={4}
+                          className="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Score / GPA</label>
+                        <input
+                          value={entry.score}
+                          onChange={e => updateEntry(entry.id, 'score', e.target.value)}
+                          placeholder="e.g. 88% or 7.8 GPA"
+                          className="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Comments thread */}
@@ -192,7 +339,7 @@ function UpdateStatusModal({
           )}
         </div>
 
-        <div className="flex gap-3 px-6 pb-6">
+        <div className="flex gap-3 px-6 py-4 border-t border-gray-100 flex-shrink-0">
           <button type="button" onClick={onClose}
             className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
             Cancel
