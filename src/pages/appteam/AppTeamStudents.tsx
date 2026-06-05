@@ -379,7 +379,7 @@ export default function AppTeamStudents() {
                 <p className="text-sm text-gray-400">No applications found</p>
               ) : (
                 <div className="space-y-2">
-                  {appsByStudent[selected._id].map((app: any) => (
+                  {[...(appsByStudent[selected._id] || [])].sort((a: any, b: any) => new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime() - new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime()).map((app: any) => (
                     <div key={app._id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-800 truncate">{app.universityName}</p>

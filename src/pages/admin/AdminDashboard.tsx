@@ -277,7 +277,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: { st
                 </p>
                 {student.applications?.length > 0 ? (
                   <div className="space-y-2">
-                    {student.applications.map((app: any, i: number) => (
+                    {[...student.applications].sort((a: any, b: any) => new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime() - new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime()).map((app: any, i: number) => (
                       <Link key={app._id || i} to={`/university/${app.universityId}`}
                         className="bg-gray-50 hover:bg-blue-50 rounded-xl p-3 flex items-start gap-3 border border-gray-100 transition-colors group">
                         <div className="flex-1 min-w-0">

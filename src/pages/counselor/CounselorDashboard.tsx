@@ -217,7 +217,8 @@ export default function CounselorDashboard() {
         (s.applications || []).some((ap: any) => (ap._id || ap.id) === (a._id || a.id))
       );
       return { app: a, question: lastQ, studentName: student?.name || 'Student' };
-    });
+    })
+    .sort((a: any, b: any) => new Date(b.question?.createdAt || 0).getTime() - new Date(a.question?.createdAt || 0).getTime());
 
   const stats = {
     totalStudents: myStudents.length,

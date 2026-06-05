@@ -228,7 +228,7 @@ export default function StudentDashboard() {
 
   if (!student) return null;
 
-  const apps = student.applications || [];
+  const apps = [...(student.applications || [])].sort((a: any, b: any) => new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime() - new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime());
   const docs = student.documents || [];
 
   const appStats = {
