@@ -819,7 +819,7 @@ export default function Activities() {
           ) : (
             <div className="space-y-2">
               {/* Pending API tasks */}
-              {apiTasks.filter(task => task.status !== 'completed').map(task => (
+              {apiTasks.filter(task => task.status !== 'completed').sort((a, b) => new Date(b.createdAt || b.updatedAt || 0).getTime() - new Date(a.createdAt || a.updatedAt || 0).getTime()).map(task => (
                 <div key={task._id}>
                   <div className={`flex items-center gap-3 bg-white border border-gray-100 px-4 py-3.5 shadow-sm hover:border-gray-200 transition-all ${expandedTask === task._id ? 'rounded-t-xl' : 'rounded-xl'}`}>
                     <button type="button" title="Mark complete" onClick={() => toggleApiTask(task._id, task.status)}
@@ -936,7 +936,7 @@ export default function Activities() {
               {(apiTasks.filter(at => at.status === 'completed').length > 0 || meetingTasks.filter(mt => mt.done).length > 0) && (
                 <>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1 pt-3 pb-1">Completed</p>
-                  {apiTasks.filter(task => task.status === 'completed').map(task => (
+                  {apiTasks.filter(task => task.status === 'completed').sort((a, b) => new Date(b.createdAt || b.updatedAt || 0).getTime() - new Date(a.createdAt || a.updatedAt || 0).getTime()).map(task => (
                     <div key={task._id}>
                       <div className={`flex items-center gap-3 bg-gray-50 border border-gray-100 px-4 py-3 opacity-60 ${expandedTask === task._id ? 'rounded-t-xl' : 'rounded-xl'}`}>
                         <button type="button" title="Mark incomplete" onClick={() => toggleApiTask(task._id, task.status)}
@@ -1073,7 +1073,20 @@ export default function Activities() {
           )}
 
           <div className="space-y-3">
-            {events.map(ev => (
+            {[...events].sort((a, b) => {
+              // Convert "10:00 AM" / "02:00 PM" to minutes-since-midnight
+              const toMins = (t: string) => {
+                if (!t) return 0;
+                const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                if (!m) return 0;
+                let h = parseInt(m[1]); const min = parseInt(m[2]); const p = m[3].toUpperCase();
+                if (p === 'PM' && h !== 12) h += 12;
+                if (p === 'AM' && h === 12) h = 0;
+                return h * 60 + min;
+              };
+              const da = (a.date || '').localeCompare(b.date || '');
+              return da !== 0 ? -da : toMins(b.time) - toMins(a.time);
+            }).map(ev => (
               <Link key={ev.id} to={`/${role}/${EVENT_PAGE[ev.type] || 'activities'}`}
                 className="block bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all overflow-hidden">
                 <div className="flex">

@@ -657,7 +657,7 @@ function StudentInfoModal({ student, onClose }: { student: any; onClose: () => v
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {apps.map((app: any, i: number) => {
+                  {[...apps].sort((a: any, b: any) => new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime() - new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime()).map((app: any, i: number) => {
                     const st = APP_STATUS[app.status] || { label: app.status, bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' };
                     return (
                       <div key={app._id || i} className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
