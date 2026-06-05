@@ -195,6 +195,7 @@ export default function Activities() {
   const [calls, setCalls]               = useState(INITIAL_CALLS);
   const [showScheduleCall, setShowScheduleCall] = useState(false);
   const [newCall, setNewCall]           = useState({ name: '', studentId: '', type: 'video', time: '', date: '' });
+  const [newCallCount, setNewCallCount] = useState(0);
 
   const [reminders, setReminders]         = useState(INITIAL_REMINDERS);
   const [showAddReminder, setShowAddReminder] = useState(false);
@@ -448,7 +449,7 @@ export default function Activities() {
   };
 
   // When the OTHER party (student) receives a call:scheduled socket event, their
-  // NotificationContext dispatches this window event so their Activities calendar updates.
+  // NotificationContext dispatches this window event so their Activities calendar + calls tab updates.
   useEffect(() => {
     const handler = (e: Event) => {
       const data = (e as CustomEvent).detail;
@@ -456,6 +457,16 @@ export default function Activities() {
       const timeLabel = data.scheduledTimeFormatted || fmt12h(data.scheduledTime || '');
       const title = `📞 ${data.callType === 'audio' ? 'Audio' : 'Video'} Call`;
       const evId = Date.now();
+
+      // Convert ISO date to a relative label for the Calls tab grouping
+      const todayD = new Date();
+      const todayStr2 = `${todayD.getFullYear()}-${padDate(todayD.getMonth()+1)}-${padDate(todayD.getDate())}`;
+      const tomD = new Date(todayD); tomD.setDate(todayD.getDate()+1);
+      const tomStr2 = `${tomD.getFullYear()}-${padDate(tomD.getMonth()+1)}-${padDate(tomD.getDate())}`;
+      const callDateLabel = data.scheduledDate === todayStr2 ? 'Today'
+        : data.scheduledDate === tomStr2 ? 'Tomorrow'
+        : data.scheduledDate;
+
       setEvents(prev => {
         if (prev.some(ev => (ev as any)._externalCallId === evId)) return prev;
         return [...prev, {
@@ -468,6 +479,21 @@ export default function Activities() {
         id: evId + 1, date: data.scheduledDate,
         text: title, time: timeLabel,
       } as any]);
+
+      // Add to Calls tab so the student sees it listed
+      setCalls(prev => [...prev, {
+        id: evId,
+        name: data.schedulerName || 'Your Counselor',
+        type: data.callType === 'audio' ? 'audio' : 'video',
+        status: 'scheduled',
+        duration: '-',
+        time: timeLabel,
+        date: callDateLabel,
+      }]);
+
+      // Show notification dot on Calls tab
+      setNewCallCount(prev => prev + 1);
+
       const [y, mo, d] = data.scheduledDate.split('-').map(Number);
       setCalYear(y); setCalMonth(mo - 1); setSelectedDay(d);
     };
@@ -513,11 +539,19 @@ export default function Activities() {
       {/* Tabs – top of page, horizontal */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
         {TABS.map(tb => (
-          <button type="button" key={tb.key} onClick={() => setTab(tb.key)}
+          <button
+            type="button"
+            key={tb.key}
+            onClick={() => { setTab(tb.key); if (tb.key === 'calls') setNewCallCount(0); }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               tab === tb.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
             }`}>
-            {tb.icon}
+            <span className="relative">
+              {tb.icon}
+              {tb.key === 'calls' && newCallCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+              )}
+            </span>
             {tb.label}
             {tb.count !== undefined && tb.count > 0 && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
@@ -1098,6 +1132,12 @@ export default function Activities() {
             <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 mb-4">
               <Phone className="w-3.5 h-3.5 flex-shrink-0" />
               Calls are scheduled for you by your counselor or admin.
+              {newCallCount > 0 && (
+                <span className="ml-auto flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5 font-semibold animate-pulse">
+                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                  {newCallCount} new
+                </span>
+              )}
             </div>
           )}
 
