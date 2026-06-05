@@ -1,6 +1,6 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, ExternalLink, TrendingUp, Share2 } from 'lucide-react';
+import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, ExternalLink, TrendingUp, Share2, Plus, X, Search } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import ApplicationModal from '../components/ApplicationModal';
@@ -21,6 +21,136 @@ function useWikipediaPhoto(name: string) {
       .catch(() => {});
   }, [name]);
   return photo;
+}
+
+function CounselorApplyModal({ course, uni, students, onClose, onApplied }: {
+  course: any; uni: any; students: any[]; onClose: () => void; onApplied: () => void;
+}) {
+  const [studentId, setStudentId] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentDropOpen, setStudentDropOpen] = useState(false);
+  const [intake, setIntake] = useState(course.intake?.[0] || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  const filteredStudents = students.filter(s =>
+    !studentSearch || s.name?.toLowerCase().includes(studentSearch.toLowerCase()) || s.email?.toLowerCase().includes(studentSearch.toLowerCase())
+  );
+  const selectedStudent = students.find(s => (s._id || s.id) === studentId);
+
+  useEffect(() => {
+    if (!studentDropOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setStudentDropOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [studentDropOpen]);
+
+  const handleApply = async () => {
+    if (!studentId) { setError('Please select a student.'); return; }
+    setSaving(true); setError('');
+    try {
+      await api.admin.createApplication({
+        studentId,
+        universityName: uni.name,
+        courseName: course.name,
+        intake,
+        universityId: (uni._id || uni.id || '').toString(),
+        courseId: (course._id || course.id || '').toString(),
+      });
+      setSuccess(true);
+      setTimeout(() => { onApplied(); onClose(); }, 1200);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create application.');
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+        <div className="flex items-start justify-between p-5 border-b border-gray-100">
+          <div className="flex-1 min-w-0 pr-3">
+            <h2 className="text-base font-bold text-gray-900">Apply for Course</h2>
+            <p className="text-sm font-semibold text-blue-700 mt-0.5 truncate">{course.name}</p>
+            <p className="text-xs text-gray-500 truncate">{uni.name}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors flex-shrink-0">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="relative" ref={dropRef}>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Student <span className="text-red-500">*</span></label>
+            <button type="button" onClick={() => setStudentDropOpen(v => !v)}
+              className={`w-full px-3 py-2.5 border rounded-xl text-sm text-left flex items-center justify-between bg-white transition-colors ${studentDropOpen ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-200 hover:border-gray-300'}`}>
+              <span className={selectedStudent ? 'text-gray-900' : 'text-gray-400'}>
+                {selectedStudent ? `${selectedStudent.name} (${selectedStudent.email})` : '— Choose a student —'}
+              </span>
+              <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            </button>
+            {studentDropOpen && (
+              <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                <div className="p-2 border-b border-gray-100">
+                  <div className="flex items-center gap-2 px-2.5 py-1.5 bg-gray-50 rounded-lg">
+                    <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <input autoFocus type="text" value={studentSearch} onChange={e => setStudentSearch(e.target.value)}
+                      placeholder="Search by name or email…"
+                      className="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400" />
+                    {studentSearch && (
+                      <button type="button" aria-label="Clear search" onClick={() => setStudentSearch('')}>
+                        <X className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="max-h-44 overflow-y-auto">
+                  {filteredStudents.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">No students found</p>
+                  ) : filteredStudents.map(s => (
+                    <button type="button" key={s._id || s.id}
+                      onClick={() => { setStudentId(s._id || s.id); setStudentDropOpen(false); setStudentSearch(''); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors flex flex-col gap-0.5 ${studentId === (s._id || s.id) ? 'bg-blue-50' : ''}`}>
+                      <span className="font-medium text-gray-900">{s.name}</span>
+                      <span className="text-xs text-gray-400">{s.email}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          {course.intake?.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Intake</label>
+              <select value={intake} onChange={e => setIntake(e.target.value)} aria-label="Select intake"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                {course.intake.map((i: string) => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+          )}
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2.5 rounded-xl">{error}</p>}
+          {success && (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2.5 rounded-xl">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />Application created successfully!
+            </div>
+          )}
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">Cancel</button>
+            <button type="button" onClick={handleApply} disabled={saving || success}
+              className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+              {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</> : <><Plus className="w-4 h-4" />Apply</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function UniLogoBox({ uni }: { uni: any }) {
@@ -53,6 +183,8 @@ export default function UniversityDetail() {
   const [uni, setUni] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [applyModal, setApplyModal] = useState<any>(null);
+  const [counselorApplyModal, setCounselorApplyModal] = useState<any>(null);
+  const [counselorStudents, setCounselorStudents] = useState<any[]>([]);
 
   const wikiPhoto = useWikipediaPhoto(uni?.name || '');
 
@@ -64,6 +196,12 @@ export default function UniversityDetail() {
         .finally(() => setLoading(false));
     }
   }, [id]);
+
+  useEffect(() => {
+    if (user?.role === 'counselor') {
+      api.students.list().then(setCounselorStudents).catch(() => {});
+    }
+  }, [user?.role]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -97,6 +235,15 @@ export default function UniversityDetail() {
           uni={uni}
           onClose={() => setApplyModal(null)}
           onSuccess={() => setApplyModal(null)}
+        />
+      )}
+      {counselorApplyModal && (
+        <CounselorApplyModal
+          course={counselorApplyModal}
+          uni={uni}
+          students={counselorStudents}
+          onClose={() => setCounselorApplyModal(null)}
+          onApplied={() => setCounselorApplyModal(null)}
         />
       )}
       <div className="relative h-72 bg-gradient-to-br from-blue-600 to-indigo-700 overflow-hidden">
@@ -209,6 +356,12 @@ export default function UniversityDetail() {
                         </button>
                       )
                     )}
+                    {isAuthenticated && user?.role === 'counselor' && (
+                      <button type="button" onClick={() => setCounselorApplyModal(course)}
+                        className="mt-4 flex items-center gap-1.5 bg-white hover:bg-green-50 text-green-700 border-2 border-gray-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm">
+                        <Plus className="w-4 h-4" />Apply for Student
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -245,8 +398,14 @@ export default function UniversityDetail() {
                   className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">
                   Start Application
                 </button>
+              ) : isAuthenticated && user?.role === 'counselor' ? (
+                <button type="button"
+                  onClick={() => uni?.courses?.[0] && setCounselorApplyModal(uni.courses[0])}
+                  className="flex items-center justify-center gap-2 w-full bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">
+                  <Plus className="w-4 h-4" />Apply for a Student
+                </button>
               ) : isAuthenticated ? (
-                <Link to="/student/applications" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">View Applications</Link>
+                <Link to="/counselor/applications" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">View Applications</Link>
               ) : (
                 <Link to="/login" className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">Sign In to Apply</Link>
               )}

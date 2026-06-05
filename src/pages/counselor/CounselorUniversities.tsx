@@ -294,7 +294,7 @@ function UniversityCard({ uni, onApply }: {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-gray-900 leading-tight">{uni.name}</h3>
+            <Link to={`/university/${uni.id || uni._id}`} className="font-bold text-gray-900 leading-tight hover:text-green-700 hover:underline">{uni.name}</Link>
             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap font-semibold">#{uni.ranking}</span>
           </div>
           <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
