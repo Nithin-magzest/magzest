@@ -40,7 +40,12 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   if (!dbReady(res)) return;
   try {
-    const uni = await University.findOne({ id: req.params.id });
+    const { id } = req.params;
+    // Try custom id field first, then fall back to MongoDB _id
+    let uni = await University.findOne({ id });
+    if (!uni && mongoose.Types.ObjectId.isValid(id)) {
+      uni = await University.findById(id);
+    }
     if (!uni) return res.status(404).json({ message: 'University not found' });
     res.json(uni);
   } catch (err) {

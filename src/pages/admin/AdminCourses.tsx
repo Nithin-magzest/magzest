@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Plus, Trash2, X, Search, BookOpen, Edit2, DollarSign, Check, Award,
-  Calendar, GraduationCap, CheckCircle, ChevronRight,
+  Calendar, ChevronDown, ChevronUp, GraduationCap, CheckCircle,
 } from 'lucide-react';
 import { api } from '../../api';
 
@@ -196,7 +196,7 @@ function CourseModal({ universities, uniId: initialUniId, course, onClose, onSav
             </div>
             <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit Course' : 'Add Course'}</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100">
+          <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -293,7 +293,7 @@ function CourseModal({ universities, uniId: initialUniId, course, onClose, onSav
               {form.requirements.map((r: string, i: number) => (
                 <span key={i} className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-full border border-purple-100">
                   {r}
-                  <button type="button" onClick={() => set('requirements', form.requirements.filter((_: string, j: number) => j !== i))} aria-label={`Remove ${r}`} className="text-purple-400 hover:text-purple-700 ml-0.5">
+                  <button type="button" onClick={() => set('requirements', form.requirements.filter((_: string, j: number) => j !== i))} className="text-purple-400 hover:text-purple-700 ml-0.5">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -329,184 +329,120 @@ function CourseModal({ universities, uniId: initialUniId, course, onClose, onSav
   );
 }
 
-function UniLogoImg({ name, website }: { name: string; website?: string }) {
-  const [err, setErr] = useState(false);
-  if (!website || err) {
+function UniLogoImg({ name, website, uniId }: { name: string; website?: string; uniId?: string }) {
+  const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
+  const initial: 'proxy' | 'favicon' | 'letter' = uniId ? 'proxy' : domain ? 'favicon' : 'letter';
+  const [stage, setStage] = useState(initial);
+  if (stage === 'letter') {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
         {name?.charAt(0) || '?'}
       </span>
     );
   }
+  const src = stage === 'proxy' ? `/api/unilogo/${uniId}` : `/api/favicon/${domain}`;
   return (
-    <img
-      src={`/api/favicon/${website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}`}
-      alt={name}
-      className="w-full h-full object-contain"
-      onError={() => setErr(true)}
-    />
+    <img src={src} alt={name} className="w-full h-full object-contain"
+      onError={() => { if (stage === 'proxy' && domain) setStage('favicon'); else setStage('letter'); }} />
   );
 }
 
-function CourseDetailModal({ course, onClose, onEdit, onDelete, onApply }: {
-  course: any; onClose: () => void;
-  onEdit: () => void; onDelete: () => void; onApply: () => void;
+function CourseCard({ course, uniName, uniId, onEdit, onDelete, onApply }: {
+  course: any; uniName: string; uniId?: string; onEdit: () => void; onDelete: () => void; onApply: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-start gap-4 p-6 border-b border-gray-100">
-          <div className="w-14 h-14 rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0 bg-white">
-            <UniLogoImg name={course._uniName} website={course.website} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap gap-1.5 mb-1.5">
-              {course.level && (
-                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${LEVEL_COLORS[course.level] || 'bg-gray-100 text-gray-700'}`}>{course.level}</span>
-              )}
-              {course.scholarshipAvailable && (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1"><Award className="w-3 h-3" />Scholarship</span>
-              )}
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 leading-snug">{course.name}</h2>
-            <p className="text-sm text-purple-600 mt-0.5 font-medium flex items-center gap-1">
-              <GraduationCap className="w-3.5 h-3.5" />{course._uniName}
-            </p>
-            {course.department && <p className="text-xs text-gray-400 mt-0.5">{course.department}</p>}
-          </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 flex-shrink-0">
-            <X className="w-4 h-4" />
-          </button>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+      <div className="flex items-start gap-4 px-5 py-4">
+        <div className="w-10 h-10 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1 flex-shrink-0 mt-0.5">
+          <UniLogoImg name={uniName} website={course.website} uniId={uniId} />
         </div>
-
-        <div className="p-6 space-y-5">
-          <div className="grid grid-cols-2 gap-3">
-            {course.tuitionFee > 0 && (
-              <div className="bg-emerald-50 rounded-xl p-3.5">
-                <p className="text-xs text-gray-500 mb-0.5">Tuition Fee</p>
-                <p className="font-bold text-emerald-700 text-base flex items-center gap-1">
-                  <DollarSign className="w-3.5 h-3.5" />{course.currency} {Number(course.tuitionFee).toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-400">per year · {course.paymentPlan || 'Annual'}</p>
-              </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-bold text-gray-900">{course.name}</p>
+            {course.level && (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LEVEL_COLORS[course.level] || 'bg-gray-100 text-gray-600'}`}>
+                {course.level}
+              </span>
             )}
-            {course.duration && (
-              <div className="bg-sky-50 rounded-xl p-3.5">
-                <p className="text-xs text-gray-500 mb-0.5">Duration</p>
-                <p className="font-bold text-sky-700 text-base flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{course.duration}</p>
-              </div>
+            {course.scholarshipAvailable && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-1">
+                <Award className="w-3 h-3" /> Scholarship
+              </span>
             )}
           </div>
-
-          {course.description && (
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">About This Course</p>
-              <p className="text-sm text-gray-600 leading-relaxed">{course.description}</p>
-            </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+            <span className="text-xs text-gray-500 flex items-center gap-1">
+              <GraduationCap className="w-3 h-3" /> {uniName}
+            </span>
+            {course.department && <span className="text-xs text-gray-400">{course.department}</span>}
+            {course.duration && <span className="text-xs text-gray-400">{course.duration}</span>}
+          </div>
+          <div className="flex flex-wrap gap-x-4 mt-1">
+            {course.tuitionFee > 0 && (
+              <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                <DollarSign className="w-3 h-3" /> {course.currency} {Number(course.tuitionFee).toLocaleString()} / year
+              </span>
+            )}
+            {course.intake?.length > 0 && (
+              <span className="text-xs text-sky-600 flex items-center gap-1">
+                <Calendar className="w-3 h-3" /> {course.intake.slice(0, 3).map((m: string) => m.slice(0, 3)).join(', ')}{course.intake.length > 3 ? '…' : ''}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button type="button" onClick={onApply}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0d1b4b] hover:bg-[#152258] active:scale-95 transition-all shadow-sm">
+            <Plus className="w-3.5 h-3.5" /> Apply
+          </button>
+          <button type="button" onClick={onEdit}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 hover:bg-purple-100 active:scale-95 transition-all">
+            <Edit2 className="w-3.5 h-3.5" /> Edit
+          </button>
+          <button type="button" onClick={onDelete}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 active:scale-95 transition-all">
+            <Trash2 className="w-3.5 h-3.5" /> Delete
+          </button>
+          {(course.description || course.requirements?.length > 0) && (
+            <button type="button" onClick={() => setExpanded(v => !v)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 active:scale-95 transition-all">
+              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {expanded ? 'Hide' : 'More'}
+            </button>
           )}
-
-          {course.intake?.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Intake Months</p>
-              <div className="flex flex-wrap gap-1.5">
-                {course.intake.map((m: string) => (
-                  <span key={m} className="text-xs bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full border border-sky-100 font-medium">{m}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
+        </div>
+      </div>
+      {expanded && (
+        <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 space-y-3">
+          {course.description && <p className="text-sm text-gray-600">{course.description}</p>}
           {course.requirements?.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Entry Requirements</p>
-              <div className="flex flex-wrap gap-1.5">
-                {course.requirements.map((req: string) => (
-                  <span key={req} className="flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full border border-purple-100">
-                    <CheckCircle className="w-3 h-3 flex-shrink-0" />{req}
-                  </span>
+              <div className="flex flex-wrap gap-2">
+                {course.requirements.map((r: string, i: number) => (
+                  <span key={i} className="text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full border border-purple-100">{r}</span>
                 ))}
               </div>
             </div>
           )}
-
-          {(course.applicationFee > 0 || course.registrationFee > 0) && (
-            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 grid grid-cols-2 gap-3">
+          {(course.applicationFee > 0 || course.registrationFee > 0 || course.scholarshipAmount) && (
+            <div className="grid grid-cols-3 gap-3 text-xs">
               {course.applicationFee > 0 && (
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Application Fee</p>
-                  <p className="text-sm font-semibold text-gray-800">{course.currency} {Number(course.applicationFee).toLocaleString()}</p>
-                </div>
+                <div><span className="text-gray-400">App Fee:</span> <span className="font-medium text-gray-700">{course.currency} {Number(course.applicationFee).toLocaleString()}</span></div>
               )}
               {course.registrationFee > 0 && (
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Registration Fee</p>
-                  <p className="text-sm font-semibold text-gray-800">{course.currency} {Number(course.registrationFee).toLocaleString()}</p>
-                </div>
+                <div><span className="text-gray-400">Reg Fee:</span> <span className="font-medium text-gray-700">{course.currency} {Number(course.registrationFee).toLocaleString()}</span></div>
+              )}
+              {course.scholarshipAmount && (
+                <div><span className="text-gray-400">Scholarship:</span> <span className="font-medium text-amber-700">{course.scholarshipAmount}</span></div>
               )}
             </div>
           )}
-
-          {course.scholarshipAvailable && (
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3.5 flex items-start gap-2.5">
-              <Award className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-amber-800">Scholarship Available</p>
-                {course.scholarshipAmount && <p className="text-sm text-amber-700 mt-0.5">{course.scholarshipAmount}</p>}
-              </div>
-            </div>
-          )}
         </div>
-
-        <div className="px-6 pb-6 flex gap-3">
-          <button type="button" onClick={() => { onApply(); onClose(); }}
-            className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-sm flex items-center justify-center gap-1.5 transition-colors">
-            <Plus className="w-4 h-4" />Apply
-          </button>
-          <button type="button" onClick={() => { onEdit(); onClose(); }}
-            className="flex-1 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors">
-            <Edit2 className="w-4 h-4" />Edit
-          </button>
-          <button type="button" onClick={() => { onDelete(); onClose(); }}
-            className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors">
-            <Trash2 className="w-4 h-4" />Delete
-          </button>
-        </div>
-      </div>
+      )}
     </div>
-  );
-}
-
-function CourseCard({ course, onClick }: { course: any; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick}
-      className="text-left w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-purple-200 transition-all group cursor-pointer flex flex-col min-h-[160px]">
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="w-10 h-10 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1 flex-shrink-0">
-          <UniLogoImg name={course._uniName} website={course.website} />
-        </div>
-        {course.level && (
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${LEVEL_COLORS[course.level] || 'bg-gray-100 text-gray-700'}`}>
-            {course.level}
-          </span>
-        )}
-      </div>
-      <h3 className="font-bold text-gray-900 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-purple-700 transition-colors">{course.name}</h3>
-      <p className="text-xs text-purple-600 truncate mb-0.5 font-medium flex items-center gap-1">
-        <GraduationCap className="w-3 h-3 flex-shrink-0" />{course._uniName}
-      </p>
-      {course.department && <p className="text-xs text-gray-400 truncate">{course.department}</p>}
-      <div className="mt-auto pt-3 flex items-center justify-between">
-        {course.tuitionFee > 0 ? (
-          <p className="text-xs font-bold text-emerald-600">{course.currency} {Number(course.tuitionFee).toLocaleString()}<span className="font-normal text-gray-400">/yr</span></p>
-        ) : (
-          course.scholarshipAvailable ? (
-            <span className="text-xs font-semibold text-amber-600 flex items-center gap-1"><Award className="w-3 h-3" />Scholarship</span>
-          ) : <span />
-        )}
-        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-purple-500 transition-colors flex-shrink-0" />
-      </div>
-    </button>
   );
 }
 
@@ -520,7 +456,6 @@ export default function AdminCourses() {
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<{ course: any; uniId: string } | null>(null);
   const [applyModal, setApplyModal] = useState<any | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<any | null>(null);
 
   const fetchUniversities = () => {
     setLoading(true);
@@ -541,6 +476,7 @@ export default function AdminCourses() {
       _uniId: normalId(uni),
       _uniName: uni.name,
       website: uni.website,
+      _uniLogo: uni.logo,
     }))
   );
 
@@ -589,17 +525,9 @@ export default function AdminCourses() {
           onClose={() => setApplyModal(null)}
         />
       )}
-      {selectedCourse && (
-        <CourseDetailModal
-          course={selectedCourse}
-          onClose={() => setSelectedCourse(null)}
-          onEdit={() => setEditing({ course: selectedCourse, uniId: selectedCourse._uniId })}
-          onDelete={() => handleDelete(selectedCourse._uniId, normalId(selectedCourse))}
-          onApply={() => setApplyModal(selectedCourse)}
-        />
-      )}
 
       <div className="space-y-6">
+        {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
@@ -630,6 +558,7 @@ export default function AdminCourses() {
           </div>
         </div>
 
+        {/* Filters */}
         <div className="flex gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -637,18 +566,19 @@ export default function AdminCourses() {
               placeholder="Search courses, universities, departments…"
               className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm" />
           </div>
-          <select aria-label="Filter by level" value={levelFilter} onChange={e => setLevelFilter(e.target.value)}
+          <select value={levelFilter} onChange={e => setLevelFilter(e.target.value)}
             className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm text-gray-700">
             <option value="">All Levels</option>
             {LEVELS.map(l => <option key={l}>{l}</option>)}
           </select>
-          <select aria-label="Filter by university" value={uniFilter} onChange={e => setUniFilter(e.target.value)}
+          <select value={uniFilter} onChange={e => setUniFilter(e.target.value)}
             className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm text-gray-700 max-w-[220px]">
             <option value="">All Universities</option>
             {uniNames.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
         </div>
 
+        {/* Course list */}
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
@@ -661,12 +591,16 @@ export default function AdminCourses() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="space-y-3">
             {filtered.map(c => (
               <CourseCard
                 key={`${c._uniId}-${normalId(c)}`}
                 course={c}
-                onClick={() => setSelectedCourse(c)}
+                uniName={c._uniName}
+                uniId={c._uniId}
+                onEdit={() => setEditing({ course: c, uniId: c._uniId })}
+                onDelete={() => handleDelete(c._uniId, normalId(c))}
+                onApply={() => setApplyModal(c)}
               />
             ))}
           </div>

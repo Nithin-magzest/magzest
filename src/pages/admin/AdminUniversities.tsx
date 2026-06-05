@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Plus, Trash2, X, Search, GraduationCap, Edit2, ChevronDown, ChevronUp,
   Globe, MapPin, BookOpen, DollarSign, Check, AlertTriangle, RefreshCw, CheckCircle, Sparkles,
@@ -438,7 +439,7 @@ function UniversityModal({ uni, onClose, onSaved }: {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     {(form.logo || form.website) && (
                       <div className="absolute top-3 left-3 w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center p-1.5 overflow-hidden">
-                        <UniLogoImg name={form.name} logo={form.logo} website={form.website} />
+                        <UniLogoImg name={form.name} website={form.website} />
                       </div>
                     )}
                     <div className="absolute bottom-3 left-3 text-white text-sm font-semibold drop-shadow">{form.name || 'University Name'}</div>
@@ -550,10 +551,10 @@ function UniversityModal({ uni, onClose, onSaved }: {
 
 // ── University Row (expandable) ───────────────────────────────────────────────
 
-function UniLogoImg({ name, logo, website }: { name: string; logo?: string; website?: string }) {
-  const initial = (logo && !logo.includes('clearbit.com')) ? 'logo' : website ? 'favicon' : 'letter';
-  const [stage, setStage] = useState<'logo' | 'favicon' | 'letter'>(initial as any);
-
+function UniLogoImg({ name, website, uniId }: { name: string; website?: string; uniId?: string }) {
+  const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
+  const initial: 'proxy' | 'favicon' | 'letter' = uniId ? 'proxy' : domain ? 'favicon' : 'letter';
+  const [stage, setStage] = useState(initial);
   if (stage === 'letter') {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-xl rounded-lg leading-none">
@@ -561,22 +562,10 @@ function UniLogoImg({ name, logo, website }: { name: string; logo?: string; webs
       </span>
     );
   }
-
-  const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
-  const src = stage === 'logo'
-    ? logo!
-    : `/api/favicon/${domain}`;
-
+  const src = stage === 'proxy' ? `/api/unilogo/${uniId}` : `/api/favicon/${domain}`;
   return (
-    <img
-      src={src}
-      alt={name}
-      className="w-full h-full object-contain"
-      onError={() => {
-        if (stage === 'logo' && website) setStage('favicon');
-        else setStage('letter');
-      }}
-    />
+    <img src={src} alt={name} className="w-full h-full object-contain"
+      onError={() => { if (stage === 'proxy' && domain) setStage('favicon'); else setStage('letter'); }} />
   );
 }
 
@@ -622,7 +611,7 @@ function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply, onEnrich 
         {/* University header row */}
         <div className="flex items-center gap-4 px-5 py-4">
           <div className="w-12 h-12 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-center overflow-hidden p-1.5 flex-shrink-0">
-            <UniLogoImg name={uni.name} logo={uni.logo} website={uni.website} />
+            <UniLogoImg name={uni.name} website={uni.website} uniId={uni.id || normalId(uni)} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-900">{uni.name}</p>
@@ -642,6 +631,11 @@ function UniversityRow({ uni, onEdit, onDelete, onUniUpdated, onApply, onEnrich 
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <Link to={`/university/${uni.id || mongoId}`}
+              title="View full university page"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors">
+              <GraduationCap className="w-3.5 h-3.5" />View
+            </Link>
             <button type="button" onClick={handleEnrichClick} disabled={enriching}
               title="Re-fetch logo, image, description and social links from Wikipedia"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50">

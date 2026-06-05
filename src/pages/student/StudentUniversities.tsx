@@ -4,11 +4,10 @@ import { Search, MapPin, Star, BookOpen, X, DollarSign, ExternalLink, Users, Inf
 import { api } from '../../api';
 
 
-function UniLogoImg({ name, website, logo }: { name: string; website?: string; logo?: string }) {
+function UniLogoImg({ name, website, uniId }: { name: string; website?: string; uniId?: string }) {
   const domain = website ? website.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0] : '';
-  const initial: 'logo' | 'favicon' | 'letter' = (logo && !logo.includes('clearbit.com')) ? 'logo' : domain ? 'favicon' : 'letter';
+  const initial: 'proxy' | 'favicon' | 'letter' = uniId ? 'proxy' : domain ? 'favicon' : 'letter';
   const [stage, setStage] = useState(initial);
-
   if (stage === 'letter') {
     return (
       <span className="w-full h-full bg-[#0d1b4b] flex items-center justify-center text-white font-bold text-base rounded-lg leading-none">
@@ -16,18 +15,10 @@ function UniLogoImg({ name, website, logo }: { name: string; website?: string; l
       </span>
     );
   }
-
-  const src = stage === 'logo' ? logo! : `/api/favicon/${domain}`;
+  const src = stage === 'proxy' ? `/api/unilogo/${uniId}` : `/api/favicon/${domain}`;
   return (
-    <img
-      src={src}
-      alt={name}
-      className="w-full h-full object-contain"
-      onError={() => {
-        if (stage === 'logo' && domain) setStage('favicon');
-        else setStage('letter');
-      }}
-    />
+    <img src={src} alt={name} className="w-full h-full object-contain"
+      onError={() => { if (stage === 'proxy' && domain) setStage('favicon'); else setStage('letter'); }} />
   );
 }
 
@@ -61,7 +52,7 @@ function UniversityCard({ uni }: { uni: any }) {
 
       <div className="relative px-4 pb-4 pt-9">
         <div className="absolute -top-7 left-4 w-14 h-14 bg-white rounded-xl border border-gray-100 shadow-md overflow-hidden p-1.5 flex items-center justify-center z-10">
-          <UniLogoImg name={uni.name} website={uni.website} logo={uni.id === 'u5' ? 'https://nus.edu.sg/images/default-source/base/logo.png' : undefined} />
+          <UniLogoImg name={uni.name} website={uni.website} uniId={uni.id || uni._id} />
         </div>
         <h3 className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{uni.name}</h3>
         <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5 mb-2">
