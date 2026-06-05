@@ -1,12 +1,20 @@
 ﻿import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Clock, CheckCircle, Bell, ArrowRight, Star, MapPin, Upload, X, AlertCircle, ExternalLink, CalendarDays, GraduationCap } from 'lucide-react';
+import { FileText, Clock, CheckCircle, Bell, ArrowRight, Star, MapPin, Upload, X, AlertCircle, ExternalLink, CalendarDays, GraduationCap, Phone, Video, PhoneCall } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Student } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 
 const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
+
+function fmt12h(time24: string) {
+  if (!time24) return '';
+  const [h, m] = time24.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${String(h % 12 || 12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
 
 function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onUploaded: () => void }) {
   const [name, setName] = useState('');
@@ -108,6 +116,8 @@ export default function StudentDashboard() {
   const [recommendations, setRecommendations] = useState<Array<{ uni: any; score: number; matchPct: number; matchedCourse: any; reasons: string[] }>>([]);
   const [recsLoading, setRecsLoading] = useState(true);
   const [upcomingIntakes, setUpcomingIntakes] = useState<Array<{ uniName: string; uniId: string; intake: string; deadline: string; daysLeft: number }>>([]);
+  const [scheduledCalls, setScheduledCalls] = useState<any[]>([]);
+  const [callsLoading, setCallsLoading] = useState(true);
 
   useEffect(() => {
     const levelMap: Record<string, string> = {
@@ -194,6 +204,26 @@ export default function StudentDashboard() {
 
       setRecsLoading(false);
     }).catch(() => setRecsLoading(false));
+  }, []);
+
+  // Fetch meetings from API and filter for call-type upcoming ones
+  useEffect(() => {
+    api.meetings.list().then((meetings: any[]) => {
+      const now = new Date();
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const upcoming = meetings
+        .filter(m => {
+          const isCall = (m.title || '').includes('📞');
+          const dt = new Date(`${m.scheduledDate}T${m.scheduledTime}`);
+          return isCall && dt >= todayStart;
+        })
+        .sort((a, b) => {
+          const da = new Date(`${a.scheduledDate}T${a.scheduledTime}`);
+          const db = new Date(`${b.scheduledDate}T${b.scheduledTime}`);
+          return da.getTime() - db.getTime();
+        });
+      setScheduledCalls(upcoming);
+    }).catch(() => {}).finally(() => setCallsLoading(false));
   }, []);
 
   if (!student) return null;
@@ -409,6 +439,89 @@ export default function StudentDashboard() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Scheduled Calls */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <Phone className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-bold text-gray-900">Scheduled Calls</h2>
+            {scheduledCalls.length > 0 && (
+              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                {scheduledCalls.length}
+              </span>
+            )}
+          </div>
+          <Link to="/student/activities" className="text-[#0d1b4b] text-sm font-medium hover:text-[#152258] flex items-center gap-1">
+            View all <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {callsLoading ? (
+          <div className="space-y-3">
+            {[1, 2].map(i => (
+              <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : scheduledCalls.length === 0 ? (
+          <div className="text-center py-8">
+            <Phone className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+            <p className="text-gray-400 text-sm">No upcoming calls scheduled</p>
+            <p className="text-xs text-gray-400 mt-1">Your counselor will schedule calls for you</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {scheduledCalls.slice(0, 3).map(call => {
+              const isVideo = !(call.notes || '').toLowerCase().includes('audio') &&
+                !(call.title || '').toLowerCase().includes('audio');
+              const callDate = new Date(call.scheduledDate + 'T00:00:00');
+              const td = new Date(); td.setHours(0, 0, 0, 0);
+              const tom = new Date(td); tom.setDate(td.getDate() + 1);
+              const isToday = callDate.getTime() === td.getTime();
+              const isTomorrow = callDate.getTime() === tom.getTime();
+              const dateLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow'
+                : callDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+              const timeLabel = fmt12h(call.scheduledTime || '');
+              const counselorName = call.createdByName || call.schedulerName || 'Your Counselor';
+
+              return (
+                <div key={call._id || call.id}
+                  className={`flex items-center gap-4 p-3.5 rounded-xl border transition-all ${
+                    isToday ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'
+                  }`}>
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    isToday ? 'bg-blue-100' : 'bg-white border border-gray-200'
+                  }`}>
+                    {isVideo
+                      ? <Video className={`w-5 h-5 ${isToday ? 'text-blue-600' : 'text-gray-500'}`} />
+                      : <PhoneCall className={`w-5 h-5 ${isToday ? 'text-blue-600' : 'text-gray-500'}`} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">{isVideo ? 'Video' : 'Audio'} Call</p>
+                    <p className="text-xs text-gray-500 mt-0.5">with {counselorName}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className={`text-xs font-bold ${isToday ? 'text-blue-600' : 'text-gray-600'}`}>{dateLabel}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{timeLabel}</p>
+                  </div>
+                  {isToday && (
+                    <Link to="/student/activities"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors flex-shrink-0">
+                      <Video className="w-3 h-3" /> Join
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+            {scheduledCalls.length > 3 && (
+              <Link to="/student/activities"
+                className="block text-center text-xs text-blue-600 font-medium hover:underline pt-1">
+                +{scheduledCalls.length - 3} more scheduled call{scheduledCalls.length - 3 > 1 ? 's' : ''}
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Upcoming Intakes */}
