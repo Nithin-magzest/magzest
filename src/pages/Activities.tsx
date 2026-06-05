@@ -221,8 +221,8 @@ export default function Activities() {
     const isCall = (m.title || '').includes('📞');
     const isUpcoming = new Date(`${m.scheduledDate}T${m.scheduledTime}`) > new Date();
 
-    // If this is a call-type meeting, populate the Calls tab
-    if (isCall) {
+    // Calls tab is student-only: only populate for the student the call was scheduled for
+    if (isCall && isStudent) {
       const todayD = new Date(); todayD.setHours(0, 0, 0, 0);
       const tomD = new Date(todayD); tomD.setDate(todayD.getDate() + 1);
       const yestD = new Date(todayD); yestD.setDate(todayD.getDate() - 1);
@@ -233,10 +233,7 @@ export default function Activities() {
         : callDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
       const isAudio = (m.notes || '').toLowerCase().includes('audio') || (m.title || '').toLowerCase().includes('audio');
-      const studentParticipant = m.participants?.find((p: any) => p.role === 'student');
-      const partnerName = isStudent
-        ? (m.createdByName || m.schedulerName || 'Your Counselor')
-        : (studentParticipant?.name || m.scheduledForName || 'Student');
+      const partnerName = m.createdByName || m.schedulerName || 'Your Counselor';
 
       setCalls(prev => {
         if (prev.some(c => (c as any)._meetingId === id)) return prev;
@@ -450,41 +447,9 @@ export default function Activities() {
   const addCall = async () => {
     if (!newCall.name.trim() || !newCall.time || !newCall.date) return;
 
-    const callTimeFormatted = fmt12h(newCall.time);
     const callTitle = `📞 ${newCall.type === 'video' ? 'Video' : 'Audio'} Call with ${newCall.name}`;
 
-    // Map date to a relative display label for the Calls tab grouping
-    const todayDate = new Date();
-    const todayStr = `${todayDate.getFullYear()}-${padDate(todayDate.getMonth()+1)}-${padDate(todayDate.getDate())}`;
-    const tomorrowDate = new Date(todayDate); tomorrowDate.setDate(todayDate.getDate()+1);
-    const tomorrowStr = `${tomorrowDate.getFullYear()}-${padDate(tomorrowDate.getMonth()+1)}-${padDate(tomorrowDate.getDate())}`;
-    const dateLabel = newCall.date === todayStr ? 'Today'
-      : newCall.date === tomorrowStr ? 'Tomorrow'
-      : newCall.date;
-
-    const callId = Date.now();
-
-    // 1. Add to Calls tab list
-    setCalls(cs => [...cs, {
-      id: callId, name: newCall.name, type: newCall.type,
-      status: 'scheduled', duration: '-',
-      time: callTimeFormatted, date: dateLabel,
-    }]);
-
-    // 2. Add to Calendar as an event on the selected date
-    setEvents(prev => [...prev, {
-      id: callId, title: callTitle,
-      date: newCall.date, time: callTimeFormatted,
-      type: 'call', desc: `${newCall.type === 'video' ? 'Video' : 'Audio'} call`,
-    }]);
-
-    // 3. Add a reminder on the same date
-    setReminders(prev => [...prev, {
-      id: callId + 1, date: newCall.date,
-      text: callTitle, time: callTimeFormatted,
-    } as any]);
-
-    // 4. Jump calendar view to the call's date
+    // Jump calendar view to the call's date
     const [y, mo, d] = newCall.date.split('-').map(Number);
     setCalYear(y); setCalMonth(mo - 1); setSelectedDay(d);
 
