@@ -40,13 +40,7 @@ const INITIAL_EVENTS = [
   { id: 4, title: 'Parent-Counselor Meet',            date: '2026-06-05', time: '04:00 PM', type: 'meeting',   desc: 'Quarterly parent engagement session' },
 ];
 
-const INITIAL_CALLS = [
-  { id: 1, name: 'Riya Sharma',  type: 'video', status: 'completed', duration: '24 min', time: '10:30 AM', date: 'Today' },
-  { id: 2, name: 'Arjun Mehta',  type: 'audio', status: 'missed',    duration: '-',      time: '09:15 AM', date: 'Today' },
-  { id: 3, name: 'Priya Nair',   type: 'video', status: 'completed', duration: '45 min', time: '03:00 PM', date: 'Yesterday' },
-  { id: 4, name: 'Karan Patel',  type: 'audio', status: 'completed', duration: '12 min', time: '11:00 AM', date: 'Yesterday' },
-  { id: 5, name: 'Sara Khan',    type: 'video', status: 'scheduled', duration: '-',      time: '02:00 PM', date: 'Tomorrow' },
-];
+const INITIAL_CALLS: { id: number; name: string; type: string; status: string; duration: string; time: string; date: string }[] = [];
 
 const INITIAL_REMINDERS = [
   { id: 1, date: '2026-05-28', text: 'Submit monthly progress report', time: '09:00 AM' },
@@ -192,7 +186,7 @@ export default function Activities() {
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [newEvent, setNewEvent]       = useState({ title: '', date: '', time: '', type: 'meeting', desc: '', studentName: '' });
 
-  const [calls, setCalls]               = useState(isStudent ? [] as typeof INITIAL_CALLS : INITIAL_CALLS);
+  const [calls, setCalls]               = useState<typeof INITIAL_CALLS>([]);
   const [showScheduleCall, setShowScheduleCall] = useState(false);
   const [newCall, setNewCall]           = useState({ name: '', studentId: '', type: 'video', time: '', date: '' });
   const [newCallCount, setNewCallCount] = useState(0);
@@ -239,9 +233,10 @@ export default function Activities() {
         : callDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
       const isAudio = (m.notes || '').toLowerCase().includes('audio') || (m.title || '').toLowerCase().includes('audio');
+      const studentParticipant = m.participants?.find((p: any) => p.role === 'student');
       const partnerName = isStudent
         ? (m.createdByName || m.schedulerName || 'Your Counselor')
-        : (m.participants?.[0]?.name || m.scheduledForName || 'Student');
+        : (studentParticipant?.name || m.scheduledForName || 'Student');
 
       setCalls(prev => {
         if (prev.some(c => (c as any)._meetingId === id)) return prev;
