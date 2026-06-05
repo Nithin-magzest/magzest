@@ -7,6 +7,7 @@ import {
   MessageCircle, Send,
 } from 'lucide-react';
 import MeetingPanel from '../components/MeetingPanel';
+import { useNotifications } from '../context/NotificationContext';
 
 type Tab = 'calendar' | 'tasks' | 'events' | 'calls' | 'meetings';
 
@@ -69,12 +70,14 @@ const EVENT_TYPE_COLOR: Record<string,string> = {
   workshop:   'bg-purple-100 text-purple-700',
   seminar:    'bg-orange-100 text-orange-700',
   meeting:    'bg-green-100 text-green-700',
+  call:       'bg-sky-100 text-sky-700',
 };
 const EVENT_TYPE_DOT: Record<string,string> = {
   university: 'bg-blue-500',
   workshop:   'bg-purple-500',
   seminar:    'bg-orange-500',
   meeting:    'bg-green-500',
+  call:       'bg-sky-500',
 };
 const CALL_STATUS_COLOR: Record<string,string> = {
   completed: 'text-green-600',
@@ -168,6 +171,7 @@ export default function Activities() {
     pathname.includes('/board')     ? 'board' : 'counselor';
 
   const isStudent = role === 'student';
+  const { addNotif } = useNotifications();
 
   const today = new Date();
   const [tab, setTab]           = useState<Tab>('calendar');
@@ -190,7 +194,7 @@ export default function Activities() {
 
   const [calls, setCalls]               = useState(INITIAL_CALLS);
   const [showScheduleCall, setShowScheduleCall] = useState(false);
-  const [newCall, setNewCall]           = useState({ name: '', type: 'video', time: '', date: 'Tomorrow' });
+  const [newCall, setNewCall]           = useState({ name: '', studentId: '', type: 'video', time: '', date: '' });
 
   const [reminders, setReminders]         = useState(INITIAL_REMINDERS);
   const [showAddReminder, setShowAddReminder] = useState(false);
@@ -370,12 +374,106 @@ export default function Activities() {
     setShowAddEvent(false);
   };
 
-  const addCall = () => {
-    if (!newCall.name.trim() || !newCall.time) return;
-    setCalls(cs => [...cs, { id: Date.now(), ...newCall, status: 'scheduled', duration: '-' }]);
-    setNewCall({ name: '', type: 'video', time: '', date: 'Tomorrow' });
+  const addCall = async () => {
+    if (!newCall.name.trim() || !newCall.time || !newCall.date) return;
+
+    const callTimeFormatted = fmt12h(newCall.time);
+    const callTitle = `📞 ${newCall.type === 'video' ? 'Video' : 'Audio'} Call with ${newCall.name}`;
+
+    // Map date to a relative display label for the Calls tab grouping
+    const todayDate = new Date();
+    const todayStr = `${todayDate.getFullYear()}-${padDate(todayDate.getMonth()+1)}-${padDate(todayDate.getDate())}`;
+    const tomorrowDate = new Date(todayDate); tomorrowDate.setDate(todayDate.getDate()+1);
+    const tomorrowStr = `${tomorrowDate.getFullYear()}-${padDate(tomorrowDate.getMonth()+1)}-${padDate(tomorrowDate.getDate())}`;
+    const dateLabel = newCall.date === todayStr ? 'Today'
+      : newCall.date === tomorrowStr ? 'Tomorrow'
+      : newCall.date;
+
+    const callId = Date.now();
+
+    // 1. Add to Calls tab list
+    setCalls(cs => [...cs, {
+      id: callId, name: newCall.name, type: newCall.type,
+      status: 'scheduled', duration: '-',
+      time: callTimeFormatted, date: dateLabel,
+    }]);
+
+    // 2. Add to Calendar as an event on the selected date
+    setEvents(prev => [...prev, {
+      id: callId, title: callTitle,
+      date: newCall.date, time: callTimeFormatted,
+      type: 'call', desc: `${newCall.type === 'video' ? 'Video' : 'Audio'} call`,
+    }]);
+
+    // 3. Add a reminder on the same date
+    setReminders(prev => [...prev, {
+      id: callId + 1, date: newCall.date,
+      text: callTitle, time: callTimeFormatted,
+    } as any]);
+
+    // 4. Jump calendar view to the call's date
+    const [y, mo, d] = newCall.date.split('-').map(Number);
+    setCalYear(y); setCalMonth(mo - 1); setSelectedDay(d);
+
+    // 5. Notify the scheduler (current user) immediately
+    addNotif({
+      type: 'meeting', priority: 'normal',
+      title: '📞 Call Scheduled',
+      message: `${newCall.type === 'video' ? 'Video' : 'Audio'} call with ${newCall.name} on ${newCall.date} at ${callTimeFormatted}. Added to your calendar & reminders.`,
+      link: `/${role}/activities`,
+    });
+
+    // 6. Persist as a meeting — triggers socket notification to the other participant
+    try {
+      const meetingPayload = {
+        title: callTitle,
+        scheduledDate: newCall.date,
+        scheduledTime: newCall.time,
+        duration: 30,
+        platform: 'other' as const,
+        meetingLink: '',
+        notes: `${newCall.type === 'video' ? 'Video' : 'Audio'} call`,
+        participants: newCall.studentId
+          ? [{ userId: newCall.studentId, name: newCall.name, role: 'student', email: '' }]
+          : [],
+      };
+      const created = await api.meetings.create(meetingPayload);
+      // Prevent addMeetingToActivities from double-adding this to events/reminders
+      const meetingId = (created._id || created.id)?.toString();
+      if (meetingId) addedMeetingIds.current.add(meetingId);
+    } catch {}
+
+    setNewCall({ name: '', studentId: '', type: 'video', time: '', date: '' });
     setShowScheduleCall(false);
   };
+
+  // When the OTHER party (student) receives a call:scheduled socket event, their
+  // NotificationContext dispatches this window event so their Activities calendar updates.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const data = (e as CustomEvent).detail;
+      if (!data?.scheduledDate) return;
+      const timeLabel = data.scheduledTimeFormatted || fmt12h(data.scheduledTime || '');
+      const title = `📞 ${data.callType === 'audio' ? 'Audio' : 'Video'} Call`;
+      const evId = Date.now();
+      setEvents(prev => {
+        if (prev.some(ev => (ev as any)._externalCallId === evId)) return prev;
+        return [...prev, {
+          id: evId, _externalCallId: evId,
+          title, date: data.scheduledDate, time: timeLabel,
+          type: 'call', desc: 'Scheduled call',
+        } as any];
+      });
+      setReminders(prev => [...prev, {
+        id: evId + 1, date: data.scheduledDate,
+        text: title, time: timeLabel,
+      } as any]);
+      const [y, mo, d] = data.scheduledDate.split('-').map(Number);
+      setCalYear(y); setCalMonth(mo - 1); setSelectedDay(d);
+    };
+    window.addEventListener('call:scheduled', handler);
+    return () => window.removeEventListener('call:scheduled', handler);
+  }, []);
 
   const addReminder = () => {
     if (!newReminder.text.trim()) return;
@@ -1005,72 +1103,110 @@ export default function Activities() {
 
           {!isStudent && showScheduleCall && (
             <div className="bg-white rounded-2xl border border-purple-200 p-5 shadow-md mb-5">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">Schedule a Call with Student</h3>
+              <h3 className="text-sm font-semibold text-gray-800 mb-4">Schedule a Call</h3>
               <div className="grid grid-cols-1 gap-3">
-                <select title="Select student" value={newCall.name} onChange={e => setNewCall(n => ({ ...n, name: e.target.value }))}
-                  className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700">
-                  <option value="">Select student</option>
-                  {students.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
-                </select>
+                {students.length > 0 ? (
+                  <select
+                    title="Select person"
+                    value={newCall.studentId}
+                    onChange={e => {
+                      const s = students.find(st => st._id === e.target.value);
+                      setNewCall(n => ({ ...n, studentId: e.target.value, name: s?.name || '' }));
+                    }}
+                    className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700"
+                  >
+                    <option value="">Select person</option>
+                    {students.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                  </select>
+                ) : (
+                  <input
+                    value={newCall.name}
+                    onChange={e => setNewCall(n => ({ ...n, name: e.target.value }))}
+                    placeholder="Person's name"
+                    className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700 placeholder-gray-400"
+                  />
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <select title="Call type" value={newCall.type} onChange={e => setNewCall(n => ({ ...n, type: e.target.value }))}
                     className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700">
                     <option value="video">Video Call</option>
                     <option value="audio">Audio Call</option>
                   </select>
-                  <select title="Call date" value={newCall.date} onChange={e => setNewCall(n => ({ ...n, date: e.target.value }))}
-                    className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700">
-                    <option>Today</option>
-                    <option>Tomorrow</option>
-                    <option>Yesterday</option>
-                  </select>
+                  <input
+                    type="date"
+                    title="Call date"
+                    value={newCall.date}
+                    onChange={e => setNewCall(n => ({ ...n, date: e.target.value }))}
+                    className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700"
+                  />
                 </div>
                 <input type="time" title="Call time" value={newCall.time} onChange={e => setNewCall(n => ({ ...n, time: e.target.value }))}
                   className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-purple-400 text-gray-700" />
+                {newCall.name && newCall.date && newCall.time && (
+                  <div className="flex items-start gap-2 bg-sky-50 border border-sky-200 rounded-xl px-3 py-2.5 text-xs text-sky-700">
+                    <Bell className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                    <span>
+                      A reminder and calendar event will be added for both you and <strong>{newCall.name}</strong>.
+                      They will also receive a notification.
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex gap-2 justify-end mt-4">
-                <button type="button" onClick={() => setShowScheduleCall(false)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><X className="w-3 h-3" /> Cancel</button>
-                <button type="button" onClick={addCall} className={`px-4 py-1.5 ${t.actionBtn} text-white text-sm rounded-lg ${t.actionBtnHover}`}>Schedule</button>
+                <button type="button" onClick={() => { setShowScheduleCall(false); setNewCall({ name: '', studentId: '', type: 'video', time: '', date: '' }); }} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><X className="w-3 h-3" /> Cancel</button>
+                <button type="button" onClick={addCall} disabled={!newCall.name.trim() || !newCall.time || !newCall.date}
+                  className={`px-4 py-1.5 ${t.actionBtn} text-white text-sm rounded-lg ${t.actionBtnHover} disabled:opacity-50`}>Schedule</button>
               </div>
             </div>
           )}
 
-          {(['Today', 'Tomorrow', 'Yesterday'] as const).map(group => {
-            const groupCalls = calls.filter(c => c.date === group);
-            if (!groupCalls.length) return null;
-            return (
-              <div key={group} className="mb-5">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{group}</p>
-                <div className="space-y-2">
-                  {groupCalls.map(call => (
-                    <Link key={call.id} to={`/${role}/chat`}
-                      className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 px-4 py-3.5 shadow-sm hover:border-gray-200 hover:shadow-md transition-all">
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${CALL_STATUS_BG[call.status]}`}>
-                        {call.type === 'video'
-                          ? <Video className={`w-5 h-5 ${CALL_STATUS_COLOR[call.status]}`} />
-                          : call.status === 'missed'
-                          ? <PhoneOff className="w-5 h-5 text-red-500" />
-                          : <PhoneCall className={`w-5 h-5 ${CALL_STATUS_COLOR[call.status]}`} />}
+          {(() => {
+            // Build dynamic date groups sorted: Today → Tomorrow → other dates asc → Yesterday
+            const ORDER: Record<string, number> = { Today: 0, Tomorrow: 1, Yesterday: 99 };
+            const groups = [...new Set(calls.map(c => c.date))].sort((a, b) => {
+              const ao = ORDER[a] ?? 50;
+              const bo = ORDER[b] ?? 50;
+              if (ao !== bo) return ao - bo;
+              return a.localeCompare(b);
+            });
+            return groups.map(group => {
+              const groupCalls = calls.filter(c => c.date === group);
+              if (!groupCalls.length) return null;
+              return (
+                <div key={group} className="mb-5">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{group}</p>
+                  <div className="space-y-2">
+                    {groupCalls.map(call => (
+                      <div key={call.id}
+                        className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 px-4 py-3.5 shadow-sm hover:border-gray-200 hover:shadow-md transition-all">
+                        <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${CALL_STATUS_BG[call.status]}`}>
+                          {call.type === 'video'
+                            ? <Video className={`w-5 h-5 ${CALL_STATUS_COLOR[call.status]}`} />
+                            : call.status === 'missed'
+                            ? <PhoneOff className="w-5 h-5 text-red-500" />
+                            : <PhoneCall className={`w-5 h-5 ${CALL_STATUS_COLOR[call.status]}`} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">{call.name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{call.type === 'video' ? 'Video' : 'Audio'} · {call.time}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-xs font-semibold capitalize ${CALL_STATUS_COLOR[call.status]}`}>{call.status}</p>
+                          {call.duration !== '-' && <p className="text-xs text-gray-400 mt-0.5">{call.duration}</p>}
+                        </div>
+                        {call.status === 'scheduled' && (
+                          <Link to={`/${role}/chat`}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
+                            <Video className="w-3 h-3" /> Join
+                          </Link>
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900">{call.name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{call.type === 'video' ? 'Video' : 'Audio'} · {call.time}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-xs font-semibold capitalize ${CALL_STATUS_COLOR[call.status]}`}>{call.status}</p>
-                        {call.duration !== '-' && <p className="text-xs text-gray-400 mt-0.5">{call.duration}</p>}
-                      </div>
-                      {call.status === 'scheduled' && (
-                        <span className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg">
-                          <Video className="w-3 h-3" /> Join
-                        </span>
-                      )}
-                    </Link>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       )}
     </div>

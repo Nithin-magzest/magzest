@@ -21,6 +21,7 @@ interface NotificationContextValue {
   notifications: AppNotification[];
   toasts: AppNotification[];
   unreadCount: number;
+  addNotif: (notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => void;
   markRead: (id: string) => void;
   markAllRead: () => void;
   dismiss: (id: string) => void;
@@ -30,6 +31,7 @@ interface NotificationContextValue {
 
 const NotificationContext = createContext<NotificationContextValue>({
   notifications: [], toasts: [], unreadCount: 0,
+  addNotif: () => {},
   markRead: () => {}, markAllRead: () => {}, dismiss: () => {},
   dismissToast: () => {}, clearAll: () => {},
 });
@@ -400,6 +402,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
     });
 
+    // All roles: call scheduled (persisted as a meeting, received by the other participant)
+    socket.on('call:scheduled', (data: any) => {
+      const timeLabel = data.scheduledTimeFormatted || data.scheduledTime || '';
+      addNotif({
+        type: 'meeting', priority: 'urgent',
+        title: '📞 Call Scheduled',
+        message: `${data.schedulerName || 'Your counselor'} scheduled a ${data.callType || 'video'} call with you on ${data.scheduledDate} at ${timeLabel}.`,
+        link: meetingsLink,
+      });
+      window.dispatchEvent(new CustomEvent('call:scheduled', { detail: data }));
+    });
+
     // All roles: meeting rescheduled / updated
     socket.on('meeting:updated', (m: any) => {
       addNotif({
@@ -436,7 +450,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const clearAll     = ()           => { setNotifications([]); localStorage.removeItem(storageKey(userId)); };
 
   return (
-    <NotificationContext.Provider value={{ notifications, toasts, unreadCount, markRead, markAllRead, dismiss, dismissToast, clearAll }}>
+    <NotificationContext.Provider value={{ notifications, toasts, unreadCount, addNotif, markRead, markAllRead, dismiss, dismissToast, clearAll }}>
       {children}
     </NotificationContext.Provider>
   );
