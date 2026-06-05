@@ -6,8 +6,8 @@ import { Student } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 
 const EDUCATION_LEVELS = ['10th Grade', '12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
-type AcademicEntry = { id: string; level: string; institution: string; board: string; year: string; percentage: string; city: string; };
-function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', institution: '', board: '', year: '', percentage: '', city: '' }; }
+type AcademicEntry = { id: string; level: string; institution: string; board: string; year: string; percentage: string; city: string; comment: string; };
+function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', institution: '', board: '', year: '', percentage: '', city: '', comment: '' }; }
 
 const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
 
@@ -444,6 +444,13 @@ export default function StudentProfile() {
                               onChange={e => updateAcademicEntry(entry.id, 'city', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                           </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Additional Comments</label>
+                            <textarea aria-label="Additional Comments" value={entry.comment} rows={2}
+                              placeholder="e.g. Science stream with Computer Science, Distinction in Mathematics…"
+                              onChange={e => updateAcademicEntry(entry.id, 'comment', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                          </div>
                         </div>
                       </div>
                     ))
@@ -458,6 +465,7 @@ export default function StudentProfile() {
                             {entry.year && <div><p className="text-xs text-gray-400">Year</p><p className="font-medium text-gray-800">{entry.year}</p></div>}
                             {entry.percentage && <div><p className="text-xs text-gray-400">Score</p><p className="font-medium text-gray-800">{entry.percentage}</p></div>}
                             {entry.city && <div><p className="text-xs text-gray-400">City</p><p className="font-medium text-gray-800">{entry.city}</p></div>}
+                            {entry.comment && <div className="col-span-2 sm:col-span-3"><p className="text-xs text-gray-400">Comments</p><p className="font-medium text-gray-700 italic">{entry.comment}</p></div>}
                           </div>
                         </div>
                       </div>
