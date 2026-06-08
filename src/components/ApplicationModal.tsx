@@ -11,6 +11,17 @@ const STEPS = [
   { title: 'Statement & Review', icon: FileText },
 ];
 
+const EDUCATION_LEVEL_ORDER: Record<string, number> = {
+  'PhD': 6, "Master's Degree": 5, "Bachelor's Degree": 4,
+  'Diploma': 3, '12th Grade / Intermediate': 2, '10th Grade': 1, 'Other': 0,
+};
+
+// Maps academicDetails.level → application form dropdown value
+const LEVEL_TO_FORM: Record<string, string> = {
+  'PhD': 'PhD', "Master's Degree": 'Master', "Bachelor's Degree": 'Bachelor',
+  'Diploma': 'Diploma', '12th Grade / Intermediate': 'High School', '10th Grade': 'High School',
+};
+
 interface Props {
   course: any;
   uni: any;
@@ -22,6 +33,20 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const student = user as any;
+
+  // Derive highest qualification from academicDetails array
+  const highestQual = (() => {
+    const details: any[] = student?.academicDetails;
+    if (!details?.length) return null;
+    return details.reduce((best: any, curr: any) => {
+      return (EDUCATION_LEVEL_ORDER[curr.level] ?? 0) > (EDUCATION_LEVEL_ORDER[best.level] ?? 0) ? curr : best;
+    });
+  })();
+
+  const validGradYears = Array.from({ length: 17 }, (_, i) => String(2027 - i));
+  const rawGradYear = highestQual?.yearOfPassing || highestQual?.year || '';
+  const gradYearInList = rawGradYear ? validGradYears.includes(rawGradYear) : false;
+  const mappedLevel = highestQual ? (LEVEL_TO_FORM[highestQual.level] ?? 'Other') : (student?.educationLevel || '');
 
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -40,16 +65,22 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
   });
 
   const [academic, setAcademic] = useState({
-    educationLevel: student?.educationLevel || '',
-    previousInstitution: '',
-    previousDegree: '',
+    educationLevel: mappedLevel,
+    previousInstitution: highestQual?.institution || '',
+    previousDegree: highestQual
+      ? (highestQual.level === 'Other' ? (highestQual.customLevel || '') : highestQual.level)
+      : '',
     previousMajor: '',
-    graduationYear: '',
-    percentage: student?.gpa ? String(student.gpa) : '',
+    graduationYear: rawGradYear ? (gradYearInList ? rawGradYear : 'Other') : '',
+    percentage: highestQual?.percentage || '',
   });
 
-  const [educationLevelCustom, setEducationLevelCustom] = useState('');
-  const [graduationYearCustom, setGraduationYearCustom] = useState('');
+  const [educationLevelCustom, setEducationLevelCustom] = useState(
+    mappedLevel === 'Other' && highestQual ? (highestQual.customLevel || highestQual.level || '') : ''
+  );
+  const [graduationYearCustom, setGraduationYearCustom] = useState(
+    rawGradYear && !gradYearInList ? rawGradYear : ''
+  );
   const isOtherLevel = academic.educationLevel === 'Other';
   const isOtherYear = academic.graduationYear === 'Other';
 
@@ -275,10 +306,14 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
           {step === 1 && (
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-800">Academic Background</h3>
-              {(student?.educationLevel || student?.gpa) && (
+              {(highestQual || student?.educationLevel || student?.gpa) && (
                 <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm text-blue-700">
                   <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-500" />
-                  <span>Academic details pre-filled from your profile — review and update if needed.</span>
+                  <span>
+                    {highestQual
+                      ? `Highest qualification (${highestQual.level}) auto-filled from your academic details — review and update if needed.`
+                      : 'Academic details pre-filled from your profile — review and update if needed.'}
+                  </span>
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
