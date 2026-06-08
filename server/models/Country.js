@@ -30,6 +30,12 @@ const CountrySchema = new mongoose.Schema(
       tuitionRange: String,
     },
     popular: [String],
+    eligibility: {
+      minAge: Number,
+      minFunds: Number,
+      fundsCurrency: String,
+      restrictedNationalities: [String],
+    },
   },
   { timestamps: true },
 );

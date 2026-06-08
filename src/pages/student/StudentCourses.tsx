@@ -1,38 +1,9 @@
 ﻿import { useState, useEffect } from 'react';
-import { Search, BookOpen, Calendar, Award, CheckCircle, XCircle, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, BookOpen, Calendar, Award, CheckCircle, X, ShieldCheck } from 'lucide-react';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import ApplicationModal from '../../components/ApplicationModal';
-
-interface EligibilityResult { eligible: boolean; checks: { req: string; status: string; detail: string }[]; summary: string; }
-
-function EligibilityBadge({ result }: { result: EligibilityResult }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="mt-2">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${result.eligible ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'}`}>
-        {result.eligible ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
-        {result.eligible ? 'Eligible' : 'Not Eligible'}
-        {open ? <ChevronUp className="w-3 h-3 ml-0.5" /> : <ChevronDown className="w-3 h-3 ml-0.5" />}
-      </button>
-      {open && (
-        <div className={`mt-1.5 rounded-lg border p-2 space-y-1 ${result.eligible ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-          {result.checks.map((c, i) => (
-            <div key={i} className="flex items-start gap-1.5 text-xs">
-              {c.status === 'pass' ? <CheckCircle className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" /> :
-               c.status === 'info' ? <span className="w-3 h-3 text-amber-500 mt-0.5 flex-shrink-0 text-center leading-none">i</span> :
-               <XCircle className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />}
-              <span className={c.status === 'pass' ? 'text-green-700' : c.status === 'info' ? 'text-amber-700' : 'text-red-700'}>{c.detail}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { checkCourseEligibility, ELIGIBILITY_BADGE } from '../../utils/eligibility';
 
 const LEVELS = ["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'];
 const LEVEL_COLORS: Record<string, string> = {
@@ -68,29 +39,12 @@ export default function StudentCourses() {
   const [query, setQuery] = useState('');
   const [level, setLevel] = useState('');
   const [uniFilter, setUniFilter] = useState('');
+  const [eligibleOnly, setEligibleOnly] = useState(false);
   const [applyModal, setApplyModal] = useState<{ course: any; uni: any } | null>(null);
-  const [eligMap, setEligMap] = useState<Record<string, EligibilityResult>>({});
 
   useEffect(() => {
     api.universities.list().then(setUniversities).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (!user || user.role !== 'student' || universities.length === 0) return;
-    universities.forEach(uni => {
-      const uniId = uni.id || uni._id;
-      if (!uniId) return;
-      api.applications.checkEligibilityBulk(uniId).then(result => {
-        setEligMap(prev => {
-          const next = { ...prev };
-          Object.entries(result).forEach(([courseId, elig]) => {
-            next[`${uniId}:${courseId}`] = elig as EligibilityResult;
-          });
-          return next;
-        });
-      }).catch(() => {});
-    });
-  }, [universities, user?.role]);
 
   const allCourses = universities.flatMap(uni =>
     (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, uniId: uni.id || uni._id, city: uni.city, country: uni.country, website: uni.website, uniLogo: uni.logo, _uniUpdatedAt: uni.updatedAt || uni.createdAt || 0 }))
@@ -98,15 +52,21 @@ export default function StudentCourses() {
 
   const uniNames = [...new Set(universities.map(u => u.name))].sort() as string[];
 
-  const filtered = allCourses.filter(c => {
+  const coursesWithElig = allCourses.map(c => ({
+    ...c,
+    _elig: checkCourseEligibility(student, c),
+  }));
+
+  const filtered = coursesWithElig.filter(c => {
     const q = query.toLowerCase();
     const matchQ = !query || c.name?.toLowerCase().includes(q) || c.uniName?.toLowerCase().includes(q) || c.department?.toLowerCase().includes(q);
     const matchLevel = !level || c.level === level;
     const matchUni = !uniFilter || c.uniName === uniFilter;
-    return matchQ && matchLevel && matchUni;
+    const matchElig = !eligibleOnly || c._elig.status === 'eligible';
+    return matchQ && matchLevel && matchUni && matchElig;
   }).sort((a, b) => new Date(b._uniUpdatedAt).getTime() - new Date(a._uniUpdatedAt).getTime());
 
-  const hasFilters = query || level || uniFilter;
+  const hasFilters = query || level || uniFilter || eligibleOnly;
 
   return (
     <div className="space-y-6">
@@ -141,8 +101,12 @@ export default function StudentCourses() {
             <option value="">All Universities</option>
             {uniNames.map(n => <option key={n}>{n}</option>)}
           </select>
+          <button type="button" onClick={() => setEligibleOnly(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${eligibleOnly ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'}`}>
+            <ShieldCheck className="w-4 h-4" />Eligible Only
+          </button>
           {hasFilters && (
-            <button type="button" onClick={() => { setQuery(''); setLevel(''); setUniFilter(''); }}
+            <button type="button" onClick={() => { setQuery(''); setLevel(''); setUniFilter(''); setEligibleOnly(false); }}
               className="flex items-center gap-1 px-3 py-2.5 text-red-500 hover:bg-red-50 rounded-xl text-sm">
               <X className="w-4 h-4" />Clear
             </button>
@@ -163,6 +127,15 @@ export default function StudentCourses() {
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${LEVEL_COLORS[course.level] || 'bg-gray-100 text-gray-700'}`}>
                     {course.level}
                   </span>
+                  {course._elig.status !== 'unknown' && (() => {
+                    const badge = ELIGIBILITY_BADGE[course._elig.status];
+                    return (
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${badge.classes}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                        {badge.label}
+                      </span>
+                    );
+                  })()}
                   {course.department && <span className="text-xs text-gray-400">{course.department}</span>}
                 </div>
                 <p className="font-bold text-gray-900">{course.name}</p>
@@ -205,10 +178,6 @@ export default function StudentCourses() {
                   </span>
                 ))}
               </div>
-            )}
-
-            {eligMap[`${course.uniId}:${course.id || course._id}`] && (
-              <EligibilityBadge result={eligMap[`${course.uniId}:${course.id || course._id}`]} />
             )}
 
             <div className="mt-auto pt-2">

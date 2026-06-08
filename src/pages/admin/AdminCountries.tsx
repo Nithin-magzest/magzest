@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Plus, Trash2, X, Search, Edit2, ChevronDown, ChevronUp,
   Check, DollarSign, Clock, FileCheck2, CreditCard, RefreshCw,
-  Eye, Globe, Languages, Coins, GraduationCap, Wand2,
+  Eye, Globe, Languages, Coins, GraduationCap, Wand2, Award,
 } from 'lucide-react';
 import { api } from '../../api';
 import { CountryFlag } from '../../components/CountryFlag';
@@ -40,6 +40,10 @@ const DEFAULT_FORM = {
   monthlyLivingMin: '', monthlyLivingMax: '', livingCurrency: 'USD',
   applicationFee: '', tuitionRange: '',
   popular: [] as string[],
+  eligibility: {
+    minAge: '', minFunds: '', fundsCurrency: 'USD',
+    restrictedNationalities: [] as string[],
+  },
 };
 
 function toForm(c: any) {
@@ -56,6 +60,12 @@ function toForm(c: any) {
     livingCurrency: c.costs?.currency || 'USD',
     applicationFee: c.costs?.applicationFee || '', tuitionRange: c.costs?.tuitionRange || '',
     popular: Array.isArray(c.popular) ? [...c.popular] : [],
+    eligibility: {
+      minAge: String(c.eligibility?.minAge || ''),
+      minFunds: String(c.eligibility?.minFunds || ''),
+      fundsCurrency: c.eligibility?.fundsCurrency || 'USD',
+      restrictedNationalities: Array.isArray(c.eligibility?.restrictedNationalities) ? [...c.eligibility.restrictedNationalities] : [],
+    },
   };
 }
 
@@ -68,12 +78,20 @@ function CountryModal({ country, onClose, onSaved }: {
   const [form, setForm] = useState(editing ? toForm(country) : { ...DEFAULT_FORM });
   const [docInput, setDocInput] = useState('');
   const [popularInput, setPopularInput] = useState('');
+  const [natInput, setNatInput] = useState('');
+  const [showElig, setShowElig] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [autofilling, setAutofilling] = useState(false);
   const [autofillMsg, setAutofillMsg] = useState('');
 
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const setElig = (k: string, v: any) => setForm(f => ({ ...f, eligibility: { ...f.eligibility, [k]: v } }));
+  const addNat = () => {
+    if (!natInput.trim()) return;
+    setElig('restrictedNationalities', [...form.eligibility.restrictedNationalities, natInput.trim()]);
+    setNatInput('');
+  };
 
   const handleAutofill = async () => {
     if (!form.name.trim() || autofilling) return;
@@ -124,6 +142,7 @@ function CountryModal({ country, onClose, onSaved }: {
     if (!form.name.trim()) { setError('Country name is required.'); return; }
     setSaving(true);
     setError('');
+    const elig = form.eligibility;
     const data = {
       name: form.name.trim(), flag: form.flag.trim() || '🌍',
       code: form.code.toUpperCase().trim().slice(0, 3),
@@ -143,6 +162,12 @@ function CountryModal({ country, onClose, onSaved }: {
         tuitionRange: form.tuitionRange.trim(),
       },
       popular: form.popular,
+      eligibility: {
+        minAge: parseInt(elig.minAge) || null,
+        minFunds: parseFloat(elig.minFunds) || null,
+        fundsCurrency: elig.fundsCurrency || null,
+        restrictedNationalities: elig.restrictedNationalities,
+      },
     };
     try {
       if (editing && country._id) {
@@ -351,6 +376,65 @@ function CountryModal({ country, onClose, onSaved }: {
                 <TagChip key={i} label={p} onRemove={() => set('popular', form.popular.filter((_: string, j: number) => j !== i))} />
               ))}
             </div>
+          </div>
+
+          {/* Eligibility Criteria */}
+          <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <button type="button" onClick={() => setShowElig(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-semibold text-gray-700">
+              <span className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-purple-500" />
+                Eligibility Criteria
+              </span>
+              {showElig ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            </button>
+            {showElig && (
+              <div className="p-4 space-y-4 border-t border-gray-200">
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Min Age</label>
+                    <input type="number" min="0" value={form.eligibility.minAge}
+                      onChange={e => setElig('minAge', e.target.value)}
+                      placeholder="e.g. 18" className={inp} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Min Funds</label>
+                    <input type="number" min="0" value={form.eligibility.minFunds}
+                      onChange={e => setElig('minFunds', e.target.value)}
+                      placeholder="e.g. 10000" className={inp} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Funds Currency</label>
+                    <select value={form.eligibility.fundsCurrency}
+                      onChange={e => setElig('fundsCurrency', e.target.value)}
+                      className={`${sel} text-sm`}>
+                      {CURRENCIES.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Restricted Nationalities</label>
+                  <div className="flex gap-2 mb-2">
+                    <input value={natInput} onChange={e => setNatInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addNat(); } }}
+                      placeholder="e.g. Iran, North Korea…"
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <button type="button" onClick={addNat}
+                      className="px-3 py-2 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100">Add</button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {form.eligibility.restrictedNationalities.map((n: string, i: number) => (
+                      <span key={i} className="inline-flex items-center gap-1 bg-red-50 text-red-700 text-xs px-2.5 py-1 rounded-full border border-red-100">
+                        {n}
+                        <button type="button"
+                          onClick={() => setElig('restrictedNationalities', form.eligibility.restrictedNationalities.filter((_: string, j: number) => j !== i))}
+                          className="text-red-400 hover:text-red-700 ml-0.5"><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">{error}</div>}

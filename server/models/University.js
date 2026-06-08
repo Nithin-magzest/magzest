@@ -16,6 +16,15 @@ const CourseSchema = new mongoose.Schema({
   scholarshipAvailable: Boolean,
   scholarshipAmount: String,
   paymentPlan: String,
+  eligibility: {
+    minEducationLevel: String,
+    minGPA: Number,
+    minWorkExperienceYears: Number,
+    englishRequirements: [{ test: String, minScore: Number }],
+    minAge: Number,
+    maxAge: Number,
+    restrictedNationalities: [String],
+  },
 });
 
 const UniversitySchema = new mongoose.Schema({

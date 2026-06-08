@@ -1,10 +1,9 @@
 ﻿import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, MapPin, Star, BookOpen, X, DollarSign, ExternalLink, Users, Info, CheckCircle, XCircle } from 'lucide-react';
+import { Search, MapPin, Star, BookOpen, X, DollarSign, ExternalLink, Users, Info } from 'lucide-react';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
-
-interface EligibilityResult { eligible: boolean; checks: any[]; summary: string; }
+import { checkCourseEligibility } from '../../utils/eligibility';
 
 
 function UniLogoImg({ name, website, uniId }: { name: string; website?: string; uniId?: string }) {
@@ -25,13 +24,9 @@ function UniLogoImg({ name, website, uniId }: { name: string; website?: string; 
   );
 }
 
-function UniversityCard({ uni, courseEligibility }: { uni: any; courseEligibility?: Record<string, EligibilityResult> }) {
+function UniversityCard({ uni, student }: { uni: any; student: any }) {
   const navigate = useNavigate();
-  const courses = uni.courses || [];
-  const eligibleCount = courseEligibility
-    ? courses.filter((c: any) => courseEligibility[c.id || c._id]?.eligible).length
-    : -1;
-  const hasEligData = courseEligibility !== undefined && courses.length > 0;
+  const eligibleCount = (uni.courses || []).filter((c: any) => checkCourseEligibility(student, c).status === 'eligible').length;
 
   return (
     <div
@@ -71,7 +66,7 @@ function UniversityCard({ uni, courseEligibility }: { uni: any; courseEligibilit
         <div className="grid grid-cols-3 gap-2 mb-3">
           <div className="bg-sky-50 rounded-lg px-2 py-1.5 text-center">
             <p className="text-xs font-bold text-blue-700 flex items-center justify-center gap-0.5"><BookOpen className="w-3 h-3" />{uni.courses?.length || 0}</p>
-            <p className="text-xs text-gray-400">Courses</p>
+            <p className="text-xs text-gray-400">{eligibleCount > 0 ? <span className="text-green-600">{eligibleCount} eligible</span> : 'Courses'}</p>
           </div>
           <div className="bg-purple-50 rounded-lg px-2 py-1.5 text-center">
             <p className="text-xs font-bold text-purple-700 flex items-center justify-center gap-0.5"><Users className="w-3 h-3" />{uni.totalStudents ? `${(uni.totalStudents/1000).toFixed(0)}k` : '—'}</p>
@@ -91,19 +86,6 @@ function UniversityCard({ uni, courseEligibility }: { uni: any; courseEligibilit
           </div>
         )}
 
-        {hasEligData && (
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg mb-3 text-xs font-semibold
-            ${eligibleCount === courses.length ? 'bg-green-50 text-green-700 border border-green-200' :
-              eligibleCount > 0 ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-              'bg-red-50 text-red-600 border border-red-200'}`}>
-            {eligibleCount === courses.length
-              ? <><CheckCircle className="w-3.5 h-3.5" /> Eligible for all {courses.length} courses</>
-              : eligibleCount > 0
-              ? <><CheckCircle className="w-3.5 h-3.5" /> Eligible for {eligibleCount}/{courses.length} courses</>
-              : <><XCircle className="w-3.5 h-3.5" /> Not eligible for any course</>}
-          </div>
-        )}
-
         <Link to={`/university/${uni.id}`}
           onClick={e => e.stopPropagation()}
           className="flex items-center justify-center gap-2 w-full bg-[#0d1b4b] text-white py-2 rounded-xl text-sm font-semibold hover:bg-[#152258] transition-colors">
@@ -116,26 +98,15 @@ function UniversityCard({ uni, courseEligibility }: { uni: any; courseEligibilit
 
 export default function StudentUniversities() {
   const { user } = useAuth();
+  const student = user as any;
   const [allUniversities, setAllUniversities] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [country, setCountry] = useState('');
   const [level, setLevel] = useState('');
-  const [eligMap, setEligMap] = useState<Record<string, Record<string, EligibilityResult>>>({});
 
   useEffect(() => {
     api.universities.list().then(setAllUniversities).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (!user || user.role !== 'student' || allUniversities.length === 0) return;
-    allUniversities.forEach(uni => {
-      const uniId = uni.id || uni._id;
-      if (!uniId) return;
-      api.applications.checkEligibilityBulk(uniId).then(result => {
-        setEligMap(prev => ({ ...prev, [uniId]: result }));
-      }).catch(() => {});
-    });
-  }, [allUniversities, user?.role]);
 
   const countries = [...new Set(allUniversities.map(u => u.country))].sort() as string[];
 
@@ -194,7 +165,7 @@ export default function StudentUniversities() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {filtered.map(uni => (
-          <UniversityCard key={uni.id} uni={uni} courseEligibility={eligMap[uni.id || uni._id]} />
+          <UniversityCard key={uni.id} uni={uni} student={student} />
         ))}
       </div>
     </div>
