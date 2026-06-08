@@ -31,7 +31,8 @@ export interface Student extends User {
   counselorId?: string;
   joinedDate: string;
   status: 'active' | 'inactive' | 'enrolled';
-  academicDetails?: { level: string; customLevel?: string; institution: string; board: string; year: string; percentage: string; city: string; comment?: string; }[];
+  academicDetails?: { level: string; customLevel?: string; institution: string; board: string; year: string; percentage: string; city: string; comment?: string; status?: string; backlogs?: string; attempts?: string; }[];
+  experienceDetails?: { company: string; role: string; type: string; from: string; to: string; current: boolean; noticePeriod?: string; description?: string; }[];
 }
 
 export interface Counselor extends User {
