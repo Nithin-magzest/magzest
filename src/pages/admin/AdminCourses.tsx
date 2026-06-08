@@ -25,11 +25,20 @@ function Spinner({ white = false }: { white?: boolean }) {
   return <span className={`w-4 h-4 border-2 ${white ? 'border-white/40 border-t-white' : 'border-gray-300 border-t-gray-600'} rounded-full animate-spin inline-block`} />;
 }
 
+const EDU_LEVELS = ['12th Grade', 'Diploma', 'Certificate', "Bachelor's", "Master's", 'PhD'];
+const ENGLISH_TESTS = ['IELTS', 'TOEFL', 'PTE', 'Duolingo'];
+
 const DEFAULT_COURSE = {
   name: '', level: '', duration: '', tuitionFee: '', currency: 'USD',
   department: '', description: '', intake: [] as string[], requirements: [] as string[],
   applicationFee: '', registrationFee: '', scholarshipAvailable: false,
   scholarshipAmount: '', paymentPlan: 'Annual',
+  eligibility: {
+    minEducationLevel: '', minGPA: '', minWorkExperienceYears: '',
+    minAge: '', maxAge: '',
+    englishRequirements: [] as { test: string; minScore: string }[],
+    restrictedNationalities: [] as string[],
+  },
 };
 
 function ApplyModal({ course, students, onClose }: {
@@ -152,14 +161,39 @@ function CourseModal({ universities, uniId: initialUniId, course, onClose, onSav
     applicationFee: String(course.applicationFee || ''), registrationFee: String(course.registrationFee || ''),
     scholarshipAvailable: course.scholarshipAvailable || false,
     scholarshipAmount: course.scholarshipAmount || '', paymentPlan: course.paymentPlan || 'Annual',
+    eligibility: {
+      minEducationLevel: course.eligibility?.minEducationLevel || '',
+      minGPA: String(course.eligibility?.minGPA || ''),
+      minWorkExperienceYears: String(course.eligibility?.minWorkExperienceYears || ''),
+      minAge: String(course.eligibility?.minAge || ''),
+      maxAge: String(course.eligibility?.maxAge || ''),
+      englishRequirements: (course.eligibility?.englishRequirements || []).map((r: any) => ({ test: r.test, minScore: String(r.minScore) })),
+      restrictedNationalities: course.eligibility?.restrictedNationalities || [],
+    },
   } : { ...DEFAULT_COURSE });
   const [reqInput, setReqInput] = useState('');
+  const [engTest, setEngTest]   = useState('IELTS');
+  const [engScore, setEngScore] = useState('');
+  const [natInput, setNatInput] = useState('');
+  const [showElig, setShowElig] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+  const setElig = (k: string, v: any) => setForm(f => ({ ...f, eligibility: { ...f.eligibility, [k]: v } }));
   const toggleIntake = (m: string) => set('intake', form.intake.includes(m) ? form.intake.filter((x: string) => x !== m) : [...form.intake, m]);
   const addReq = () => { if (reqInput.trim()) { set('requirements', [...form.requirements, reqInput.trim()]); setReqInput(''); } };
+  const addEngReq = () => {
+    if (!engScore.trim()) return;
+    const existing = form.eligibility.englishRequirements.filter((r: any) => r.test !== engTest);
+    setElig('englishRequirements', [...existing, { test: engTest, minScore: engScore }]);
+    setEngScore('');
+  };
+  const addNat = () => {
+    if (!natInput.trim()) return;
+    setElig('restrictedNationalities', [...form.eligibility.restrictedNationalities, natInput.trim()]);
+    setNatInput('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,11 +201,21 @@ function CourseModal({ universities, uniId: initialUniId, course, onClose, onSav
     if (!form.name.trim()) { setError('Course name is required.'); return; }
     setSaving(true); setError('');
     try {
+      const elig = form.eligibility;
       const payload = {
         ...form,
         tuitionFee: parseFloat(form.tuitionFee) || 0,
         applicationFee: parseFloat(form.applicationFee) || 0,
         registrationFee: parseFloat(form.registrationFee) || 0,
+        eligibility: {
+          minEducationLevel: elig.minEducationLevel || null,
+          minGPA: parseFloat(elig.minGPA) || null,
+          minWorkExperienceYears: parseFloat(elig.minWorkExperienceYears) || null,
+          minAge: parseInt(elig.minAge) || null,
+          maxAge: parseInt(elig.maxAge) || null,
+          englishRequirements: elig.englishRequirements.map((r: any) => ({ test: r.test, minScore: parseFloat(r.minScore) || 0 })),
+          restrictedNationalities: elig.restrictedNationalities,
+        },
       };
       if (editing) {
         await api.admin.updateCourse(uniId, normalId(course), payload);
@@ -308,6 +352,102 @@ function CourseModal({ universities, uniId: initialUniId, course, onClose, onSav
             {form.scholarshipAvailable && (
               <input value={form.scholarshipAmount} onChange={e => set('scholarshipAmount', e.target.value)} placeholder="e.g. Up to USD 5,000/year"
                 className="mt-2 w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            )}
+          </div>
+
+          {/* Eligibility Criteria */}
+          <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <button type="button" onClick={() => setShowElig(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-semibold text-gray-700">
+              <span className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-purple-500" />
+                Eligibility Criteria
+              </span>
+              {showElig ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            </button>
+            {showElig && (
+              <div className="p-4 space-y-4 border-t border-gray-200">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Min Education Level</label>
+                    <select value={form.eligibility.minEducationLevel} onChange={e => setElig('minEducationLevel', e.target.value)}
+                      className={`${inp} bg-white text-sm`}>
+                      <option value="">No requirement</option>
+                      {EDU_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Min GPA (%)</label>
+                    <input type="number" min="0" max="100" value={form.eligibility.minGPA}
+                      onChange={e => setElig('minGPA', e.target.value)}
+                      placeholder="e.g. 60" className={inp} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Min Work Exp (years)</label>
+                    <input type="number" min="0" value={form.eligibility.minWorkExperienceYears}
+                      onChange={e => setElig('minWorkExperienceYears', e.target.value)}
+                      placeholder="e.g. 2" className={inp} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Min Age</label>
+                    <input type="number" min="0" value={form.eligibility.minAge}
+                      onChange={e => setElig('minAge', e.target.value)}
+                      placeholder="e.g. 18" className={inp} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Max Age</label>
+                    <input type="number" min="0" value={form.eligibility.maxAge}
+                      onChange={e => setElig('maxAge', e.target.value)}
+                      placeholder="e.g. 35" className={inp} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">English Requirements</label>
+                  <div className="flex gap-2 mb-2">
+                    <select value={engTest} onChange={e => setEngTest(e.target.value)}
+                      className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                      {ENGLISH_TESTS.map(t => <option key={t}>{t}</option>)}
+                    </select>
+                    <input type="number" min="0" value={engScore} onChange={e => setEngScore(e.target.value)}
+                      placeholder="Min score" className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    <button type="button" onClick={addEngReq}
+                      className="px-3 py-2 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100 whitespace-nowrap">Add</button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {form.eligibility.englishRequirements.map((r: any, i: number) => (
+                      <span key={i} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full border border-blue-100">
+                        {r.test} ≥ {r.minScore}
+                        <button type="button"
+                          onClick={() => setElig('englishRequirements', form.eligibility.englishRequirements.filter((_: any, j: number) => j !== i))}
+                          className="text-blue-400 hover:text-blue-700 ml-0.5"><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Restricted Nationalities</label>
+                  <div className="flex gap-2 mb-2">
+                    <input value={natInput} onChange={e => setNatInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addNat(); } }}
+                      placeholder="e.g. Iran, North Korea…"
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    <button type="button" onClick={addNat}
+                      className="px-3 py-2 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100">Add</button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {form.eligibility.restrictedNationalities.map((n: string, i: number) => (
+                      <span key={i} className="inline-flex items-center gap-1 bg-red-50 text-red-700 text-xs px-2.5 py-1 rounded-full border border-red-100">
+                        {n}
+                        <button type="button"
+                          onClick={() => setElig('restrictedNationalities', form.eligibility.restrictedNationalities.filter((_: string, j: number) => j !== i))}
+                          className="text-red-400 hover:text-red-700 ml-0.5"><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
