@@ -98,7 +98,7 @@ function UniversityCard({ uni, student }: { uni: any; student: any }) {
 
 export default function StudentUniversities() {
   const { user } = useAuth();
-  const student = user as any;
+  const [student, setStudent] = useState<any>(user);
   const [allUniversities, setAllUniversities] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [country, setCountry] = useState('');
@@ -106,6 +106,7 @@ export default function StudentUniversities() {
 
   useEffect(() => {
     api.universities.list().then(setAllUniversities).catch(() => {});
+    api.students.me().then(setStudent).catch(() => {});
   }, []);
 
   const countries = [...new Set(allUniversities.map(u => u.country))].sort() as string[];

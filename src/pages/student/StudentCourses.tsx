@@ -34,7 +34,7 @@ function UniLogoImg({ name, website, uniId }: { name: string; website?: string; 
 
 export default function StudentCourses() {
   const { user } = useAuth();
-  const student = user as any;
+  const [student, setStudent] = useState<any>(user);
   const [universities, setUniversities] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [level, setLevel] = useState('');
@@ -44,6 +44,7 @@ export default function StudentCourses() {
 
   useEffect(() => {
     api.universities.list().then(setUniversities).catch(() => {});
+    api.students.me().then(setStudent).catch(() => {});
   }, []);
 
   const allCourses = universities.flatMap(uni =>
