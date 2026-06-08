@@ -1,4 +1,4 @@
-﻿import { useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { User, GraduationCap, BookOpen, Upload, Edit3, Save, X, FileText, Trash2, ExternalLink, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
@@ -11,8 +11,8 @@ function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), l
 const BACHELOR_LEVELS = ["Bachelor's Degree", "Master's Degree"];
 
 const EXP_TYPES = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Volunteer'];
-type ExperienceEntry = { id: string; company: string; role: string; type: string; from: string; to: string; current: boolean; noticePeriod: string; description: string; };
-function newExperienceEntry(): ExperienceEntry { return { id: crypto.randomUUID(), company: '', role: '', type: 'Full-time', from: '', to: '', current: false, noticePeriod: '', description: '' }; }
+type ExperienceEntry = { id: string; company: string; role: string; employmentType: string; from: string; to: string; current: boolean; noticePeriod: string; description: string; };
+function newExperienceEntry(): ExperienceEntry { return { id: crypto.randomUUID(), company: '', role: '', employmentType: 'Full-time', from: '', to: '', current: false, noticePeriod: '', description: '' }; }
 
 const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
 const ALL_COUNTRIES = ['Australia', 'Canada', 'France', 'Germany', 'Ireland', 'Netherlands', 'New Zealand', 'Singapore', 'United Kingdom', 'United States', 'Other'];
@@ -120,7 +120,7 @@ export default function StudentProfile() {
   const removeAcademicEntry = (id: string) => setAcademicEntries(prev => prev.filter(e => e.id !== id));
 
   const [experienceEntries, setExperienceEntries] = useState<ExperienceEntry[]>(
-    (student?.experienceDetails || []).map((e: any) => ({ ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
+    (student?.experienceDetails || []).map((e: any) => ({ employmentType: 'Full-time', noticePeriod: '', ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
   );
   const addExperienceEntry = () => setExperienceEntries(prev => [...prev, newExperienceEntry()]);
   const updateExperienceEntry = (id: string, field: keyof Omit<ExperienceEntry, 'id'>, value: string | boolean) =>
@@ -128,6 +128,7 @@ export default function StudentProfile() {
   const removeExperienceEntry = (id: string) => setExperienceEntries(prev => prev.filter(e => e.id !== id));
 
   const [resumeUploading, setResumeUploading] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const uploadResume = async (file: File) => {
     setResumeUploading(true);
@@ -141,37 +142,56 @@ export default function StudentProfile() {
     } catch {}
     setResumeUploading(false);
   };
-  const nameParts = (student?.name || '').split(' ');
-  const [form, setForm] = useState({
-    firstName: student?.firstName || nameParts[0] || '',
-    lastName: student?.lastName || nameParts.slice(1).join(' ') || '',
-    phone: student?.phone || '',
-    nationality: student?.nationality || '',
-    dateOfBirth: student?.dateOfBirth || '',
-    gender: student?.gender || '',
-    maritalStatus: student?.maritalStatus || '',
-    placeOfBirth: student?.placeOfBirth || '',
-    passport: {
-      number: student?.passport?.number || '',
-      issueDate: student?.passport?.issueDate || '',
-      expiryDate: student?.passport?.expiryDate || '',
-      issuingCountry: student?.passport?.issuingCountry || '',
-    },
-    address: {
-      street: student?.address?.street || '',
-      city: student?.address?.city || '',
-      state: student?.address?.state || '',
-      country: student?.address?.country || '',
-      postalCode: student?.address?.postalCode || '',
-    },
-    educationLevel: student?.educationLevel || '',
-    gpa: student?.gpa || 0,
-    englishTestType: student?.englishScore?.type || '',
-    englishTestScore: student?.englishScore?.score || '',
-    budget: student?.budget || '',
-    preferredCountries: student?.preferredCountries || [] as string[],
-    interestedCourses: student?.interestedCourses || [] as string[],
-  });
+
+  const buildForm = (s: Student | null) => {
+    const np = (s?.name || '').split(' ');
+    return {
+      firstName: s?.firstName || np[0] || '',
+      lastName: s?.lastName || np.slice(1).join(' ') || '',
+      phone: s?.phone || '',
+      nationality: s?.nationality || '',
+      dateOfBirth: s?.dateOfBirth || '',
+      gender: s?.gender || '',
+      maritalStatus: s?.maritalStatus || '',
+      placeOfBirth: s?.placeOfBirth || '',
+      passport: {
+        number: s?.passport?.number || '',
+        issueDate: s?.passport?.issueDate || '',
+        expiryDate: s?.passport?.expiryDate || '',
+        issuingCountry: s?.passport?.issuingCountry || '',
+      },
+      address: {
+        street: s?.address?.street || '',
+        city: s?.address?.city || '',
+        state: s?.address?.state || '',
+        country: s?.address?.country || '',
+        postalCode: s?.address?.postalCode || '',
+      },
+      educationLevel: s?.educationLevel || '',
+      gpa: s?.gpa ?? '',
+      englishTestType: s?.englishScore?.type || '',
+      englishTestScore: s?.englishScore?.score ?? '',
+      budget: s?.budget ?? '',
+      preferredCountries: (s?.preferredCountries || []) as string[],
+      interestedCourses: (s?.interestedCourses || []) as string[],
+    };
+  };
+
+  const [form, setForm] = useState(() => buildForm(student));
+
+  // Re-initialize form and lists from server data after save + refreshUser
+  useEffect(() => {
+    if (!editing) {
+      const s = user as Student;
+      setForm(buildForm(s));
+      setAcademicEntries(
+        (s?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', ...e, id: e.id || crypto.randomUUID() }))
+      );
+      setExperienceEntries(
+        (s?.experienceDetails || []).map((e: any) => ({ employmentType: 'Full-time', noticePeriod: '', ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
+      );
+    }
+  }, [user, editing]);
 
   if (!student) return null;
 
@@ -196,23 +216,34 @@ export default function StudentProfile() {
 
   const save = async () => {
     setSaving(true);
+    setSaveError('');
     try {
       await api.students.updateMe({
-        ...form,
         name: [form.firstName, form.lastName].filter(Boolean).join(' '),
+        firstName: form.firstName,
+        lastName: form.lastName,
+        phone: form.phone,
+        nationality: form.nationality,
+        dateOfBirth: form.dateOfBirth || undefined,
+        gender: form.gender || undefined,
+        maritalStatus: form.maritalStatus || undefined,
         placeOfBirth: form.placeOfBirth || undefined,
         passport: form.passport.number ? form.passport : undefined,
         address: form.address.city ? form.address : undefined,
-        academicDetails: academicEntries.map(({ id, ...rest }) => rest),
-        experienceDetails: experienceEntries.map(({ id, ...rest }) => rest),
+        educationLevel: form.educationLevel || undefined,
+        gpa: form.gpa !== '' ? Number(form.gpa) : undefined,
         englishScore: form.englishTestType ? { type: form.englishTestType, score: Number(form.englishTestScore) } : undefined,
-        budget: form.budget ? Number(form.budget) : undefined,
+        budget: form.budget !== '' ? Number(form.budget) : undefined,
         preferredCountries: form.preferredCountries,
         interestedCourses: form.interestedCourses,
+        academicDetails: academicEntries.map(({ id, ...rest }) => rest),
+        experienceDetails: experienceEntries.map(({ id, ...rest }) => rest),
       });
       await refreshUser();
       setEditing(false);
-    } catch {}
+    } catch (e: any) {
+      setSaveError(e.message || 'Failed to save. Please try again.');
+    }
     setSaving(false);
   };
 
@@ -229,10 +260,13 @@ export default function StudentProfile() {
           <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
           <p className="text-gray-500 mt-1">Manage your personal and academic information</p>
         </div>
-        <button type="button" onClick={editing ? save : () => setEditing(true)} disabled={saving}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-60 ${editing ? 'bg-green-600 text-white' : 'bg-[#0d1b4b] text-white'}`}>
-          {editing ? <><Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Changes'}</> : <><Edit3 className="w-4 h-4" /> Edit Profile</>}
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button type="button" onClick={editing ? save : () => { setEditing(true); setSaveError(''); }} disabled={saving}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-60 ${editing ? 'bg-green-600 text-white' : 'bg-[#0d1b4b] text-white'}`}>
+            {editing ? <><Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Changes'}</> : <><Edit3 className="w-4 h-4" /> Edit Profile</>}
+          </button>
+          {saveError && <p className="text-xs text-red-600 font-medium">{saveError}</p>}
+        </div>
       </div>
 
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white">
@@ -708,8 +742,8 @@ export default function StudentProfile() {
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Employment Type</label>
-                        <select aria-label="Employment Type" value={entry.type}
-                          onChange={e => updateExperienceEntry(entry.id, 'type', e.target.value)}
+                        <select aria-label="Employment Type" value={entry.employmentType}
+                          onChange={e => updateExperienceEntry(entry.id, 'employmentType', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
                           {EXP_TYPES.map(t => <option key={t}>{t}</option>)}
                         </select>
@@ -765,7 +799,7 @@ export default function StudentProfile() {
                   <div key={entry.id} className="border border-gray-100 bg-gray-50 rounded-xl p-4">
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-bold text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full">{entry.type}</span>
+                        <span className="text-xs font-bold text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full">{entry.employmentType}</span>
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold text-gray-800 text-sm">{entry.role}</p>
@@ -792,20 +826,59 @@ export default function StudentProfile() {
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
               <FileText className="w-5 h-5 text-green-600" /> Resume &amp; Documents
             </h3>
+
+            {/* Resume subsection */}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Resume / CV</p>
             <input ref={resumeInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden"
               aria-label="Upload Resume or CV"
               onChange={e => { const f = e.target.files?.[0]; if (f) uploadResume(f); e.target.value = ''; }} />
-            <button type="button" disabled={resumeUploading}
-              onClick={() => resumeInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 bg-green-50 border-2 border-dashed border-green-300 text-green-700 hover:bg-green-100 hover:border-green-400 py-4 rounded-xl transition-colors text-sm font-semibold disabled:opacity-60 mb-5">
-              <Upload className="w-4 h-4" />
-              {resumeUploading ? 'Uploading…' : 'Upload Resume / CV'}
-            </button>
-            {docs.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-2">No documents uploaded yet.</p>
+            {(() => {
+              const resumeDoc = docs.find((d: any) => d.type === 'CV/Resume') as any;
+              if (resumeDoc) {
+                const docId = resumeDoc._id || resumeDoc.id;
+                return (
+                  <div className="flex items-center justify-between gap-2 p-3 bg-green-50 border border-green-200 rounded-xl mb-5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{resumeDoc.name}</p>
+                        <p className="text-xs text-green-600 font-medium">CV / Resume</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {resumeDoc.url && (
+                        <a href={resumeDoc.url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
+                          <ExternalLink className="w-3 h-3" /> Open
+                        </a>
+                      )}
+                      <StatusBadge status={resumeDoc.status} />
+                      <button type="button" aria-label="Delete resume"
+                        onClick={async () => { await api.students.deleteDocument(docId); refreshUser(); }}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <button type="button" disabled={resumeUploading}
+                  onClick={() => resumeInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 bg-green-50 border-2 border-dashed border-green-300 text-green-700 hover:bg-green-100 hover:border-green-400 py-4 rounded-xl transition-colors text-sm font-semibold disabled:opacity-60 mb-5">
+                  <Upload className="w-4 h-4" />
+                  {resumeUploading ? 'Uploading…' : 'Upload Resume / CV'}
+                </button>
+              );
+            })()}
+
+            {/* Other documents */}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Other Documents</p>
+            {docs.filter((d: any) => d.type !== 'CV/Resume').length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-2 mb-2">No other documents uploaded yet.</p>
             )}
             <div className="space-y-3">
-              {docs.map((doc: any) => {
+              {docs.filter((d: any) => d.type !== 'CV/Resume').map((doc: any) => {
                 const docId = doc._id || doc.id;
                 return (
                   <div key={docId} className="flex items-start justify-between gap-2 p-3 bg-gray-50 rounded-xl">
