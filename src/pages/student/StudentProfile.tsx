@@ -6,8 +6,9 @@ import { Student } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 
 const EDUCATION_LEVELS = ['10th Grade', '12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
-type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; year: string; percentage: string; city: string; comment: string; };
-function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', year: '', percentage: '', city: '', comment: '' }; }
+type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; year: string; percentage: string; city: string; comment: string; status: string; yearOfStudying: string; yearOfPassing: string; backlogs: string; attempts: string; };
+function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '' }; }
+const BACHELOR_LEVELS = ["Bachelor's Degree"];
 
 const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
 const ALL_COUNTRIES = ['Australia', 'Canada', 'France', 'Germany', 'Ireland', 'Netherlands', 'New Zealand', 'Singapore', 'United Kingdom', 'United States', 'Other'];
@@ -107,7 +108,7 @@ export default function StudentProfile() {
   const [saving, setSaving] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [academicEntries, setAcademicEntries] = useState<AcademicEntry[]>(
-    (student?.academicDetails || []).map((e: any) => ({ ...e, id: e.id || crypto.randomUUID() }))
+    (student?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', ...e, id: e.id || crypto.randomUUID() }))
   );
   const addAcademicEntry = () => setAcademicEntries(prev => [...prev, newAcademicEntry()]);
   const updateAcademicEntry = (id: string, field: keyof Omit<AcademicEntry, 'id'>, value: string) =>
@@ -502,6 +503,59 @@ export default function StudentProfile() {
                                 className="w-full px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                             </div>
                           )}
+                          {BACHELOR_LEVELS.includes(entry.level) && (
+                            <>
+                              <div className="sm:col-span-2">
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Current Status</label>
+                                <div className="flex gap-3">
+                                  {['Pursuing', 'Passed Out'].map(opt => (
+                                    <button key={opt} type="button"
+                                      onClick={() => updateAcademicEntry(entry.id, 'status', opt)}
+                                      className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${entry.status === opt ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'}`}>
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {entry.status === 'Pursuing' && (
+                                <>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Year of Studying</label>
+                                    <select aria-label="Year of Studying" value={entry.yearOfStudying}
+                                      onChange={e => updateAcademicEntry(entry.id, 'yearOfStudying', e.target.value)}
+                                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                      <option value="">Select year</option>
+                                      <option>1st Year</option>
+                                      <option>2nd Year</option>
+                                      <option>3rd Year</option>
+                                      <option>4th Year</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Expected Year of Passing</label>
+                                    <input aria-label="Expected Year of Passing" value={entry.yearOfPassing}
+                                      placeholder="e.g. 2026"
+                                      onChange={e => updateAcademicEntry(entry.id, 'yearOfPassing', e.target.value)}
+                                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Number of Backlogs</label>
+                                    <input type="number" min={0} aria-label="Number of Backlogs" value={entry.backlogs}
+                                      placeholder="e.g. 0"
+                                      onChange={e => updateAcademicEntry(entry.id, 'backlogs', e.target.value)}
+                                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Number of Attempts</label>
+                                    <input type="number" min={1} aria-label="Number of Attempts" value={entry.attempts}
+                                      placeholder="e.g. 1"
+                                      onChange={e => updateAcademicEntry(entry.id, 'attempts', e.target.value)}
+                                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                  </div>
+                                </>
+                              )}
+                            </>
+                          )}
                           <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">Institution Name</label>
                             <input aria-label="Institution Name" value={entry.institution} placeholder="e.g. St. Joseph's High School"
@@ -555,6 +609,11 @@ export default function StudentProfile() {
                             {entry.year && <div><p className="text-xs text-gray-400">Year</p><p className="font-medium text-gray-800">{entry.year}</p></div>}
                             {entry.percentage && <div><p className="text-xs text-gray-400">Score</p><p className="font-medium text-gray-800">{entry.percentage}</p></div>}
                             {entry.city && <div><p className="text-xs text-gray-400">City</p><p className="font-medium text-gray-800">{entry.city}</p></div>}
+                            {BACHELOR_LEVELS.includes(entry.level) && entry.status && <div><p className="text-xs text-gray-400">Status</p><p className="font-medium text-gray-800">{entry.status}</p></div>}
+                            {entry.status === 'Pursuing' && entry.yearOfStudying && <div><p className="text-xs text-gray-400">Year of Studying</p><p className="font-medium text-gray-800">{entry.yearOfStudying}</p></div>}
+                            {entry.status === 'Pursuing' && entry.yearOfPassing && <div><p className="text-xs text-gray-400">Expected Passing</p><p className="font-medium text-gray-800">{entry.yearOfPassing}</p></div>}
+                            {entry.status === 'Pursuing' && entry.backlogs !== '' && <div><p className="text-xs text-gray-400">Backlogs</p><p className="font-medium text-gray-800">{entry.backlogs}</p></div>}
+                            {entry.status === 'Pursuing' && entry.attempts !== '' && <div><p className="text-xs text-gray-400">Attempts</p><p className="font-medium text-gray-800">{entry.attempts}</p></div>}
                             {entry.comment && <div className="col-span-2 sm:col-span-3"><p className="text-xs text-gray-400">Comments</p><p className="font-medium text-gray-700 italic">{entry.comment}</p></div>}
                           </div>
                         </div>
