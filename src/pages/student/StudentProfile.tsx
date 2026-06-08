@@ -148,6 +148,21 @@ export default function StudentProfile() {
     setExperienceEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
   const removeExperienceEntry = (id: string) => setExperienceEntries(prev => prev.filter(e => e.id !== id));
 
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
+  const uploadResume = async (file: File) => {
+    setResumeUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('name', file.name.replace(/\.[^.]+$/, ''));
+      fd.append('type', 'CV/Resume');
+      await api.students.uploadDocument(fd);
+      await refreshUser();
+    } catch {}
+    setResumeUploading(false);
+  };
+
   const [saveError, setSaveError] = useState('');
 
   const buildForm = (s: Student | null) => {
@@ -836,6 +851,55 @@ export default function StudentProfile() {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Resume & CV Section */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-green-600" /> Resume &amp; CV
+            </h3>
+            <input ref={resumeInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden"
+              aria-label="Upload Resume or CV"
+              onChange={e => { const f = e.target.files?.[0]; if (f) uploadResume(f); e.target.value = ''; }} />
+            {(() => {
+              const resumeDoc = (student?.documents || []).find((d: any) => d.type === 'CV/Resume') as any;
+              if (resumeDoc) {
+                const docId = resumeDoc._id || resumeDoc.id;
+                return (
+                  <div className="flex items-center justify-between gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{resumeDoc.name}</p>
+                        <p className="text-xs text-green-600 font-medium">CV / Resume</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {resumeDoc.url && (
+                        <a href={resumeDoc.url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
+                          <ExternalLink className="w-3 h-3" /> Open
+                        </a>
+                      )}
+                      <StatusBadge status={resumeDoc.status} />
+                      <button type="button" aria-label="Delete resume"
+                        onClick={async () => { await api.students.deleteDocument(docId); refreshUser(); }}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <button type="button" disabled={resumeUploading}
+                  onClick={() => resumeInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 bg-green-50 border-2 border-dashed border-green-300 text-green-700 hover:bg-green-100 hover:border-green-400 py-4 rounded-xl transition-colors text-sm font-semibold disabled:opacity-60">
+                  <Upload className="w-4 h-4" />
+                  {resumeUploading ? 'Uploading…' : 'Upload Resume / CV'}
+                </button>
+              );
+            })()}
           </div>
 
           {/* Documents Section */}
