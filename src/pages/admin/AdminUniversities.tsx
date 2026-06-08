@@ -5,6 +5,7 @@ import {
   Globe, MapPin, BookOpen, DollarSign, Check, AlertTriangle, RefreshCw, CheckCircle, Sparkles,
 } from 'lucide-react';
 import { api } from '../../api';
+import { checkCourseEligibility, ELIGIBILITY_BADGE } from '../../utils/eligibility';
 
 const COUNTRIES = [
   'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany',
@@ -751,18 +752,44 @@ function ApplyModal({ course, universityName, students, onClose, onApplied }: {
   course: any; universityName: string;
   students: any[]; onClose: () => void; onApplied: () => void;
 }) {
-  const [studentId, setStudentId] = useState('');
+  const [studentQuery, setStudentQuery] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [studentProfile, setStudentProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [intake, setIntake] = useState(course.intake?.[0] || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  const matchedStudents = studentQuery.trim().length >= 1
+    ? students.filter(s =>
+        s.name?.toLowerCase().includes(studentQuery.toLowerCase()) ||
+        s.email?.toLowerCase().includes(studentQuery.toLowerCase())
+      ).slice(0, 8)
+    : [];
+
+  useEffect(() => {
+    if (!selectedStudent) { setStudentProfile(null); return; }
+    setLoadingProfile(true);
+    api.students.get(normalId(selectedStudent))
+      .then(p => { setStudentProfile(p); setLoadingProfile(false); })
+      .catch(() => { setStudentProfile(selectedStudent); setLoadingProfile(false); });
+  }, [selectedStudent]);
+
+  const elig = studentProfile
+    ? checkCourseEligibility(studentProfile, course)
+    : { status: 'unknown' as const, missing: [] as string[], warnings: [] as string[] };
+  const badge = ELIGIBILITY_BADGE[elig.status];
+  const isNotEligible = elig.status === 'not_eligible';
+
   const handleApply = async () => {
-    if (!studentId) { setError('Please select a student.'); return; }
+    if (!selectedStudent) { setError('Please select a student.'); return; }
+    if (isNotEligible) { setError('Student is not eligible for this course.'); return; }
     setSaving(true); setError('');
     try {
       await api.admin.createApplication({
-        studentId,
+        studentId: normalId(selectedStudent),
         universityName,
         courseName: course.name,
         intake,
@@ -779,7 +806,7 @@ function ApplyModal({ course, universityName, students, onClose, onApplied }: {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex items-start justify-between p-5 border-b border-gray-100">
           <div className="flex-1 min-w-0 pr-3">
             <h2 className="text-base font-bold text-gray-900">Apply for Course</h2>
@@ -809,17 +836,72 @@ function ApplyModal({ course, universityName, students, onClose, onApplied }: {
         </div>
 
         <div className="p-5 space-y-4">
+          {/* Student search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Student <span className="text-red-500">*</span></label>
-            <select value={studentId} onChange={e => setStudentId(e.target.value)}
-              aria-label="Select student"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-              <option value="">— Choose a student —</option>
-              {students.map(s => (
-                <option key={s._id || s.id} value={s._id || s.id}>{s.name} ({s.email})</option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Search Student <span className="text-red-500">*</span></label>
+            {selectedStudent ? (
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-xl">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-blue-900 truncate">{selectedStudent.name}</p>
+                  <p className="text-xs text-blue-600 truncate">{selectedStudent.email}</p>
+                </div>
+                <button type="button" aria-label="Clear student" onClick={() => { setSelectedStudent(null); setStudentProfile(null); setStudentQuery(''); }}
+                  className="text-blue-400 hover:text-blue-700 flex-shrink-0"><X className="w-4 h-4" /></button>
+              </div>
+            ) : (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  value={studentQuery}
+                  onChange={e => { setStudentQuery(e.target.value); setShowDropdown(true); }}
+                  onFocus={() => setShowDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                  placeholder="Type name or email…"
+                  className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {showDropdown && matchedStudents.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                    {matchedStudents.map(s => (
+                      <button key={normalId(s)} type="button"
+                        onMouseDown={() => { setSelectedStudent(s); setStudentQuery(''); setShowDropdown(false); }}
+                        className="w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-0">
+                        <p className="text-sm font-medium text-gray-900">{s.name}</p>
+                        <p className="text-xs text-gray-500">{s.email}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Eligibility result */}
+          {selectedStudent && (
+            <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+              {loadingProfile ? (
+                <p className="text-xs text-gray-500 flex items-center gap-2"><Spinner />Checking eligibility…</p>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-gray-600">Eligibility:</span>
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${badge.classes}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />{badge.label}
+                    </span>
+                  </div>
+                  {elig.missing.map((m, i) => (
+                    <p key={i} className="text-xs text-red-600 flex items-center gap-1.5">
+                      <X className="w-3 h-3 flex-shrink-0" />{m}
+                    </p>
+                  ))}
+                  {elig.warnings.map((w, i) => (
+                    <p key={i} className="text-xs text-yellow-700 flex items-center gap-1.5">
+                      <span className="text-yellow-500 font-bold flex-shrink-0">⚠</span>{w}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {course.intake?.length > 0 && (
             <div>
@@ -845,12 +927,18 @@ function ApplyModal({ course, universityName, students, onClose, onApplied }: {
               className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
               Cancel
             </button>
-            <button type="button" onClick={handleApply} disabled={saving || success}
-              className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
-              {saving
-                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
-                : <><Plus className="w-4 h-4" />Apply</>}
-            </button>
+            {isNotEligible ? (
+              <div className="flex-1 py-2.5 bg-red-100 text-red-700 border border-red-200 rounded-xl text-sm font-semibold text-center">
+                Not Eligible
+              </div>
+            ) : (
+              <button type="button" onClick={handleApply} disabled={saving || success || !selectedStudent}
+                className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+                {saving
+                  ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
+                  : <><Plus className="w-4 h-4" />Apply</>}
+              </button>
+            )}
           </div>
         </div>
       </div>
