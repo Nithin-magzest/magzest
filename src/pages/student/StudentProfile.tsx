@@ -6,8 +6,8 @@ import { Student } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 
 const EDUCATION_LEVELS = ['10th Grade', '12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
-type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; year: string; percentage: string; city: string; comment: string; status: string; yearOfStudying: string; yearOfPassing: string; backlogs: string; attempts: string; };
-function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '' }; }
+type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; course: string; year: string; percentage: string; city: string; comment: string; status: string; yearOfStudying: string; yearOfPassing: string; backlogs: string; attempts: string; };
+function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', course: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '' }; }
 const BACHELOR_LEVELS = ["Bachelor's Degree", "Master's Degree"];
 
 const EXP_TYPES = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Volunteer'];
@@ -112,7 +112,7 @@ export default function StudentProfile() {
   const [saving, setSaving] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [academicEntries, setAcademicEntries] = useState<AcademicEntry[]>(
-    (student?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', ...e, id: e.id || crypto.randomUUID() }))
+    (student?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', course: '', ...e, id: e.id || crypto.randomUUID() }))
   );
   const addAcademicEntry = () => setAcademicEntries(prev => [...prev, newAcademicEntry()]);
   const updateAcademicEntry = (id: string, field: keyof Omit<AcademicEntry, 'id'>, value: string) =>
@@ -568,6 +568,13 @@ export default function StudentProfile() {
                           {BACHELOR_LEVELS.includes(entry.level) && (
                             <>
                               <div className="sm:col-span-2">
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Course / Program <span className="text-red-400">*</span></label>
+                                <input aria-label="Course or Program" value={entry.course}
+                                  placeholder="e.g. B.Tech Computer Science, MBA, M.Sc Mathematics"
+                                  onChange={e => updateAcademicEntry(entry.id, 'course', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                              </div>
+                              <div className="sm:col-span-2">
                                 <label className="block text-xs font-medium text-gray-500 mb-1">Current Status</label>
                                 <div className="flex gap-3">
                                   {['Pursuing', 'Passed Out'].map(opt => (
@@ -668,6 +675,7 @@ export default function StudentProfile() {
                           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
                             {entry.institution && <div><p className="text-xs text-gray-400">Institution</p><p className="font-medium text-gray-800">{entry.institution}</p></div>}
                             {entry.board && <div><p className="text-xs text-gray-400">{entry.level === "Bachelor's Degree" || entry.level === "Master's Degree" || entry.level === 'PhD' || entry.level === 'Diploma' ? 'University' : 'Board'}</p><p className="font-medium text-gray-800">{entry.board}</p></div>}
+                            {BACHELOR_LEVELS.includes(entry.level) && entry.course && <div><p className="text-xs text-gray-400">Course</p><p className="font-medium text-gray-800">{entry.course}</p></div>}
                             {entry.year && <div><p className="text-xs text-gray-400">Year</p><p className="font-medium text-gray-800">{entry.year}</p></div>}
                             {entry.percentage && <div><p className="text-xs text-gray-400">Score</p><p className="font-medium text-gray-800">{entry.percentage}</p></div>}
                             {entry.city && <div><p className="text-xs text-gray-400">City</p><p className="font-medium text-gray-800">{entry.city}</p></div>}
@@ -874,6 +882,12 @@ export default function StudentProfile() {
 
             {/* Other documents */}
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Other Documents</p>
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+              <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700 leading-relaxed">
+                <span className="font-semibold">Tip:</span> Upload your important certificates here — <span className="font-medium">10th Grade certificate</span>, <span className="font-medium">Intermediate / 12th certificate</span>, <span className="font-medium">Degree certificate (B.Tech / B.Sc etc.)</span>, and <span className="font-medium">Passport</span>. These documents will be needed when applying to universities.
+              </p>
+            </div>
             {docs.filter((d: any) => d.type !== 'CV/Resume').length === 0 && (
               <p className="text-sm text-gray-400 text-center py-2 mb-2">No other documents uploaded yet.</p>
             )}

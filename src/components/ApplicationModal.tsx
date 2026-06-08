@@ -70,7 +70,7 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
     previousDegree: highestQual
       ? (highestQual.level === 'Other' ? (highestQual.customLevel || '') : highestQual.level)
       : '',
-    previousMajor: '',
+    previousMajor: highestQual?.course || '',
     graduationYear: rawGradYear ? (gradYearInList ? rawGradYear : 'Other') : '',
     percentage: highestQual?.percentage || '',
   });
