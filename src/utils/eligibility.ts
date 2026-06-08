@@ -47,10 +47,20 @@ export interface EligibilityResult {
   warnings: string[];  // soft — data missing from profile, can't confirm
 }
 
+// Parse "IELTS 6.5", "TOEFL 90", "PTE 65", "Duolingo 110" out of a plain string array
+function parseEnglishFromRequirements(requirements: string[]): { test: string; minScore: number }[] {
+  if (!requirements?.length) return [];
+  const parsed: { test: string; minScore: number }[] = [];
+  for (const r of requirements) {
+    const m = /\b(IELTS|TOEFL|PTE|Duolingo)\s+([\d.]+)/i.exec(r);
+    if (m) parsed.push({ test: m[1].toUpperCase(), minScore: parseFloat(m[2]) });
+  }
+  return parsed;
+}
+
 // ─── Course eligibility ────────────────────────────────────────────────────────
 export function checkCourseEligibility(student: any, course: any): EligibilityResult {
-  const elig = course?.eligibility;
-  if (!elig || Object.keys(elig).length === 0) return { status: 'unknown', missing: [], warnings: [] };
+  const elig = course?.eligibility ?? {};
 
   const missing: string[] = [];
   const warnings: string[] = [];
@@ -73,20 +83,25 @@ export function checkCourseEligibility(student: any, course: any): EligibilityRe
     }
   }
 
-  // English proficiency
-  if (elig.englishRequirements?.length > 0) {
+  // English proficiency — use structured eligibility if present, else parse plain requirements
+  const englishReqs: { test: string; minScore: number }[] =
+    elig.englishRequirements?.length > 0
+      ? elig.englishRequirements
+      : parseEnglishFromRequirements(course?.requirements);
+
+  if (englishReqs.length > 0) {
     if (!student.englishScore?.type) {
-      const req = elig.englishRequirements.map((r: any) => `${r.test} ${r.minScore}`).join(' / ');
+      const req = englishReqs.map((r: any) => `${r.test} ${r.minScore}`).join(' / ');
       warnings.push(`English test required: ${req} — add score to profile`);
     } else {
       const { type, score } = student.englishScore;
-      const matched = elig.englishRequirements.find((r: any) => r.test === type);
+      const matched = englishReqs.find((r: any) => r.test === type);
       if (matched) {
         if (score < matched.minScore) {
           missing.push(`${type} min ${matched.minScore} (you have: ${score})`);
         }
       } else {
-        const req = elig.englishRequirements.map((r: any) => `${r.test} ${r.minScore}`).join(' / ');
+        const req = englishReqs.map((r: any) => `${r.test} ${r.minScore}`).join(' / ');
         warnings.push(`Course requires: ${req} — your test (${type}) not listed`);
       }
     }
@@ -122,6 +137,13 @@ export function checkCourseEligibility(student: any, course: any): EligibilityRe
 
   if (missing.length > 0) return { status: 'not_eligible', missing, warnings };
   if (warnings.length > 0) return { status: 'partial',      missing, warnings };
+
+  // No criteria found at all → unknown
+  const hasCriteria = elig.minEducationLevel || (elig.minGPA && elig.minGPA > 0) ||
+    englishReqs.length > 0 || elig.minWorkExperienceYears > 0 ||
+    elig.minAge || elig.maxAge || elig.restrictedNationalities?.length > 0;
+  if (!hasCriteria) return { status: 'unknown', missing: [], warnings: [] };
+
   return { status: 'eligible', missing: [], warnings: [] };
 }
 
