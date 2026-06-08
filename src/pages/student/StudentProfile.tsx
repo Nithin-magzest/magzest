@@ -913,11 +913,11 @@ export default function StudentProfile() {
                 <span className="font-semibold">Tip:</span> Upload your important certificates here — <span className="font-medium">10th Grade certificate</span>, <span className="font-medium">Intermediate / 12th certificate</span>, <span className="font-medium">Degree certificate (B.Tech / B.Sc etc.)</span>, and <span className="font-medium">Passport</span>. These documents will be needed when applying to universities.
               </p>
             </div>
-            {docs.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-2 mb-2">No other documents uploaded yet.</p>
+            {docs.filter((d: any) => d.type !== 'CV/Resume').length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-2 mb-2">No documents uploaded yet.</p>
             )}
             <div className="space-y-3">
-              {docs.map((doc: any) => {
+              {docs.filter((d: any) => d.type !== 'CV/Resume').map((doc: any) => {
                 const docId = doc._id || doc.id;
                 return (
                   <div key={docId} className="flex items-start justify-between gap-2 p-3 bg-gray-50 rounded-xl">
@@ -1050,7 +1050,7 @@ export default function StudentProfile() {
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-4">Documents</h3>
             <div className="space-y-3">
-              {docs.map((doc: any) => {
+              {docs.filter((d: any) => d.type !== 'CV/Resume').map((doc: any) => {
                 const docId = doc._id || doc.id;
                 return (
                   <div key={docId} className="flex items-start justify-between gap-2 p-3 bg-gray-50 rounded-xl">
