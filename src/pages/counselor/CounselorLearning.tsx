@@ -230,7 +230,7 @@ export default function CounselorLearning() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-br from-green-600 to-teal-700 rounded-2xl p-6 text-white">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">

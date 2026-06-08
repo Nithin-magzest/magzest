@@ -244,7 +244,7 @@ export default function StudentLearning() {
   const rest     = filtered.filter(r => !r.featured);
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#0d1b4b] via-blue-700 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
