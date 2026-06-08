@@ -8,7 +8,7 @@ import StatusBadge from '../../components/StatusBadge';
 const EDUCATION_LEVELS = ['10th Grade', '12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
 type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; year: string; percentage: string; city: string; comment: string; status: string; yearOfStudying: string; yearOfPassing: string; backlogs: string; attempts: string; };
 function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '' }; }
-const BACHELOR_LEVELS = ["Bachelor's Degree"];
+const BACHELOR_LEVELS = ["Bachelor's Degree", "Master's Degree"];
 
 const EXP_TYPES = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Volunteer'];
 type ExperienceEntry = { id: string; company: string; role: string; type: string; from: string; to: string; current: boolean; noticePeriod: string; description: string; };
@@ -608,34 +608,6 @@ export default function StudentProfile() {
                               onChange={e => updateAcademicEntry(entry.id, 'percentage', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                           </div>
-                          {(entry.level === "Bachelor's Degree" || entry.level === "Master's Degree") && (
-                            <>
-                              <div className="sm:col-span-2">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
-                                <select aria-label="Status" value={entry.status}
-                                  onChange={e => updateAcademicEntry(entry.id, 'status', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                                  <option value="">Select status</option>
-                                  <option>Completed</option>
-                                  <option>Pursuing</option>
-                                </select>
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Number of Backlogs</label>
-                                <input aria-label="Number of Backlogs" value={entry.backlogs}
-                                  placeholder="e.g. 0" type="number" min="0"
-                                  onChange={e => updateAcademicEntry(entry.id, 'backlogs', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Number of Attempts</label>
-                                <input aria-label="Number of Attempts" value={entry.attempts}
-                                  placeholder="e.g. 1" type="number" min="1"
-                                  onChange={e => updateAcademicEntry(entry.id, 'attempts', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                              </div>
-                            </>
-                          )}
                           <div className="sm:col-span-2">
                             <label className="block text-xs font-medium text-gray-500 mb-1">City</label>
                             <input aria-label="City" value={entry.city} placeholder="e.g. Chennai"

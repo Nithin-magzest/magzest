@@ -22,7 +22,7 @@ export interface Student extends User {
   address?: { street: string; city: string; state: string; country: string; postalCode: string };
   educationLevel: string;
   gpa: number;
-  englishScore: { type: 'IELTS' | 'TOEFL' | 'PTE'; score: number };
+  englishScore: { type: 'IELTS' | 'TOEFL' | 'PTE' | 'Duolingo'; score: number };
   preferredCountries: string[];
   budget: number;
   interestedCourses: string[];
@@ -31,7 +31,7 @@ export interface Student extends User {
   counselorId?: string;
   joinedDate: string;
   status: 'active' | 'inactive' | 'enrolled';
-  academicDetails?: { level: string; customLevel?: string; institution: string; board: string; year: string; percentage: string; city: string; comment?: string; status?: string; backlogs?: string; attempts?: string; }[];
+  academicDetails?: { level: string; customLevel?: string; institution: string; board: string; year: string; percentage: string; city: string; comment?: string; status?: string; yearOfStudying?: string; yearOfPassing?: string; backlogs?: string; attempts?: string; }[];
   experienceDetails?: { company: string; role: string; type: string; from: string; to: string; current: boolean; noticePeriod?: string; description?: string; }[];
 }
 
