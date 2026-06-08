@@ -668,8 +668,13 @@ export default function StudentProfile() {
                             {BACHELOR_LEVELS.includes(entry.level) && entry.status && <div><p className="text-xs text-gray-400">Status</p><p className="font-medium text-gray-800">{entry.status}</p></div>}
                             {entry.status === 'Pursuing' && entry.yearOfStudying && <div><p className="text-xs text-gray-400">Year of Studying</p><p className="font-medium text-gray-800">{entry.yearOfStudying}</p></div>}
                             {entry.status === 'Pursuing' && entry.yearOfPassing && <div><p className="text-xs text-gray-400">Expected Passing</p><p className="font-medium text-gray-800">{entry.yearOfPassing}</p></div>}
+<<<<<<< HEAD
                             {entry.status === 'Pursuing' && entry.backlogs !== '' && entry.backlogs !== undefined && <div><p className="text-xs text-gray-400">Backlogs</p><p className="font-medium text-gray-800">{entry.backlogs}</p></div>}
                             {entry.status === 'Pursuing' && entry.attempts !== '' && entry.attempts !== undefined && <div><p className="text-xs text-gray-400">Attempts</p><p className="font-medium text-gray-800">{entry.attempts}</p></div>}
+=======
+                            {entry.backlogs !== '' && entry.backlogs !== undefined && <div><p className="text-xs text-gray-400">Backlogs</p><p className="font-medium text-gray-800">{entry.backlogs}</p></div>}
+                            {entry.attempts !== '' && entry.attempts !== undefined && <div><p className="text-xs text-gray-400">Attempts</p><p className="font-medium text-gray-800">{entry.attempts}</p></div>}
+>>>>>>> 3290cb9b4ce31b818c47e121c51436ab12275070
                             {entry.comment && <div className="col-span-2 sm:col-span-3"><p className="text-xs text-gray-400">Comments</p><p className="font-medium text-gray-700 italic">{entry.comment}</p></div>}
                           </div>
                         </div>
@@ -821,7 +826,10 @@ export default function StudentProfile() {
               <FileText className="w-5 h-5 text-green-600" /> Resume &amp; Documents
             </h3>
             <input ref={resumeInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden"
+<<<<<<< HEAD
               aria-label="Upload Resume or CV"
+=======
+>>>>>>> 3290cb9b4ce31b818c47e121c51436ab12275070
               onChange={e => { const f = e.target.files?.[0]; if (f) uploadResume(f); e.target.value = ''; }} />
             <button type="button" disabled={resumeUploading}
               onClick={() => resumeInputRef.current?.click()}

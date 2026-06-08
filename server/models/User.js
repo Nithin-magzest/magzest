@@ -130,6 +130,8 @@ const UserSchema = new mongoose.Schema({
     city: String,
     comment: String,
     status: String,
+    yearOfStudying: String,
+    yearOfPassing: String,
     backlogs: String,
     attempts: String,
   }],
