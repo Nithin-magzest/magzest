@@ -402,8 +402,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
     });
 
-    // All roles: call scheduled (persisted as a meeting, received by the other participant)
+    // Students only: call scheduled by their counselor
     socket.on('call:scheduled', (data: any) => {
+      if (userRole !== 'student') return;
       const timeLabel = data.scheduledTimeFormatted || data.scheduledTime || '';
       addNotif({
         type: 'meeting', priority: 'urgent',

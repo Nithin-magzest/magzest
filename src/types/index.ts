@@ -10,13 +10,15 @@ export interface User {
 
 export interface Student extends User {
   role: 'student';
+  firstName?: string;
+  lastName?: string;
   phone: string;
   nationality: string;
   dateOfBirth?: string;
   gender?: string;
   maritalStatus?: string;
   passport?: { number: string; issueDate: string; expiryDate: string; issuingCountry: string };
-  address?: { street: string; city: string; state: string; postalCode: string };
+  address?: { street: string; city: string; state: string; country: string; postalCode: string };
   educationLevel: string;
   gpa: number;
   englishScore: { type: 'IELTS' | 'TOEFL' | 'PTE'; score: number };

@@ -89,6 +89,8 @@ const ApplicationSchema = new mongoose.Schema({
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  firstName: String,
+  lastName: String,
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: false },
   role: { type: String, enum: ['student', 'counselor', 'admin'], required: true },

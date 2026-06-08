@@ -113,8 +113,10 @@ export default function StudentProfile() {
   const updateAcademicEntry = (id: string, field: keyof Omit<AcademicEntry, 'id'>, value: string) =>
     setAcademicEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
   const removeAcademicEntry = (id: string) => setAcademicEntries(prev => prev.filter(e => e.id !== id));
+  const nameParts = (student?.name || '').split(' ');
   const [form, setForm] = useState({
-    name: student?.name || '',
+    firstName: student?.firstName || nameParts[0] || '',
+    lastName: student?.lastName || nameParts.slice(1).join(' ') || '',
     phone: student?.phone || '',
     nationality: student?.nationality || '',
     dateOfBirth: student?.dateOfBirth || '',
@@ -130,6 +132,7 @@ export default function StudentProfile() {
       street: student?.address?.street || '',
       city: student?.address?.city || '',
       state: student?.address?.state || '',
+      country: student?.address?.country || '',
       postalCode: student?.address?.postalCode || '',
     },
     educationLevel: student?.educationLevel || '',
@@ -167,6 +170,7 @@ export default function StudentProfile() {
     try {
       await api.students.updateMe({
         ...form,
+        name: [form.firstName, form.lastName].filter(Boolean).join(' '),
         passport: form.passport.number ? form.passport : undefined,
         address: form.address.city ? form.address : undefined,
         academicDetails: academicEntries.map(({ id, ...rest }) => rest),
@@ -235,11 +239,30 @@ export default function StudentProfile() {
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2"><User className="w-5 h-5 text-blue-600" /> Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* First Name */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">First Name</label>
+                {editing ? (
+                  <input aria-label="First Name" value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                ) : (
+                  <p className="text-gray-900 font-medium">{student.firstName || student.name.split(' ')[0] || '—'}</p>
+                )}
+              </div>
+              {/* Last Name */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Last Name</label>
+                {editing ? (
+                  <input aria-label="Last Name" value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                ) : (
+                  <p className="text-gray-900 font-medium">{student.lastName || student.name.split(' ').slice(1).join(' ') || '—'}</p>
+                )}
+              </div>
               {([
-                { label: 'Full Name', key: 'name' },
                 { label: 'Phone', key: 'phone' },
                 { label: 'Nationality', key: 'nationality' },
-              ] as { label: string; key: 'name' | 'phone' | 'nationality' }[]).map(field => (
+              ] as { label: string; key: 'phone' | 'nationality' }[]).map(field => (
                 <div key={field.label}>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">{field.label}</label>
                   {editing ? (
@@ -337,7 +360,8 @@ export default function StudentProfile() {
               </div>
               {([
                 { label: 'City', key: 'city' },
-                { label: 'State', key: 'state' },
+                { label: 'State / Province', key: 'state' },
+                { label: 'Country', key: 'country' },
                 { label: 'Postal Code', key: 'postalCode' },
               ] as { label: string; key: keyof typeof form.address }[]).map(field => (
                 <div key={field.label}>

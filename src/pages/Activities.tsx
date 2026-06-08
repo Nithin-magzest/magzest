@@ -40,13 +40,7 @@ const INITIAL_EVENTS = [
   { id: 4, title: 'Parent-Counselor Meet',            date: '2026-06-05', time: '04:00 PM', type: 'meeting',   desc: 'Quarterly parent engagement session' },
 ];
 
-const INITIAL_CALLS = [
-  { id: 1, name: 'Riya Sharma',  type: 'video', status: 'completed', duration: '24 min', time: '10:30 AM', date: 'Today' },
-  { id: 2, name: 'Arjun Mehta',  type: 'audio', status: 'missed',    duration: '-',      time: '09:15 AM', date: 'Today' },
-  { id: 3, name: 'Priya Nair',   type: 'video', status: 'completed', duration: '45 min', time: '03:00 PM', date: 'Yesterday' },
-  { id: 4, name: 'Karan Patel',  type: 'audio', status: 'completed', duration: '12 min', time: '11:00 AM', date: 'Yesterday' },
-  { id: 5, name: 'Sara Khan',    type: 'video', status: 'scheduled', duration: '-',      time: '02:00 PM', date: 'Tomorrow' },
-];
+const INITIAL_CALLS: { id: number; name: string; type: string; status: string; duration: string; time: string; date: string }[] = [];
 
 const INITIAL_REMINDERS = [
   { id: 1, date: '2026-05-28', text: 'Submit monthly progress report', time: '09:00 AM' },
@@ -192,7 +186,7 @@ export default function Activities() {
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [newEvent, setNewEvent]       = useState({ title: '', date: '', time: '', type: 'meeting', desc: '', studentName: '' });
 
-  const [calls, setCalls]               = useState(isStudent ? [] as typeof INITIAL_CALLS : INITIAL_CALLS);
+  const [calls, setCalls]               = useState<typeof INITIAL_CALLS>([]);
   const [showScheduleCall, setShowScheduleCall] = useState(false);
   const [newCall, setNewCall]           = useState({ name: '', studentId: '', type: 'video', time: '', date: '' });
   const [newCallCount, setNewCallCount] = useState(0);
@@ -227,8 +221,8 @@ export default function Activities() {
     const isCall = (m.title || '').includes('📞');
     const isUpcoming = new Date(`${m.scheduledDate}T${m.scheduledTime}`) > new Date();
 
-    // If this is a call-type meeting, populate the Calls tab
-    if (isCall) {
+    // Calls tab is student-only: only populate for the student the call was scheduled for
+    if (isCall && isStudent) {
       const todayD = new Date(); todayD.setHours(0, 0, 0, 0);
       const tomD = new Date(todayD); tomD.setDate(todayD.getDate() + 1);
       const yestD = new Date(todayD); yestD.setDate(todayD.getDate() - 1);
@@ -239,9 +233,7 @@ export default function Activities() {
         : callDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
       const isAudio = (m.notes || '').toLowerCase().includes('audio') || (m.title || '').toLowerCase().includes('audio');
-      const partnerName = isStudent
-        ? (m.createdByName || m.schedulerName || 'Your Counselor')
-        : (m.participants?.[0]?.name || m.scheduledForName || 'Student');
+      const partnerName = m.createdByName || m.schedulerName || 'Your Counselor';
 
       setCalls(prev => {
         if (prev.some(c => (c as any)._meetingId === id)) return prev;
@@ -455,51 +447,11 @@ export default function Activities() {
   const addCall = async () => {
     if (!newCall.name.trim() || !newCall.time || !newCall.date) return;
 
-    const callTimeFormatted = fmt12h(newCall.time);
     const callTitle = `📞 ${newCall.type === 'video' ? 'Video' : 'Audio'} Call with ${newCall.name}`;
 
-    // Map date to a relative display label for the Calls tab grouping
-    const todayDate = new Date();
-    const todayStr = `${todayDate.getFullYear()}-${padDate(todayDate.getMonth()+1)}-${padDate(todayDate.getDate())}`;
-    const tomorrowDate = new Date(todayDate); tomorrowDate.setDate(todayDate.getDate()+1);
-    const tomorrowStr = `${tomorrowDate.getFullYear()}-${padDate(tomorrowDate.getMonth()+1)}-${padDate(tomorrowDate.getDate())}`;
-    const dateLabel = newCall.date === todayStr ? 'Today'
-      : newCall.date === tomorrowStr ? 'Tomorrow'
-      : newCall.date;
-
-    const callId = Date.now();
-
-    // 1. Add to Calls tab list
-    setCalls(cs => [...cs, {
-      id: callId, name: newCall.name, type: newCall.type,
-      status: 'scheduled', duration: '-',
-      time: callTimeFormatted, date: dateLabel,
-    }]);
-
-    // 2. Add to Calendar as an event on the selected date
-    setEvents(prev => [...prev, {
-      id: callId, title: callTitle,
-      date: newCall.date, time: callTimeFormatted,
-      type: 'call', desc: `${newCall.type === 'video' ? 'Video' : 'Audio'} call`,
-    }]);
-
-    // 3. Add a reminder on the same date
-    setReminders(prev => [...prev, {
-      id: callId + 1, date: newCall.date,
-      text: callTitle, time: callTimeFormatted,
-    } as any]);
-
-    // 4. Jump calendar view to the call's date
+    // Jump calendar view to the call's date
     const [y, mo, d] = newCall.date.split('-').map(Number);
     setCalYear(y); setCalMonth(mo - 1); setSelectedDay(d);
-
-    // 5. Notify the scheduler (current user) immediately
-    addNotif({
-      type: 'meeting', priority: 'normal',
-      title: '📞 Call Scheduled',
-      message: `${newCall.type === 'video' ? 'Video' : 'Audio'} call with ${newCall.name} on ${newCall.date} at ${callTimeFormatted}. Added to your calendar & reminders.`,
-      link: `/${role}/activities`,
-    });
 
     // 6. Persist as a meeting — triggers socket notification to the other participant
     try {
