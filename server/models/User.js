@@ -1,5 +1,18 @@
 const mongoose = require('mongoose');
 
+// Nested schemas for objects that have a field named "type" — avoids
+// Mongoose mis-interpreting { type: ..., otherField: ... } as a SchemaType
+// definition rather than an embedded document.
+const EnglishScoreSchema = new mongoose.Schema(
+  { type: { type: String, enum: ['IELTS', 'TOEFL', 'PTE', 'Duolingo'] }, score: Number },
+  { _id: false }
+);
+
+const EnglishTestSchema = new mongoose.Schema(
+  { type: { type: String }, score: Number, testDate: String },
+  { _id: false }
+);
+
 const DocumentSchema = new mongoose.Schema({
   name: String,
   type: String,
@@ -58,11 +71,7 @@ const ApplicationSchema = new mongoose.Schema({
   percentage: String,
 
   // English proficiency
-  englishTest: {
-    type: { type: String },
-    score: Number,
-    testDate: String,
-  },
+  englishTest: EnglishTestSchema,
 
   // Financial
   fundingSource: String,
@@ -143,7 +152,7 @@ const UserSchema = new mongoose.Schema({
   },
   educationLevel: String,
   gpa: Number,
-  englishScore: { type: { type: String, enum: ['IELTS', 'TOEFL', 'PTE', 'Duolingo'] }, score: Number },
+  englishScore: EnglishScoreSchema,
   preferredCountries: [String],
   budget: Number,
   interestedCourses: [String],
@@ -169,8 +178,6 @@ const UserSchema = new mongoose.Schema({
   certifications: [String],
   linkedIn: String,
   website: String,
-  dateOfBirth: String,
-  gender: String,
   address: {
     street: String,
     city: String,
