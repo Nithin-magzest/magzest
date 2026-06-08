@@ -1,12 +1,20 @@
 // Education levels in ascending order
 const EDU_ORDER = [
   '12th Grade', 'Diploma', 'Certificate',
-  "Bachelor's", "Master's", 'PhD',
+  'Bachelor', 'Master', 'PhD',
 ];
 
+// Normalize strings like "Bachelor's (Completed)" → "Bachelor"
+function normalizeEduLevel(level: string): string {
+  if (!level) return '';
+  return level
+    .replace(/\s*\(.*?\)/g, '')  // strip "(Completed)", "(In Progress)" etc.
+    .replace(/[''']s\b/g, '')    // "Bachelor's" → "Bachelor", "Master's" → "Master"
+    .trim();
+}
+
 function eduIndex(level: string): number {
-  const i = EDU_ORDER.indexOf(level);
-  return i === -1 ? -1 : i;
+  return EDU_ORDER.indexOf(normalizeEduLevel(level));
 }
 
 function calcAge(dateOfBirth: string): number {

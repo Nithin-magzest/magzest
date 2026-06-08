@@ -128,7 +128,7 @@ export default function StudentCourses() {
                     {course.level}
                   </span>
                   {course._elig.status !== 'unknown' && (() => {
-                    const badge = ELIGIBILITY_BADGE[course._elig.status];
+                    const badge = ELIGIBILITY_BADGE[course._elig.status as keyof typeof ELIGIBILITY_BADGE];
                     return (
                       <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${badge.classes}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
