@@ -1,19 +1,74 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, BookOpen, Calendar, Award, CheckCircle, X, Plus } from 'lucide-react';
+import { Search, BookOpen, Calendar, Award, CheckCircle, X, Plus, ShieldCheck, AlertTriangle, AlertCircle } from 'lucide-react';
 import { api } from '../../api';
+import { checkCourseEligibility, checkCountryEligibility, ELIGIBILITY_BADGE, EligibilityResult } from '../../utils/eligibility';
 
-const LEVELS = ["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'];
+const LEVELS = ['Bachelor', 'Master', 'PhD', 'Diploma', 'Certificate'];
 const LEVEL_COLORS: Record<string, string> = {
-  "Bachelor's": 'bg-blue-100 text-blue-700',
-  "Master's": 'bg-purple-100 text-purple-700',
+  'Bachelor': 'bg-blue-100 text-blue-700',
+  'Master': 'bg-purple-100 text-purple-700',
   'PhD': 'bg-red-100 text-red-700',
   'Diploma': 'bg-green-100 text-green-700',
   'Certificate': 'bg-yellow-100 text-yellow-700',
 };
 
-function ApplyModal({ course, students, onClose }: {
-  course: { name: string; uniId: string; uniName: string; intake?: string[]; tuitionFee?: number; currency?: string; level?: string };
+function mergeEligibility(a: EligibilityResult, b: EligibilityResult | null): EligibilityResult {
+  if (!b) return a;
+  const missing = [...a.missing, ...b.missing];
+  const warnings = [...a.warnings, ...b.warnings];
+  if (missing.length > 0) return { status: 'not_eligible', missing, warnings };
+  if (warnings.length > 0) return { status: 'partial', missing, warnings };
+  if (a.status === 'eligible' || b.status === 'eligible') return { status: 'eligible', missing: [], warnings: [] };
+  return { status: 'unknown', missing: [], warnings: [] };
+}
+
+function EligibilityPanel({ result }: { result: EligibilityResult }) {
+  const badge = ELIGIBILITY_BADGE[result.status];
+  return (
+    <div className={`rounded-xl border p-3 space-y-2 ${
+      result.status === 'eligible'     ? 'bg-green-50 border-green-200' :
+      result.status === 'not_eligible' ? 'bg-red-50 border-red-200' :
+      result.status === 'partial'      ? 'bg-yellow-50 border-yellow-200' :
+                                         'bg-gray-50 border-gray-200'
+    }`}>
+      <div className="flex items-center gap-2">
+        {result.status === 'eligible'     && <ShieldCheck className="w-4 h-4 text-green-600" />}
+        {result.status === 'not_eligible' && <AlertCircle className="w-4 h-4 text-red-600" />}
+        {result.status === 'partial'      && <AlertTriangle className="w-4 h-4 text-yellow-600" />}
+        {result.status === 'unknown'      && <ShieldCheck className="w-4 h-4 text-gray-400" />}
+        <span className={`text-xs font-bold ${badge.classes.split(' ').filter(c => c.startsWith('text-')).join(' ')}`}>
+          {result.status === 'eligible'     ? 'Student meets all requirements' :
+           result.status === 'not_eligible' ? 'Student does not meet requirements' :
+           result.status === 'partial'      ? 'Some profile info missing — review before applying' :
+                                              'No eligibility criteria defined'}
+        </span>
+      </div>
+      {result.missing.length > 0 && (
+        <ul className="space-y-1">
+          {result.missing.map((m, i) => (
+            <li key={i} className="flex items-start gap-1.5 text-xs text-red-700">
+              <X className="w-3 h-3 mt-0.5 flex-shrink-0" />{m}
+            </li>
+          ))}
+        </ul>
+      )}
+      {result.warnings.length > 0 && (
+        <ul className="space-y-1">
+          {result.warnings.map((w, i) => (
+            <li key={i} className="flex items-start gap-1.5 text-xs text-yellow-700">
+              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />{w}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ApplyModal({ course, students, country, onClose }: {
+  course: { name: string; uniId: string; uniName: string; intake?: string[]; tuitionFee?: number; currency?: string; level?: string; eligibility?: any };
   students: any[];
+  country: any | null;
   onClose: () => void;
 }) {
   const [studentId, setStudentId] = useState('');
@@ -30,6 +85,15 @@ function ApplyModal({ course, students, onClose }: {
   );
   const selectedStudent = students.find(s => (s._id || s.id) === studentId);
 
+  const eligResult: EligibilityResult | null = selectedStudent
+    ? mergeEligibility(
+        checkCourseEligibility(selectedStudent, course),
+        country ? checkCountryEligibility(selectedStudent, country) : null
+      )
+    : null;
+
+  const isBlocked = eligResult?.status === 'not_eligible';
+
   useEffect(() => {
     if (!studentDropOpen) return;
     function handleClick(e: MouseEvent) {
@@ -41,6 +105,7 @@ function ApplyModal({ course, students, onClose }: {
 
   const handleApply = async () => {
     if (!studentId) { setError('Please select a student.'); return; }
+    if (isBlocked) { setError('Cannot apply — student does not meet eligibility requirements.'); return; }
     setSaving(true); setError('');
     try {
       await api.admin.createApplication({
@@ -88,8 +153,11 @@ function ApplyModal({ course, students, onClose }: {
         </div>
 
         <div className="p-5 space-y-4">
+          {/* Student selector */}
           <div className="relative" ref={dropRef}>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Student <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Select Student <span className="text-red-500">*</span>
+            </label>
             <button type="button"
               onClick={() => setStudentDropOpen(v => !v)}
               className={`w-full px-3 py-2.5 border rounded-xl text-sm text-left flex items-center justify-between bg-white transition-colors ${studentDropOpen ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -125,7 +193,7 @@ function ApplyModal({ course, students, onClose }: {
                     filteredStudents.map(s => (
                       <button type="button" key={s._id || s.id}
                         onClick={() => { setStudentId(s._id || s.id); setStudentDropOpen(false); setStudentSearch(''); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-emerald-50 transition-colors flex flex-col gap-0.5 ${studentId === (s._id || s.id) ? 'bg-emerald-50' : ''}`}>
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors flex flex-col gap-0.5 ${studentId === (s._id || s.id) ? 'bg-blue-50' : ''}`}>
                         <span className="font-medium text-gray-900">{s.name}</span>
                         <span className="text-xs text-gray-400">{s.email}</span>
                       </button>
@@ -136,6 +204,10 @@ function ApplyModal({ course, students, onClose }: {
             )}
           </div>
 
+          {/* Eligibility result */}
+          {eligResult && <EligibilityPanel result={eligResult} />}
+
+          {/* Intake */}
           {course.intake && course.intake.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Intake</label>
@@ -159,11 +231,18 @@ function ApplyModal({ course, students, onClose }: {
               className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
               Cancel
             </button>
-            <button type="button" onClick={handleApply} disabled={saving || success}
-              className="flex-1 py-2.5 bg-[#0d1b4b] hover:bg-[#152258] text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-60 transition-all flex items-center justify-center gap-2">
+            <button type="button" onClick={handleApply} disabled={saving || success || isBlocked}
+              title={isBlocked ? 'Student does not meet eligibility requirements' : undefined}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all flex items-center justify-center gap-2 ${
+                isBlocked
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-[#0d1b4b] hover:bg-[#152258] text-white disabled:opacity-60'
+              }`}>
               {saving
                 ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</>
-                : <><Plus className="w-4 h-4" />Apply</>}
+                : isBlocked
+                  ? <><AlertCircle className="w-4 h-4" />Not Eligible</>
+                  : <><Plus className="w-4 h-4" />Apply</>}
             </button>
           </div>
         </div>
@@ -193,6 +272,7 @@ function UniLogoImg({ name, website, uniId }: { name: string; website?: string; 
 export default function CounselorCourses() {
   const [universities, setUniversities] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+  const [countries, setCountries] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [level, setLevel] = useState('');
   const [uniFilter, setUniFilter] = useState('');
@@ -201,6 +281,7 @@ export default function CounselorCourses() {
   useEffect(() => {
     api.universities.list().then(setUniversities).catch(() => {});
     api.students.list().then(setStudents).catch(() => {});
+    api.countries.list().then(setCountries).catch(() => {});
   }, []);
 
   const allCourses = universities.flatMap(uni =>
@@ -219,12 +300,17 @@ export default function CounselorCourses() {
 
   const hasFilters = query || level || uniFilter;
 
+  const modalCountry = applyModal
+    ? (countries.find((c: any) => c.name?.toLowerCase() === applyModal.country?.toLowerCase()) || null)
+    : null;
+
   return (
     <div className="space-y-6">
       {applyModal && (
         <ApplyModal
           course={applyModal}
           students={students}
+          country={modalCountry}
           onClose={() => setApplyModal(null)}
         />
       )}
