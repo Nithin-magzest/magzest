@@ -473,7 +473,7 @@ export default function UniversityDetail() {
                     )}
                     {isAuthenticated && user?.role === 'counselor' && (
                       <button type="button" onClick={() => setCounselorApplyModal(course)}
-                        className="mt-4 flex items-center gap-1.5 bg-white hover:bg-green-50 text-green-700 border-2 border-gray-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm">
+                        className="mt-4 flex items-center gap-1.5 bg-[#0d1b4b] hover:bg-[#152258] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm">
                         <Plus className="w-4 h-4" />Apply for Student
                       </button>
                     )}
@@ -510,13 +510,13 @@ export default function UniversityDetail() {
               {isAuthenticated && user?.role === 'student' ? (
                 <button type="button"
                   onClick={() => uni?.courses?.[0] && setApplyModal(uni.courses[0])}
-                  className="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">
+                  className="block w-full text-center bg-[#0d1b4b] hover:bg-[#152258] text-white font-bold py-3 rounded-xl transition-colors">
                   Start Application
                 </button>
               ) : isAuthenticated && user?.role === 'counselor' ? (
                 <button type="button"
                   onClick={() => uni?.courses?.[0] && setCounselorApplyModal(uni.courses[0])}
-                  className="flex items-center justify-center gap-2 w-full bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-sky-50 transition-colors">
+                  className="flex items-center justify-center gap-2 w-full bg-[#0d1b4b] hover:bg-[#152258] text-white font-bold py-3 rounded-xl transition-colors">
                   <Plus className="w-4 h-4" />Apply for a Student
                 </button>
               ) : isAuthenticated ? (

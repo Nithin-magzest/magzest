@@ -328,11 +328,11 @@ function UniversityCard({ uni }: { uni: any }) {
       <div className="px-5 pb-4 flex gap-2">
         <Link
           to={`/university/${uni.id || uni._id}`}
-          className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-green-50 text-green-700 border-2 border-gray-300 py-2 rounded-xl text-sm font-semibold transition-colors"
+          className="flex-1 relative flex items-center justify-center bg-white hover:bg-green-50 text-green-700 border-2 border-gray-300 py-2 rounded-xl text-sm font-semibold transition-colors"
         >
-          <BookOpen className="w-4 h-4" />
+          <BookOpen className="w-4 h-4 absolute left-3" />
           View Courses & Info
-          <ChevronRight className="w-4 h-4 ml-auto" />
+          <ChevronRight className="w-4 h-4 absolute right-3" />
         </Link>
         {uni.website && (
           <a href={uni.website} target="_blank" rel="noopener noreferrer"
