@@ -10,6 +10,10 @@ type AcademicEntry = { id: string; level: string; customLevel: string; instituti
 function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '' }; }
 const BACHELOR_LEVELS = ["Bachelor's Degree"];
 
+const EXP_TYPES = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Volunteer'];
+type ExperienceEntry = { id: string; company: string; role: string; type: string; from: string; to: string; current: boolean; noticePeriod: string; description: string; };
+function newExperienceEntry(): ExperienceEntry { return { id: crypto.randomUUID(), company: '', role: '', type: 'Full-time', from: '', to: '', current: false, noticePeriod: '', description: '' }; }
+
 const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
 const ALL_COUNTRIES = ['Australia', 'Canada', 'France', 'Germany', 'Ireland', 'Netherlands', 'New Zealand', 'Singapore', 'United Kingdom', 'United States', 'Other'];
 const ALL_COURSES = ['Arts & Humanities', 'Business', 'Computer Science', 'Data Science', 'Engineering', 'Finance', 'Law', 'Medicine', 'MBA', 'Pharmacy', 'Psychology', 'Other'];
@@ -114,6 +118,29 @@ export default function StudentProfile() {
   const updateAcademicEntry = (id: string, field: keyof Omit<AcademicEntry, 'id'>, value: string) =>
     setAcademicEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
   const removeAcademicEntry = (id: string) => setAcademicEntries(prev => prev.filter(e => e.id !== id));
+
+  const [experienceEntries, setExperienceEntries] = useState<ExperienceEntry[]>(
+    (student?.experienceDetails || []).map((e: any) => ({ ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
+  );
+  const addExperienceEntry = () => setExperienceEntries(prev => [...prev, newExperienceEntry()]);
+  const updateExperienceEntry = (id: string, field: keyof Omit<ExperienceEntry, 'id'>, value: string | boolean) =>
+    setExperienceEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+  const removeExperienceEntry = (id: string) => setExperienceEntries(prev => prev.filter(e => e.id !== id));
+
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
+  const uploadResume = async (file: File) => {
+    setResumeUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('name', file.name.replace(/\.[^.]+$/, ''));
+      fd.append('type', 'CV/Resume');
+      await api.students.uploadDocument(fd);
+      await refreshUser();
+    } catch {}
+    setResumeUploading(false);
+  };
   const nameParts = (student?.name || '').split(' ');
   const [form, setForm] = useState({
     firstName: student?.firstName || nameParts[0] || '',
@@ -177,6 +204,7 @@ export default function StudentProfile() {
         passport: form.passport.number ? form.passport : undefined,
         address: form.address.city ? form.address : undefined,
         academicDetails: academicEntries.map(({ id, ...rest }) => rest),
+        experienceDetails: experienceEntries.map(({ id, ...rest }) => rest),
         englishScore: form.englishTestType ? { type: form.englishTestType, score: Number(form.englishTestScore) } : undefined,
         budget: form.budget ? Number(form.budget) : undefined,
         preferredCountries: form.preferredCountries,
@@ -580,6 +608,34 @@ export default function StudentProfile() {
                               onChange={e => updateAcademicEntry(entry.id, 'percentage', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                           </div>
+                          {(entry.level === "Bachelor's Degree" || entry.level === "Master's Degree") && (
+                            <>
+                              <div className="sm:col-span-2">
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                                <select aria-label="Status" value={entry.status}
+                                  onChange={e => updateAcademicEntry(entry.id, 'status', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                  <option value="">Select status</option>
+                                  <option>Completed</option>
+                                  <option>Pursuing</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Number of Backlogs</label>
+                                <input aria-label="Number of Backlogs" value={entry.backlogs}
+                                  placeholder="e.g. 0" type="number" min="0"
+                                  onChange={e => updateAcademicEntry(entry.id, 'backlogs', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Number of Attempts</label>
+                                <input aria-label="Number of Attempts" value={entry.attempts}
+                                  placeholder="e.g. 1" type="number" min="1"
+                                  onChange={e => updateAcademicEntry(entry.id, 'attempts', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                              </div>
+                            </>
+                          )}
                           <div className="sm:col-span-2">
                             <label className="block text-xs font-medium text-gray-500 mb-1">City</label>
                             <input aria-label="City" value={entry.city} placeholder="e.g. Chennai"
@@ -605,15 +661,15 @@ export default function StudentProfile() {
                           </span>
                           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
                             {entry.institution && <div><p className="text-xs text-gray-400">Institution</p><p className="font-medium text-gray-800">{entry.institution}</p></div>}
-                            {entry.board && <div><p className="text-xs text-gray-400">Board / University</p><p className="font-medium text-gray-800">{entry.board}</p></div>}
+                            {entry.board && <div><p className="text-xs text-gray-400">{entry.level === "Bachelor's Degree" || entry.level === "Master's Degree" || entry.level === 'PhD' || entry.level === 'Diploma' ? 'University' : 'Board'}</p><p className="font-medium text-gray-800">{entry.board}</p></div>}
                             {entry.year && <div><p className="text-xs text-gray-400">Year</p><p className="font-medium text-gray-800">{entry.year}</p></div>}
                             {entry.percentage && <div><p className="text-xs text-gray-400">Score</p><p className="font-medium text-gray-800">{entry.percentage}</p></div>}
                             {entry.city && <div><p className="text-xs text-gray-400">City</p><p className="font-medium text-gray-800">{entry.city}</p></div>}
                             {BACHELOR_LEVELS.includes(entry.level) && entry.status && <div><p className="text-xs text-gray-400">Status</p><p className="font-medium text-gray-800">{entry.status}</p></div>}
                             {entry.status === 'Pursuing' && entry.yearOfStudying && <div><p className="text-xs text-gray-400">Year of Studying</p><p className="font-medium text-gray-800">{entry.yearOfStudying}</p></div>}
                             {entry.status === 'Pursuing' && entry.yearOfPassing && <div><p className="text-xs text-gray-400">Expected Passing</p><p className="font-medium text-gray-800">{entry.yearOfPassing}</p></div>}
-                            {entry.status === 'Pursuing' && entry.backlogs !== '' && <div><p className="text-xs text-gray-400">Backlogs</p><p className="font-medium text-gray-800">{entry.backlogs}</p></div>}
-                            {entry.status === 'Pursuing' && entry.attempts !== '' && <div><p className="text-xs text-gray-400">Attempts</p><p className="font-medium text-gray-800">{entry.attempts}</p></div>}
+                            {entry.status === 'Pursuing' && entry.backlogs !== '' && entry.backlogs !== undefined && <div><p className="text-xs text-gray-400">Backlogs</p><p className="font-medium text-gray-800">{entry.backlogs}</p></div>}
+                            {entry.status === 'Pursuing' && entry.attempts !== '' && entry.attempts !== undefined && <div><p className="text-xs text-gray-400">Attempts</p><p className="font-medium text-gray-800">{entry.attempts}</p></div>}
                             {entry.comment && <div className="col-span-2 sm:col-span-3"><p className="text-xs text-gray-400">Comments</p><p className="font-medium text-gray-700 italic">{entry.comment}</p></div>}
                           </div>
                         </div>
@@ -630,6 +686,185 @@ export default function StudentProfile() {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Experience Section */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <User className="w-5 h-5 text-purple-600" /> Work Experience
+              </h3>
+              {editing && (
+                <button type="button" onClick={addExperienceEntry}
+                  className="flex items-center gap-1.5 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors">
+                  <Plus className="w-3.5 h-3.5" /> Add Experience
+                </button>
+              )}
+            </div>
+            {experienceEntries.length === 0 && !editing && (
+              <p className="text-sm text-gray-400 text-center py-4">No work experience added yet.</p>
+            )}
+            {experienceEntries.length === 0 && editing && (
+              <button type="button" onClick={addExperienceEntry}
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-purple-200 text-purple-500 hover:border-purple-400 hover:text-purple-700 py-4 rounded-xl transition-colors text-sm font-medium">
+                <Plus className="w-4 h-4" /> Add Work Experience
+              </button>
+            )}
+            <div className="space-y-4">
+              {editing ? (
+                experienceEntries.map((entry, idx) => (
+                  <div key={entry.id} className="border border-purple-100 bg-purple-50/40 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full">Experience {idx + 1}</span>
+                      <button type="button" aria-label="Remove experience" onClick={() => removeExperienceEntry(entry.id)}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Company / Organization</label>
+                        <input aria-label="Company" value={entry.company} placeholder="e.g. TCS, Infosys"
+                          onChange={e => updateExperienceEntry(entry.id, 'company', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Job Title / Role</label>
+                        <input aria-label="Role" value={entry.role} placeholder="e.g. Software Engineer"
+                          onChange={e => updateExperienceEntry(entry.id, 'role', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Employment Type</label>
+                        <select aria-label="Employment Type" value={entry.type}
+                          onChange={e => updateExperienceEntry(entry.id, 'type', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                          {EXP_TYPES.map(t => <option key={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">From (Month / Year)</label>
+                        <input aria-label="From date" value={entry.from} placeholder="e.g. Jan 2022"
+                          onChange={e => updateExperienceEntry(entry.id, 'from', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                      </div>
+                      {!entry.current && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">To (Month / Year)</label>
+                          <input aria-label="To date" value={entry.to} placeholder="e.g. Dec 2023"
+                            onChange={e => updateExperienceEntry(entry.id, 'to', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 sm:col-span-2">
+                        <input type="checkbox" id={`current-${entry.id}`} checked={entry.current}
+                          onChange={e => { updateExperienceEntry(entry.id, 'current', e.target.checked); if (e.target.checked) updateExperienceEntry(entry.id, 'to', ''); }}
+                          className="w-4 h-4 text-purple-600 rounded" />
+                        <label htmlFor={`current-${entry.id}`} className="text-sm text-gray-600 cursor-pointer">Currently working here</label>
+                      </div>
+                      {entry.current && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Notice Period</label>
+                          <select aria-label="Notice Period" value={entry.noticePeriod}
+                            onChange={e => updateExperienceEntry(entry.id, 'noticePeriod', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="">Select notice period</option>
+                            <option>Immediate</option>
+                            <option>15 Days</option>
+                            <option>1 Month</option>
+                            <option>2 Months</option>
+                            <option>3 Months</option>
+                            <option>More than 3 Months</option>
+                          </select>
+                        </div>
+                      )}
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Description (optional)</label>
+                        <textarea aria-label="Description" value={entry.description} rows={2}
+                          placeholder="Brief description of your role and responsibilities…"
+                          onChange={e => updateExperienceEntry(entry.id, 'description', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                experienceEntries.map(entry => (
+                  <div key={entry.id} className="border border-gray-100 bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <span className="text-xs font-bold text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full">{entry.type}</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800 text-sm">{entry.role}</p>
+                        <p className="text-sm text-gray-600">{entry.company}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{entry.from}{entry.to || entry.current ? ` — ${entry.current ? 'Present' : entry.to}` : ''}</p>
+                        {entry.current && entry.noticePeriod && <p className="text-xs text-purple-600 font-medium mt-0.5">Notice Period: {entry.noticePeriod}</p>}
+                        {entry.description && <p className="text-xs text-gray-500 mt-1.5 italic">{entry.description}</p>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+              {editing && experienceEntries.length > 0 && (
+                <button type="button" onClick={addExperienceEntry}
+                  className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-purple-200 text-purple-500 hover:border-purple-400 hover:text-purple-700 py-3 rounded-xl transition-colors text-sm font-medium">
+                  <Plus className="w-4 h-4" /> Add Another Experience
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Resume & Documents Section */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-green-600" /> Resume &amp; Documents
+            </h3>
+            <input ref={resumeInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden"
+              aria-label="Upload Resume or CV"
+              onChange={e => { const f = e.target.files?.[0]; if (f) uploadResume(f); e.target.value = ''; }} />
+            <button type="button" disabled={resumeUploading}
+              onClick={() => resumeInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 bg-green-50 border-2 border-dashed border-green-300 text-green-700 hover:bg-green-100 hover:border-green-400 py-4 rounded-xl transition-colors text-sm font-semibold disabled:opacity-60 mb-5">
+              <Upload className="w-4 h-4" />
+              {resumeUploading ? 'Uploading…' : 'Upload Resume / CV'}
+            </button>
+            {docs.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-2">No documents uploaded yet.</p>
+            )}
+            <div className="space-y-3">
+              {docs.map((doc: any) => {
+                const docId = doc._id || doc.id;
+                return (
+                  <div key={docId} className="flex items-start justify-between gap-2 p-3 bg-gray-50 rounded-xl">
+                    <div className="flex items-start gap-2 min-w-0">
+                      <FileText className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{doc.name}</p>
+                        <p className="text-xs text-gray-400">{doc.type}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {doc.url && (
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs bg-sky-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
+                          <ExternalLink className="w-3 h-3" /> Open
+                        </a>
+                      )}
+                      <StatusBadge status={doc.status} />
+                      <button type="button" aria-label="Delete document"
+                        onClick={async () => { await api.students.deleteDocument(docId); refreshUser(); }}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button type="button" onClick={() => setShowUpload(true)} className="mt-4 w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600 py-3 rounded-xl transition-colors text-sm font-medium">
+              <Upload className="w-4 h-4" /> Upload Other Document
+            </button>
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
