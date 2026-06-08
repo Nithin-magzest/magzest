@@ -1,10 +1,11 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, Routes, Route, useParams, useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus, Users } from 'lucide-react';
+import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus, Users, BookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
+import { checkCourseEligibility, ELIGIBILITY_BADGE } from '../../utils/eligibility';
 
 const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
 
@@ -385,14 +386,15 @@ function StudentDetail() {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'documents'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'documents' | 'courses'>('overview');
   const [updating, setUpdating] = useState(false);
   const [showRequestDoc, setShowRequestDoc] = useState(false);
+  const [universities, setUniversities] = useState<any[]>([]);
+  const [eligFilter, setEligFilter] = useState('');
 
   useEffect(() => {
-    if (studentId) {
-      api.students.get(studentId).then(setStudent).catch(() => {});
-    }
+    if (studentId) api.students.get(studentId).then(setStudent).catch(() => {});
+    api.universities.list().then(setUniversities).catch(() => {});
   }, [studentId]);
 
   const verifyDoc = async (docId: string, status: 'verified' | 'rejected') => {
@@ -428,6 +430,15 @@ function StudentDetail() {
     return tb - ta;
   });
   const docs = student.documents || [];
+  const allCourses = universities.flatMap(uni =>
+    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, _elig: checkCourseEligibility(student, c) }))
+  );
+  const eligCounts = {
+    eligible: allCourses.filter(c => c._elig.status === 'eligible').length,
+    partial: allCourses.filter(c => c._elig.status === 'partial').length,
+    not_eligible: allCourses.filter(c => c._elig.status === 'not_eligible').length,
+  };
+  const visibleCourses = eligFilter ? allCourses.filter(c => c._elig.status === eligFilter) : allCourses;
 
   return (
     <div className="space-y-5">
@@ -474,9 +485,12 @@ function StudentDetail() {
         </div>
       </div>
 
-      <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-fit">
-        {(['overview', 'applications', 'documents'] as const).map(tab => (
-          <button type="button" key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>{tab}</button>
+      <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-xl w-fit">
+        {(['overview', 'applications', 'documents', 'courses'] as const).map(t => (
+          <button type="button" key={t} onClick={() => { setActiveTab(t); setEligFilter(''); }}
+            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${activeTab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
+            {t === 'courses' ? 'Course Eligibility' : t}
+          </button>
         ))}
       </div>
 
@@ -547,6 +561,62 @@ function StudentDetail() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {activeTab === 'courses' && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: '', label: `All (${allCourses.length})`, active: 'bg-gray-200 text-gray-700 border-gray-300' },
+              { key: 'eligible', label: `Eligible (${eligCounts.eligible})`, active: 'bg-green-100 text-green-700 border-green-300' },
+              { key: 'partial', label: `Check Profile (${eligCounts.partial})`, active: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+              { key: 'not_eligible', label: `Not Eligible (${eligCounts.not_eligible})`, active: 'bg-red-100 text-red-700 border-red-300' },
+            ].map(f => (
+              <button key={f.key} type="button" onClick={() => setEligFilter(f.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${eligFilter === f.key ? f.active : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="space-y-2">
+            {visibleCourses.length === 0 ? (
+              <div className="bg-white rounded-2xl p-10 text-center border border-gray-100 shadow-sm">
+                <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-400">{universities.length === 0 ? 'Loading courses…' : 'No courses match this filter.'}</p>
+              </div>
+            ) : visibleCourses.map((course: any, i: number) => {
+              const badge = ELIGIBILITY_BADGE[course._elig.status as keyof typeof ELIGIBILITY_BADGE];
+              return (
+                <div key={course._id || course.id || i} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm">{course.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{course.uniName} · {course.level}</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border flex-shrink-0 ${badge.classes}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                      {badge.label}
+                    </span>
+                  </div>
+                  {course._elig.missing.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {course._elig.missing.map((m: string, mi: number) => (
+                        <p key={mi} className="text-xs text-red-600 bg-red-50 px-2.5 py-1 rounded-lg">✕ {m}</p>
+                      ))}
+                    </div>
+                  )}
+                  {course._elig.warnings.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {course._elig.warnings.map((w: string, wi: number) => (
+                        <p key={wi} className="text-xs text-yellow-700 bg-yellow-50 px-2.5 py-1 rounded-lg">⚠ {w}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

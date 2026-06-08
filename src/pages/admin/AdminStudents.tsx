@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { api } from '../../api';
+import { checkCourseEligibility, ELIGIBILITY_BADGE } from '../../utils/eligibility';
 import StatusBadge from '../../components/StatusBadge';
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -83,7 +84,25 @@ function BtnClose({ onClick }: { onClick: () => void }) {
 function StudentDetailModal({ student, onClose, onChat, onNewApplication }: {
   student: any; onClose: () => void; onChat?: () => void; onNewApplication?: () => void;
 }) {
+  const [tab, setTab] = useState<'overview' | 'courses'>('overview');
+  const [universities, setUniversities] = useState<any[]>([]);
+  const [eligFilter, setEligFilter] = useState('');
+
+  useEffect(() => {
+    api.universities.list().then(setUniversities).catch(() => {});
+  }, []);
+
   const initials = student.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+  const allCourses = universities.flatMap(uni =>
+    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, _elig: checkCourseEligibility(student, c) }))
+  );
+  const eligCounts = {
+    eligible: allCourses.filter(c => c._elig.status === 'eligible').length,
+    partial: allCourses.filter(c => c._elig.status === 'partial').length,
+    not_eligible: allCourses.filter(c => c._elig.status === 'not_eligible').length,
+  };
+  const visibleCourses = eligFilter ? allCourses.filter(c => c._elig.status === eligFilter) : allCourses;
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -101,7 +120,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: {
                 </div>
               </div>
             </div>
-            <button type="button" onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:bg-white/20 hover:text-white transition-all flex-shrink-0"><X className="w-5 h-5" /></button>
+            <button type="button" onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:bg-white/20 hover:text-white transition-all flex-shrink-0"><X className="w-5 h-5" /></button>
           </div>
           <div className="grid grid-cols-4 gap-3 mt-5">
             {[{ label: 'Applications', value: student.applications?.length ?? 0 }, { label: 'Documents', value: student.documents?.length ?? 0 }, { label: 'GPA', value: student.gpa ?? '—' }, { label: 'Budget', value: student.budget ? `$${Number(student.budget).toLocaleString()}` : '—' }].map(stat => (
@@ -112,64 +131,128 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: {
             ))}
           </div>
         </div>
+        <div className="flex border-b border-gray-100 flex-shrink-0 px-6 bg-white">
+          {(['overview', 'courses'] as const).map(t => (
+            <button key={t} type="button" onClick={() => { setTab(t); setEligFilter(''); }}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              {t === 'courses' ? 'Course Eligibility' : 'Overview'}
+            </button>
+          ))}
+        </div>
         <div className="flex-1 overflow-y-auto min-h-0">
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-5">
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Personal Information</p>
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <DetailRow label="Phone" value={student.phone} />
-                  <DetailRow label="Nationality" value={student.nationality} />
-                  <DetailRow label="Date of Birth" value={student.dateOfBirth} />
-                  <DetailRow label="Gender" value={student.gender} />
-                  <DetailRow label="Status" value={student.status} />
-                  <DetailRow label="Joined" value={student.joinedDate} />
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Academic Profile</p>
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <DetailRow label="Education Level" value={student.educationLevel} />
-                  <DetailRow label="GPA" value={student.gpa} />
-                  {student.englishScore?.score && <DetailRow label="English Score" value={`${student.englishScore.type} — ${student.englishScore.score}`} />}
-                  <DetailRow label="Budget" value={student.budget ? `$${Number(student.budget).toLocaleString()}` : undefined} />
-                </div>
-              </div>
-              {student.preferredCountries?.length > 0 && (
+          {tab === 'overview' ? (
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-5">
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Preferred Countries</p>
-                  <div className="flex flex-wrap gap-2">{student.preferredCountries.map((c: string) => <span key={c} className="text-xs bg-sky-50 text-blue-700 px-3 py-1.5 rounded-full font-medium border border-blue-100">{c}</span>)}</div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Personal Information</p>
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <DetailRow label="Phone" value={student.phone} />
+                    <DetailRow label="Nationality" value={student.nationality} />
+                    <DetailRow label="Date of Birth" value={student.dateOfBirth} />
+                    <DetailRow label="Gender" value={student.gender} />
+                    <DetailRow label="Status" value={student.status} />
+                    <DetailRow label="Joined" value={student.joinedDate} />
+                  </div>
                 </div>
-              )}
-            </div>
-            <div className="space-y-5">
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Applications{student.applications?.length > 0 ? ` (${student.applications.length})` : ''}</p>
-                {student.applications?.length > 0 ? (
-                  <div className="space-y-2">{[...student.applications].sort((a: any, b: any) => new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime() - new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime()).map((app: any, i: number) => (
-                    <div key={app._id || i} className="bg-gray-50 rounded-xl p-3 flex items-start gap-3 border border-gray-100">
-                      <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-900">{app.universityName}</p><p className="text-xs text-gray-500">{app.courseName}</p></div>
-                      <StatusBadge status={app.status} />
-                    </div>
-                  ))}</div>
-                ) : <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 text-center"><p className="text-sm text-gray-400">No applications yet</p></div>}
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Academic Profile</p>
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <DetailRow label="Education Level" value={student.educationLevel} />
+                    <DetailRow label="GPA" value={student.gpa} />
+                    {student.englishScore?.score && <DetailRow label="English Score" value={`${student.englishScore.type} — ${student.englishScore.score}`} />}
+                    <DetailRow label="Budget" value={student.budget ? `$${Number(student.budget).toLocaleString()}` : undefined} />
+                  </div>
+                </div>
+                {student.preferredCountries?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Preferred Countries</p>
+                    <div className="flex flex-wrap gap-2">{student.preferredCountries.map((c: string) => <span key={c} className="text-xs bg-sky-50 text-blue-700 px-3 py-1.5 rounded-full font-medium border border-blue-100">{c}</span>)}</div>
+                  </div>
+                )}
               </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Documents{student.documents?.length > 0 ? ` (${student.documents.length})` : ''}</p>
-                {student.documents?.length > 0 ? (
-                  <div className="space-y-1.5">{student.documents.map((doc: any, i: number) => (
-                    <div key={doc._id || i} className="bg-gray-50 rounded-lg px-3 py-2.5 flex items-center justify-between border border-gray-100">
-                      <div><p className="text-xs font-medium text-gray-900">{doc.name}</p><p className="text-xs text-gray-400">{doc.type}</p></div>
-                      <div className="flex items-center gap-2">
-                        {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md hover:bg-gray-200 font-medium"><ExternalLink className="w-3 h-3" />Open</a>}
-                        <StatusBadge status={doc.status} />
+              <div className="space-y-5">
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Applications{student.applications?.length > 0 ? ` (${student.applications.length})` : ''}</p>
+                  {student.applications?.length > 0 ? (
+                    <div className="space-y-2">{[...student.applications].sort((a: any, b: any) => new Date(b.updatedDate || b.updatedAt || b.submittedDate || b.createdAt || 0).getTime() - new Date(a.updatedDate || a.updatedAt || a.submittedDate || a.createdAt || 0).getTime()).map((app: any, i: number) => (
+                      <div key={app._id || i} className="bg-gray-50 rounded-xl p-3 flex items-start gap-3 border border-gray-100">
+                        <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-900">{app.universityName}</p><p className="text-xs text-gray-500">{app.courseName}</p></div>
+                        <StatusBadge status={app.status} />
                       </div>
-                    </div>
-                  ))}</div>
-                ) : <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 text-center"><p className="text-sm text-gray-400">No documents uploaded</p></div>}
+                    ))}</div>
+                  ) : <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 text-center"><p className="text-sm text-gray-400">No applications yet</p></div>}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Documents{student.documents?.length > 0 ? ` (${student.documents.length})` : ''}</p>
+                  {student.documents?.length > 0 ? (
+                    <div className="space-y-1.5">{student.documents.map((doc: any, i: number) => (
+                      <div key={doc._id || i} className="bg-gray-50 rounded-lg px-3 py-2.5 flex items-center justify-between border border-gray-100">
+                        <div><p className="text-xs font-medium text-gray-900">{doc.name}</p><p className="text-xs text-gray-400">{doc.type}</p></div>
+                        <div className="flex items-center gap-2">
+                          {doc.url && <a href={doc.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md hover:bg-gray-200 font-medium"><ExternalLink className="w-3 h-3" />Open</a>}
+                          <StatusBadge status={doc.status} />
+                        </div>
+                      </div>
+                    ))}</div>
+                  ) : <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 text-center"><p className="text-sm text-gray-400">No documents uploaded</p></div>}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="p-5 space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: '', label: `All (${allCourses.length})`, active: 'bg-gray-200 text-gray-700 border-gray-300' },
+                  { key: 'eligible', label: `Eligible (${eligCounts.eligible})`, active: 'bg-green-100 text-green-700 border-green-300' },
+                  { key: 'partial', label: `Check Profile (${eligCounts.partial})`, active: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+                  { key: 'not_eligible', label: `Not Eligible (${eligCounts.not_eligible})`, active: 'bg-red-100 text-red-700 border-red-300' },
+                ].map(f => (
+                  <button key={f.key} type="button" onClick={() => setEligFilter(f.key)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${eligFilter === f.key ? f.active : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-2">
+                {visibleCourses.length === 0 ? (
+                  <div className="p-10 text-center">
+                    <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">{universities.length === 0 ? 'Loading courses…' : 'No courses match this filter.'}</p>
+                  </div>
+                ) : visibleCourses.map((course: any, i: number) => {
+                  const badge = ELIGIBILITY_BADGE[course._elig.status as keyof typeof ELIGIBILITY_BADGE];
+                  return (
+                    <div key={course._id || course.id || i} className="bg-gray-50 rounded-xl border border-gray-100 p-3.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 text-sm">{course.name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{course.uniName} · {course.level}</p>
+                        </div>
+                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border flex-shrink-0 ${badge.classes}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                          {badge.label}
+                        </span>
+                      </div>
+                      {course._elig.missing.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {course._elig.missing.map((m: string, mi: number) => (
+                            <p key={mi} className="text-xs text-red-600 bg-red-50 px-2.5 py-1 rounded-lg">✕ {m}</p>
+                          ))}
+                        </div>
+                      )}
+                      {course._elig.warnings.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {course._elig.warnings.map((w: string, wi: number) => (
+                            <p key={wi} className="text-xs text-yellow-700 bg-yellow-50 px-2.5 py-1 rounded-lg">⚠ {w}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex-shrink-0 flex gap-3">
           {onChat && <button type="button" onClick={onChat} className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md active:scale-[0.98] transition-all"><MessageSquare className="w-4 h-4" />Chat</button>}
