@@ -5,10 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 import ApplicationModal from '../../components/ApplicationModal';
 import { checkCourseEligibility, ELIGIBILITY_BADGE } from '../../utils/eligibility';
 
-const LEVELS = ["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'];
+const LEVELS = ['Bachelor', 'Master', 'PhD', 'Diploma', 'Certificate'];
 const LEVEL_COLORS: Record<string, string> = {
-  "Bachelor's": 'bg-blue-100 text-blue-700',
-  "Master's": 'bg-purple-100 text-purple-700',
+  'Bachelor': 'bg-blue-100 text-blue-700',
+  'Master': 'bg-purple-100 text-purple-700',
   'PhD': 'bg-red-100 text-red-700',
   'Diploma': 'bg-green-100 text-green-700',
   'Certificate': 'bg-yellow-100 text-yellow-700',

@@ -5,15 +5,15 @@ import {
 } from 'lucide-react';
 import { api } from '../../api';
 
-const LEVELS = ["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'];
+const LEVELS = ['Bachelor', 'Master', 'PhD', 'Diploma', 'Certificate'];
 const CURRENCIES = ['USD', 'GBP', 'EUR', 'AUD', 'CAD', 'SGD', 'NZD'];
 const INTAKES = ['January', 'February', 'March', 'April', 'May', 'June',
                  'July', 'August', 'September', 'October', 'November', 'December'];
 const PAYMENT_PLANS = ['Annual', 'Semester', 'Monthly'];
 
 const LEVEL_COLORS: Record<string, string> = {
-  "Bachelor's": 'bg-blue-100 text-blue-700',
-  "Master's": 'bg-purple-100 text-purple-700',
+  'Bachelor': 'bg-blue-100 text-blue-700',
+  'Master': 'bg-purple-100 text-purple-700',
   'PhD': 'bg-red-100 text-red-700',
   'Diploma': 'bg-green-100 text-green-700',
   'Certificate': 'bg-yellow-100 text-yellow-700',
@@ -25,7 +25,7 @@ function Spinner({ white = false }: { white?: boolean }) {
   return <span className={`w-4 h-4 border-2 ${white ? 'border-white/40 border-t-white' : 'border-gray-300 border-t-gray-600'} rounded-full animate-spin inline-block`} />;
 }
 
-const EDU_LEVELS = ['12th Grade', 'Diploma', 'Certificate', "Bachelor's", "Master's", 'PhD'];
+const EDU_LEVELS = ['12th Grade', 'Diploma', 'Certificate', 'Bachelor', 'Master', 'PhD'];
 const ENGLISH_TESTS = ['IELTS', 'TOEFL', 'PTE', 'Duolingo'];
 
 const DEFAULT_COURSE = {

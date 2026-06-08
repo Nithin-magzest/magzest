@@ -151,7 +151,7 @@ export default function StudentUniversities() {
           <select aria-label="Filter by level" value={level} onChange={e => setLevel(e.target.value)}
             className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
             <option value="">All Levels</option>
-            {["Bachelor's", "Master's", 'PhD', 'Diploma', 'Certificate'].map(l => <option key={l}>{l}</option>)}
+            {['Bachelor', 'Master', 'PhD', 'Diploma', 'Certificate'].map(l => <option key={l}>{l}</option>)}
           </select>
           {(query || country || level) && (
             <button type="button" onClick={() => { setQuery(''); setCountry(''); setLevel(''); }}
