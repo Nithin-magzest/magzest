@@ -112,6 +112,7 @@ const AcademicDetailSchema = new mongoose.Schema({
   customLevel: String,
   institution: String,
   board: String,
+  course: String,
   year: String,
   percentage: String,
   city: String,
