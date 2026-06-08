@@ -1,8 +1,71 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ChevronDown, ChevronUp, Clock, DollarSign, FileCheck2, CreditCard, Check, GraduationCap } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Clock, DollarSign, FileCheck2, CreditCard, Check, GraduationCap, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { api } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 import { CountryFlag } from '../../components/CountryFlag';
+
+interface EligCheck { req: string; status: 'pass' | 'fail' | 'missing'; detail: string; }
+interface EligResult { eligible: boolean; checks: EligCheck[]; }
+
+function checkCountryEligibility(student: any, country: any): EligResult {
+  const checks: EligCheck[] = [];
+
+  // Passport
+  const hasPassport = !!student?.passport?.number;
+  checks.push({
+    req: 'Valid Passport',
+    status: hasPassport ? 'pass' : 'fail',
+    detail: hasPassport ? `Passport on file (${student.passport.number})` : 'No passport on file — required for visa application',
+  });
+
+  if (hasPassport && student.passport?.expiryDate) {
+    const expiry = new Date(student.passport.expiryDate);
+    const monthsLeft = Math.floor((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30));
+    checks.push({
+      req: 'Passport Validity',
+      status: monthsLeft >= 6 ? 'pass' : 'fail',
+      detail: monthsLeft >= 6
+        ? `Valid until ${expiry.toLocaleDateString()} (${monthsLeft} months left)`
+        : `Expires in ${monthsLeft} month(s) — minimum 6 months validity required`,
+    });
+  }
+
+  // English proficiency
+  const hasEnglish = !!(student?.englishScore?.score && student?.englishScore?.type);
+  checks.push({
+    req: 'English Proficiency',
+    status: hasEnglish ? 'pass' : 'missing',
+    detail: hasEnglish
+      ? `${student.englishScore.type}: ${student.englishScore.score}`
+      : 'No English test score on file — required for most study destinations',
+  });
+
+  // Budget vs living costs
+  if (country.costs?.monthlyLivingMin) {
+    const annualMin = country.costs.monthlyLivingMin * 12;
+    const cur = country.costs.currency || '';
+    if (!student?.budget) {
+      checks.push({ req: 'Financial Capacity', status: 'missing', detail: 'Annual budget not set on profile' });
+    } else if (student.budget >= annualMin) {
+      checks.push({ req: 'Financial Capacity', status: 'pass', detail: `Budget ${cur} ${Number(student.budget).toLocaleString()}/yr covers min. living cost ${cur} ${annualMin.toLocaleString()}/yr` });
+    } else {
+      checks.push({ req: 'Financial Capacity', status: 'fail', detail: `Budget ${cur} ${Number(student.budget).toLocaleString()}/yr is below min. living cost ${cur} ${annualMin.toLocaleString()}/yr` });
+    }
+  } else if (!student?.budget) {
+    checks.push({ req: 'Financial Capacity', status: 'missing', detail: 'Annual budget not set on profile' });
+  }
+
+  // Education level
+  checks.push({
+    req: 'Education Level',
+    status: student?.educationLevel ? 'pass' : 'missing',
+    detail: student?.educationLevel || 'Education level not set on profile',
+  });
+
+  const eligible = checks.every(c => c.status !== 'fail');
+  return { eligible, checks };
+}
 
 function UniMiniCard({ uni }: { uni: any }) {
   return (
@@ -40,8 +103,10 @@ function UniMiniCard({ uni }: { uni: any }) {
   );
 }
 
-function CountryCard({ country, unis }: { country: any; unis: any[] }) {
+function CountryCard({ country, unis, student }: { country: any; unis: any[]; student: any }) {
   const [expanded, setExpanded] = useState(false);
+  const [showElig, setShowElig] = useState(false);
+  const elig = student ? checkCountryEligibility(student, country) : null;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
@@ -78,11 +143,21 @@ function CountryCard({ country, unis }: { country: any; unis: any[] }) {
             )}
           </div>
         </div>
-        <button type="button" onClick={() => setExpanded(v => !v)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all flex-shrink-0">
-          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          {expanded ? 'Hide' : 'Details'}
-        </button>
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          {elig && (
+            <button type="button" onClick={() => { setShowElig(v => !v); setExpanded(true); }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all
+                ${elig.eligible ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'}`}>
+              {elig.eligible ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+              {elig.eligible ? 'Eligible' : 'Not Eligible'}
+            </button>
+          )}
+          <button type="button" onClick={() => setExpanded(v => !v)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all">
+            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {expanded ? 'Hide' : 'Details'}
+          </button>
+        </div>
       </div>
 
       {expanded && (
@@ -170,6 +245,31 @@ function CountryCard({ country, unis }: { country: any; unis: any[] }) {
             </div>
           </div>
 
+          {/* Eligibility breakdown */}
+          {elig && showElig && (
+            <div className={`border-t px-5 py-4 ${elig.eligible ? 'bg-green-50/60 border-green-100' : 'bg-red-50/60 border-red-100'}`}>
+              <p className={`text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-1.5 ${elig.eligible ? 'text-green-700' : 'text-red-700'}`}>
+                {elig.eligible ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                Eligibility Check — {elig.eligible ? 'Profile Meets Requirements' : 'Requirements Not Met'}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {elig.checks.map((c, i) => (
+                  <div key={i} className="flex items-start gap-2 bg-white rounded-lg px-3 py-2 border border-gray-100 shadow-sm">
+                    {c.status === 'pass'
+                      ? <CheckCircle className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                      : c.status === 'missing'
+                      ? <AlertCircle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                      : <XCircle className="w-3.5 h-3.5 text-red-500 mt-0.5 flex-shrink-0" />}
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-gray-700">{c.req}</p>
+                      <p className={`text-xs ${c.status === 'pass' ? 'text-green-600' : c.status === 'missing' ? 'text-amber-600' : 'text-red-600'}`}>{c.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Universities in this country */}
           {unis.length > 0 && (
             <div className="border-t border-gray-100 bg-indigo-50/40 px-5 py-4">
@@ -194,18 +294,22 @@ function CountryCard({ country, unis }: { country: any; unis: any[] }) {
 }
 
 export default function StudentCountries() {
+  const { user } = useAuth();
   const [countries, setCountries] = useState<any[]>([]);
   const [universities, setUniversities] = useState<any[]>([]);
+  const [studentProfile, setStudentProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
 
   useEffect(() => {
-    Promise.all([api.countries.list(), api.universities.list()])
-      .then(([c, u]) => { setCountries(c); setUniversities(u); })
+    const fetches: Promise<any>[] = [api.countries.list(), api.universities.list()];
+    if (user?.role === 'student') fetches.push(api.students.me());
+    Promise.all(fetches)
+      .then(([c, u, s]) => { setCountries(c); setUniversities(u); if (s) setStudentProfile(s); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [user?.role]);
 
   const regions = [...new Set(countries.map((c: any) => c.region).filter(Boolean))].sort() as string[];
 
@@ -252,6 +356,7 @@ export default function StudentCountries() {
                 key={c.id || c._id || c.code}
                 country={c}
                 unis={universities.filter(u => u.country?.toLowerCase() === c.name?.toLowerCase())}
+                student={studentProfile}
               />
             ))}
             {filtered.length === 0 && (
