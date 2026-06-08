@@ -230,7 +230,7 @@ export default function AppTeamLearning() {
   const rest     = visible.filter(r => !r.featured);
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-6 text-white">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">

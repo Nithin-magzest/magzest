@@ -91,7 +91,7 @@ export default function AppTeamDashboard() {
   const maxCount = Math.max(...STATUSES.map(s => statusCounts[s.key] || 0), 1);
 
   return (
-    <div className="space-y-6 max-w-7xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-6">
         <p className="text-gray-900 text-sm mb-1">Application Team Portal</p>
