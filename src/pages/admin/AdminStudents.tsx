@@ -433,18 +433,41 @@ function AssignCounselorModal({ student, counselors, onClose, onSaved }: {
 }
 
 // ── New application modal ────────────────────────────────────────────────────
-function NewApplicationModal({ student, onClose, onCreated }: {
-  student: any; onClose: () => void; onCreated: () => void;
+function NewApplicationModal({ allStudents, initialStudent, onClose, onCreated }: {
+  allStudents: any[]; initialStudent?: any; onClose: () => void; onCreated: () => void;
 }) {
   const [universities, setUniversities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
+  const [uniSearch, setUniSearch] = useState('');
   const [expandedUni, setExpandedUni] = useState<string | null>(null);
   const [applying, setApplying] = useState<string | null>(null);
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [applyError, setApplyError] = useState('');
   const [applySuccess, setApplySuccess] = useState('');
+
+  // Student search & selection
+  const [studentQuery, setStudentQuery] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState<any>(initialStudent || null);
+  const [studentProfile, setStudentProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const matchedStudents = studentQuery.trim().length >= 1
+    ? allStudents.filter(s =>
+        s.name?.toLowerCase().includes(studentQuery.toLowerCase()) ||
+        s.email?.toLowerCase().includes(studentQuery.toLowerCase())
+      ).slice(0, 8)
+    : [];
+
+  // Fetch full student profile whenever selection changes (ensures all eligibility fields are present)
+  useEffect(() => {
+    if (!selectedStudent) { setStudentProfile(null); return; }
+    setLoadingProfile(true);
+    api.students.get(normalId(selectedStudent))
+      .then(p => { setStudentProfile(p); setLoadingProfile(false); })
+      .catch(() => { setStudentProfile(selectedStudent); setLoadingProfile(false); });
+  }, [selectedStudent]);
 
   useEffect(() => {
     api.admin.universities()
@@ -453,14 +476,15 @@ function NewApplicationModal({ student, onClose, onCreated }: {
   }, []);
 
   const filteredUnis = universities.filter(u =>
-    !search || u.name?.toLowerCase().includes(search.toLowerCase()) || u.country?.toLowerCase().includes(search.toLowerCase())
+    !uniSearch || u.name?.toLowerCase().includes(uniSearch.toLowerCase()) || u.country?.toLowerCase().includes(uniSearch.toLowerCase())
   );
 
   const handleApply = async (uni: any, course: any) => {
+    if (!selectedStudent) return;
     const key = `${normalId(uni)}-${normalId(course)}`;
     setApplying(key); setApplyError(''); setApplySuccess('');
     try {
-      await api.admin.createApplication({ studentId: normalId(student), universityName: uni.name, courseName: course.name, intake: course.intake?.[0] || undefined, universityId: normalId(uni), courseId: normalId(course) });
+      await api.admin.createApplication({ studentId: normalId(selectedStudent), universityName: uni.name, courseName: course.name, intake: course.intake?.[0] || undefined, universityId: normalId(uni), courseId: normalId(course) });
       setAppliedIds(prev => new Set([...prev, key])); setApplySuccess(`Applied to ${course.name} at ${uni.name}`); onCreated();
     } catch (e: any) { setApplyError(e.message || 'Failed.'); }
     setApplying(null);
@@ -470,27 +494,107 @@ function NewApplicationModal({ student, onClose, onCreated }: {
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[70] flex items-center justify-center p-3"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-white rounded-2xl w-full max-w-2xl h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+
+        {/* Header */}
         <div className="bg-gradient-to-r from-sky-500 to-cyan-600 px-6 py-5 flex-shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sky-200 text-xs font-medium uppercase tracking-wide">New Application</p>
-              <h2 className="text-xl font-bold text-white mt-0.5">Select University & Course</h2>
-              <p className="text-sky-100 text-sm mt-1">for <span className="font-semibold">{student.name}</span></p>
+              <h2 className="text-xl font-bold text-white mt-0.5">Select Student & Course</h2>
+              {selectedStudent && <p className="text-sky-100 text-sm mt-1">Eligibility checked against <span className="font-semibold">{selectedStudent.name}</span>'s profile</p>}
             </div>
             <button type="button" onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:bg-white/20 hover:text-white transition-all flex-shrink-0"><X className="w-5 h-5" /></button>
           </div>
         </div>
+
+        {/* Student selector */}
+        <div className="px-5 py-3 border-b border-gray-100 flex-shrink-0 bg-gray-50/60">
+          {selectedStudent ? (
+            <div className="flex items-center gap-3">
+              <div className="flex-1 flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                  {selectedStudent.name?.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{selectedStudent.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{selectedStudent.email}</p>
+                </div>
+                {loadingProfile
+                  ? <span className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin flex-shrink-0" />
+                  : studentProfile && (
+                    <span className="text-xs text-blue-600 font-medium flex-shrink-0 hidden sm:block">
+                      {[studentProfile.educationLevel, studentProfile.gpa ? `GPA ${studentProfile.gpa}` : null, studentProfile.englishScore?.type ? `${studentProfile.englishScore.type} ${studentProfile.englishScore.score}` : null].filter(Boolean).join(' · ')}
+                    </span>
+                  )
+                }
+              </div>
+              <button type="button"
+                onClick={() => { setSelectedStudent(null); setStudentProfile(null); setStudentQuery(''); setAppliedIds(new Set()); }}
+                className="px-3 py-2 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex-shrink-0">
+                Change
+              </button>
+            </div>
+          ) : (
+            <div className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  value={studentQuery}
+                  onChange={e => { setStudentQuery(e.target.value); setShowDropdown(true); }}
+                  onFocus={() => setShowDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                  placeholder="Type student name or email to search…"
+                  className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  autoFocus
+                />
+              </div>
+              {showDropdown && matchedStudents.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden max-h-52 overflow-y-auto">
+                  {matchedStudents.map(s => (
+                    <button key={normalId(s)} type="button"
+                      onMouseDown={() => { setSelectedStudent(s); setStudentQuery(s.name); setShowDropdown(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors text-left">
+                      <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                        {s.name?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{s.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{s.email}</p>
+                      </div>
+                      {s.educationLevel && <span className="text-xs text-gray-400 flex-shrink-0 hidden sm:block">{s.educationLevel}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showDropdown && studentQuery.trim().length >= 1 && matchedStudents.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 px-4 py-3">
+                  <p className="text-sm text-gray-400">No students found for "{studentQuery}"</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* University search */}
         <div className="px-5 py-3 border-b border-gray-100 flex-shrink-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search universities…" className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            <input value={uniSearch} onChange={e => setUniSearch(e.target.value)} placeholder="Search universities…" className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
           </div>
         </div>
+
         {applySuccess && <div className="mx-5 mt-3 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 flex-shrink-0"><CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" /><p className="text-sm text-green-700 font-medium">{applySuccess}</p></div>}
         {applyError && <div className="mx-5 mt-3 flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex-shrink-0"><AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" /><p className="text-sm text-red-700">{applyError}</p></div>}
+
         <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-3">
-          {loading ? (
-            <div className="flex items-center justify-center gap-3 py-16 text-gray-400"><span className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" /><span className="text-sm">Loading…</span></div>
+          {!selectedStudent ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <GraduationCap className="w-10 h-10 mb-3 text-gray-300" />
+              <p className="text-sm font-medium text-gray-500">Search for a student above to get started</p>
+              <p className="text-xs mt-1">Eligibility will be checked against their profile automatically</p>
+            </div>
+          ) : loading ? (
+            <div className="flex items-center justify-center gap-3 py-16 text-gray-400"><span className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" /><span className="text-sm">Loading universities…</span></div>
           ) : error ? (
             <p className="text-sm text-red-600">{error}</p>
           ) : filteredUnis.map(uni => {
@@ -512,7 +616,9 @@ function NewApplicationModal({ student, onClose, onCreated }: {
                   {courses.map((course: any) => {
                     const cid = normalId(course); const key = `${uid}-${cid}`;
                     const isApplied = appliedIds.has(key); const isApplying = applying === key;
-                    const elig = checkCourseEligibility(student, course);
+                    const elig = studentProfile
+                      ? checkCourseEligibility(studentProfile, course)
+                      : { status: 'unknown' as const, missing: [] as string[], warnings: [] as string[] };
                     const badge = ELIGIBILITY_BADGE[elig.status];
                     const isNotEligible = elig.status === 'not_eligible';
                     return (
@@ -523,9 +629,12 @@ function NewApplicationModal({ student, onClose, onCreated }: {
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                               {course.level && <span className="text-xs text-gray-500">{course.level}</span>}
                               {course.tuitionFee != null && <span className="flex items-center gap-0.5 text-xs text-green-700 font-medium"><DollarSign className="w-3 h-3" />{Number(course.tuitionFee).toLocaleString()}</span>}
-                              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${badge.classes}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />{badge.label}
-                              </span>
+                              {loadingProfile
+                                ? <span className="text-xs text-gray-400 italic">checking…</span>
+                                : <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${badge.classes}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />{badge.label}
+                                  </span>
+                              }
                             </div>
                           </div>
                           {isNotEligible ? (
@@ -533,20 +642,20 @@ function NewApplicationModal({ student, onClose, onCreated }: {
                               <X className="w-3.5 h-3.5" />Not Eligible
                             </span>
                           ) : (
-                            <button type="button" disabled={isApplied || isApplying} onClick={() => handleApply(uni, course)}
+                            <button type="button" disabled={isApplied || isApplying || loadingProfile} onClick={() => handleApply(uni, course)}
                               className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all active:scale-95 ${isApplied ? 'bg-green-50 text-green-700 border-green-200 cursor-default' : 'bg-[#0d1b4b] text-white border-[#0d1b4b] hover:bg-[#152258] shadow-sm disabled:opacity-60'}`}>
                               {isApplying ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Applying…</> : isApplied ? <><Check className="w-3.5 h-3.5" />Applied</> : <><Plus className="w-3.5 h-3.5" />Apply</>}
                             </button>
                           )}
                         </div>
-                        {elig.missing.length > 0 && (
+                        {!loadingProfile && elig.missing.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {elig.missing.map((m: string, mi: number) => (
                               <span key={mi} className="text-xs text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">✕ {m}</span>
                             ))}
                           </div>
                         )}
-                        {elig.warnings.length > 0 && !isNotEligible && (
+                        {!loadingProfile && elig.warnings.length > 0 && !isNotEligible && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {elig.warnings.map((w: string, wi: number) => (
                               <span key={wi} className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 px-2 py-0.5 rounded-full">⚠ {w}</span>
@@ -590,6 +699,7 @@ export default function AdminStudents() {
   const [loadError, setLoadError] = useState('');
   const [showNewStudent, setShowNewStudent] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [showNewApp, setShowNewApp] = useState(false);
   const [newAppStudent, setNewAppStudent] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -723,9 +833,9 @@ export default function AdminStudents() {
       {selectedStudent && (
         <StudentDetailModal student={selectedStudent} onClose={() => setSelectedStudent(null)}
           onChat={() => { navigate('/admin/chat', { state: { openChatWith: { _id: normalId(selectedStudent), name: selectedStudent.name } } }); setSelectedStudent(null); }}
-          onNewApplication={() => { setNewAppStudent(selectedStudent); setSelectedStudent(null); }} />
+          onNewApplication={() => { setNewAppStudent(selectedStudent); setSelectedStudent(null); setShowNewApp(true); }} />
       )}
-      {newAppStudent && <NewApplicationModal student={newAppStudent} onClose={() => setNewAppStudent(null)} onCreated={() => loadData()} />}
+      {showNewApp && <NewApplicationModal allStudents={students} initialStudent={newAppStudent || undefined} onClose={() => { setShowNewApp(false); setNewAppStudent(null); }} onCreated={() => loadData()} />}
 
       {/* Page wrapper */}
       <div className="space-y-6">
@@ -750,6 +860,10 @@ export default function AdminStudents() {
               <button type="button" onClick={loadData} disabled={loading}
                 className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors disabled:opacity-50">
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />Refresh
+              </button>
+              <button type="button" onClick={() => { setNewAppStudent(null); setShowNewApp(true); }}
+                className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors">
+                <Plus className="w-4 h-4" />New Application
               </button>
               <button type="button" onClick={() => setShowNewStudent(true)}
                 className="flex items-center gap-2 px-3 py-2 bg-white text-purple-700 rounded-xl text-sm font-bold hover:bg-purple-50 transition-colors shadow-sm">
