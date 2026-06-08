@@ -1,6 +1,9 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const University = require('../models/University');
 const authMiddleware = require('../middleware/auth');
+const { checkEligibility } = require('../lib/eligibilityChecker');
 
 const router = express.Router();
 
@@ -101,6 +104,66 @@ router.put('/:appId', authMiddleware, async (req, res) => {
     res.json(app.toJSON());
   } catch {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Check eligibility for all courses in a university (bulk)
+router.post('/check-eligibility-bulk', authMiddleware, async (req, res) => {
+  const { universityId, studentId } = req.body;
+  if (!universityId) return res.status(400).json({ message: 'universityId required' });
+  try {
+    let student;
+    if (req.user.role === 'student') {
+      student = await User.findById(req.user.id).select('-password');
+    } else if (studentId) {
+      student = await User.findById(studentId).select('-password');
+    } else {
+      return res.status(400).json({ message: 'studentId required for non-student users' });
+    }
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+
+    const query = { $or: [{ id: universityId }] };
+    if (mongoose.isValidObjectId(universityId)) query.$or.push({ _id: universityId });
+    const uni = await University.findOne(query);
+    if (!uni) return res.status(404).json({ message: 'University not found' });
+
+    const results = {};
+    for (const course of uni.courses) {
+      const key = course.id || course._id?.toString();
+      results[key] = checkEligibility(student, course.requirements || []);
+    }
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Server error' });
+  }
+});
+
+// Check eligibility for a single course
+router.post('/check-eligibility', authMiddleware, async (req, res) => {
+  const { universityId, courseId, studentId } = req.body;
+  if (!universityId || !courseId) return res.status(400).json({ message: 'universityId and courseId required' });
+  try {
+    let student;
+    if (req.user.role === 'student') {
+      student = await User.findById(req.user.id).select('-password');
+    } else if (studentId) {
+      student = await User.findById(studentId).select('-password');
+    } else {
+      return res.status(400).json({ message: 'studentId required for non-student users' });
+    }
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+
+    const query = { $or: [{ id: universityId }] };
+    if (mongoose.isValidObjectId(universityId)) query.$or.push({ _id: universityId });
+    const uni = await University.findOne(query);
+    if (!uni) return res.status(404).json({ message: 'University not found' });
+
+    const course = uni.courses.find(c => c.id === courseId || c._id?.toString() === courseId);
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+
+    res.json(checkEligibility(student, course.requirements || []));
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Server error' });
   }
 });
 

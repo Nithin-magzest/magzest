@@ -101,6 +101,18 @@ export interface Application {
   intake: string;
 }
 
+export interface EligibilityCheck {
+  req: string;
+  status: 'pass' | 'fail' | 'missing' | 'info';
+  detail: string;
+}
+
+export interface EligibilityResult {
+  eligible: boolean;
+  checks: EligibilityCheck[];
+  summary: string;
+}
+
 export interface Document {
   id: string;
   name: string;

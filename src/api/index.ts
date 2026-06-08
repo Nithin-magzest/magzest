@@ -116,6 +116,16 @@ export const api = {
     addComment: (appId: string, text: string) => req<any>(`/applications/${appId}/comments`, {
       method: 'POST', headers: authHeaders(), body: JSON.stringify({ text }),
     }),
+    checkEligibility: (universityId: string, courseId: string, studentId?: string) =>
+      req<any>('/applications/check-eligibility', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ universityId, courseId, studentId }),
+      }),
+    checkEligibilityBulk: (universityId: string, studentId?: string) =>
+      req<Record<string, any>>('/applications/check-eligibility-bulk', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ universityId, studentId }),
+      }),
   },
 
   chat: {

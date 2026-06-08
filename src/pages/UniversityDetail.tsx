@@ -1,9 +1,56 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, ExternalLink, TrendingUp, Share2, Plus, X, Search } from 'lucide-react';
+import { MapPin, Star, Globe, Users, BookOpen, Award, Calendar, DollarSign, ArrowLeft, CheckCircle, XCircle, AlertCircle, ExternalLink, TrendingUp, Share2, Plus, X, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import ApplicationModal from '../components/ApplicationModal';
+import type { EligibilityResult } from '../types';
+
+function EligibilityBadge({ result, loading }: { result: EligibilityResult | null; loading: boolean }) {
+  const [open, setOpen] = useState(false);
+  if (loading) return <span className="inline-flex items-center gap-1 text-xs text-gray-400 animate-pulse">Checking eligibility…</span>;
+  if (!result) return null;
+
+  const failCount = result.checks.filter(c => c.status === 'fail' || c.status === 'missing').length;
+  const passCount = result.checks.filter(c => c.status === 'pass').length;
+
+  return (
+    <div className="mt-3">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+          result.eligible
+            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+            : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+        }`}
+      >
+        {result.eligible
+          ? <><CheckCircle className="w-3.5 h-3.5" /> Eligible</>
+          : <><XCircle className="w-3.5 h-3.5" /> Not Eligible</>}
+        <span className="text-xs font-normal opacity-70">— {result.summary}</span>
+        {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+
+      {open && result.checks.length > 0 && (
+        <div className="mt-2 border border-gray-100 rounded-xl overflow-hidden text-xs">
+          {result.checks.map((c, i) => (
+            <div key={i} className={`flex items-start gap-2 px-3 py-2 ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+              {c.status === 'pass'    && <CheckCircle  className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />}
+              {c.status === 'fail'    && <XCircle      className="w-3.5 h-3.5 text-red-500   mt-0.5 flex-shrink-0" />}
+              {c.status === 'missing' && <XCircle      className="w-3.5 h-3.5 text-red-400   mt-0.5 flex-shrink-0" />}
+              {c.status === 'info'    && <AlertCircle  className="w-3.5 h-3.5 text-amber-400  mt-0.5 flex-shrink-0" />}
+              <div>
+                <span className="font-medium text-gray-700">{c.req}</span>
+                <span className="text-gray-400 ml-1">— {c.detail}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function useWikipediaPhoto(name: string) {
   const [photo, setPhoto] = useState<string | null>(null);
@@ -33,6 +80,8 @@ function CounselorApplyModal({ course, uni, students, onClose, onApplied }: {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [eligibility, setEligibility] = useState<EligibilityResult | null>(null);
+  const [eligLoading, setEligLoading] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
 
   const filteredStudents = students.filter(s =>
@@ -48,6 +97,18 @@ function CounselorApplyModal({ course, uni, students, onClose, onApplied }: {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [studentDropOpen]);
+
+  useEffect(() => {
+    if (!studentId) { setEligibility(null); return; }
+    const uniId = (uni._id || uni.id || '').toString();
+    const courseId = (course._id || course.id || '').toString();
+    if (!uniId || !courseId) return;
+    setEligLoading(true);
+    api.applications.checkEligibility(uniId, courseId, studentId)
+      .then(r => setEligibility(r))
+      .catch(() => setEligibility(null))
+      .finally(() => setEligLoading(false));
+  }, [studentId, uni, course]);
 
   const handleApply = async () => {
     if (!studentId) { setError('Please select a student.'); return; }
@@ -124,6 +185,39 @@ function CounselorApplyModal({ course, uni, students, onClose, onApplied }: {
               </div>
             )}
           </div>
+          {/* Eligibility for selected student */}
+          {studentId && (
+            <div>
+              {eligLoading
+                ? <p className="text-xs text-gray-400 animate-pulse">Checking eligibility…</p>
+                : eligibility && (
+                  <div className={`rounded-xl p-3 border text-sm ${eligibility.eligible ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className={`flex items-center gap-1.5 font-semibold mb-2 ${eligibility.eligible ? 'text-green-700' : 'text-red-700'}`}>
+                      {eligibility.eligible ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                      {eligibility.eligible ? 'Student is Eligible' : 'Student is Not Eligible'}
+                      <span className="font-normal text-xs opacity-70 ml-1">— {eligibility.summary}</span>
+                    </div>
+                    {eligibility.checks.length > 0 && (
+                      <div className="space-y-1">
+                        {eligibility.checks.map((c, i) => (
+                          <div key={i} className="flex items-start gap-1.5 text-xs">
+                            {c.status === 'pass'    && <CheckCircle  className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />}
+                            {c.status === 'fail'    && <XCircle      className="w-3 h-3 text-red-500   mt-0.5 flex-shrink-0" />}
+                            {c.status === 'missing' && <XCircle      className="w-3 h-3 text-red-400   mt-0.5 flex-shrink-0" />}
+                            {c.status === 'info'    && <AlertCircle  className="w-3 h-3 text-amber-400  mt-0.5 flex-shrink-0" />}
+                            <span className={c.status === 'fail' || c.status === 'missing' ? 'text-red-700' : 'text-gray-600'}>
+                              <strong>{c.req}</strong> — {c.detail}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+            </div>
+          )}
+
           {course.intake?.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Intake</label>
@@ -185,6 +279,8 @@ export default function UniversityDetail() {
   const [applyModal, setApplyModal] = useState<any>(null);
   const [counselorApplyModal, setCounselorApplyModal] = useState<any>(null);
   const [counselorStudents, setCounselorStudents] = useState<any[]>([]);
+  const [eligibilityMap, setEligibilityMap] = useState<Record<string, EligibilityResult>>({});
+  const [eligLoading, setEligLoading] = useState(false);
 
   const wikiPhoto = useWikipediaPhoto(uni?.name || '');
 
@@ -202,6 +298,18 @@ export default function UniversityDetail() {
       api.students.list().then(setCounselorStudents).catch(() => {});
     }
   }, [user?.role]);
+
+  // Load eligibility for all courses when student views the page
+  useEffect(() => {
+    if (!uni || user?.role !== 'student') return;
+    const uniId = (uni._id || uni.id || '').toString();
+    if (!uniId) return;
+    setEligLoading(true);
+    api.applications.checkEligibilityBulk(uniId)
+      .then(setEligibilityMap)
+      .catch(() => {})
+      .finally(() => setEligLoading(false));
+  }, [uni, user?.role]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -344,6 +452,13 @@ export default function UniversityDetail() {
                         </span>
                       ))}
                     </div>
+                    {/* Eligibility badge for students */}
+                    {isAuthenticated && user?.role === 'student' && (
+                      <EligibilityBadge
+                        result={eligibilityMap[course.id || course._id?.toString()] ?? null}
+                        loading={eligLoading && !eligibilityMap[course.id || course._id?.toString()]}
+                      />
+                    )}
                     {isAuthenticated && user?.role === 'student' && (
                       hasApplied(course) ? (
                         <span className="mt-4 inline-flex items-center gap-1 text-sm text-green-700 font-medium">
