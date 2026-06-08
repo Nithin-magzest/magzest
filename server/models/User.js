@@ -104,7 +104,10 @@ const UserSchema = new mongoose.Schema({
   // Student fields
   phone: String,
   nationality: String,
+  dateOfBirth: String,
+  gender: String,
   maritalStatus: String,
+  placeOfBirth: String,
   passport: {
     number: String,
     issueDate: String,
