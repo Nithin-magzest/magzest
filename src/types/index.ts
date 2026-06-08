@@ -32,7 +32,7 @@ export interface Student extends User {
   joinedDate: string;
   status: 'active' | 'inactive' | 'enrolled';
   academicDetails?: { level: string; customLevel?: string; institution: string; board: string; year: string; percentage: string; city: string; comment?: string; status?: string; yearOfStudying?: string; yearOfPassing?: string; backlogs?: string; attempts?: string; }[];
-  experienceDetails?: { company: string; role: string; type: string; from: string; to: string; current: boolean; noticePeriod?: string; description?: string; }[];
+  experienceDetails?: { company: string; role: string; employmentType: string; from: string; to: string; current: boolean; noticePeriod?: string; description?: string; }[];
 }
 
 export interface Counselor extends User {

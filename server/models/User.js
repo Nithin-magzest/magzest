@@ -87,6 +87,33 @@ const ApplicationSchema = new mongoose.Schema({
   comments: [CommentSchema],
 });
 
+const ExperienceSchema = new mongoose.Schema({
+  company: String,
+  role: String,
+  employmentType: String,
+  from: String,
+  to: String,
+  current: Boolean,
+  noticePeriod: String,
+  description: String,
+}, { _id: false });
+
+const AcademicDetailSchema = new mongoose.Schema({
+  level: String,
+  customLevel: String,
+  institution: String,
+  board: String,
+  year: String,
+  percentage: String,
+  city: String,
+  comment: String,
+  status: String,
+  yearOfStudying: String,
+  yearOfPassing: String,
+  backlogs: String,
+  attempts: String,
+}, { _id: false });
+
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   firstName: String,
@@ -120,31 +147,8 @@ const UserSchema = new mongoose.Schema({
   preferredCountries: [String],
   budget: Number,
   interestedCourses: [String],
-  academicDetails: [{
-    level: String,
-    customLevel: String,
-    institution: String,
-    board: String,
-    year: String,
-    percentage: String,
-    city: String,
-    comment: String,
-    status: String,
-    yearOfStudying: String,
-    yearOfPassing: String,
-    backlogs: String,
-    attempts: String,
-  }],
-  experienceDetails: [{
-    company: String,
-    role: String,
-    type: String,
-    from: String,
-    to: String,
-    current: Boolean,
-    noticePeriod: String,
-    description: String,
-  }],
+  academicDetails: [AcademicDetailSchema],
+  experienceDetails: [ExperienceSchema],
   applications: [ApplicationSchema],
   documents: [DocumentSchema],
   counselorId: String,

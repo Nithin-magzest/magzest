@@ -30,12 +30,18 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 // Update current student profile
 router.put('/me', authMiddleware, async (req, res) => {
-  const { password, role, _id, ...updates } = req.body;
+  const { password, role, _id, __v, ...updates } = req.body;
   try {
-    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: updates },
+      { new: true, runValidators: false }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user.toJSON());
-  } catch {
-    res.status(500).json({ message: 'Server error' });
+  } catch (err) {
+    console.error('[PUT /students/me]', err);
+    res.status(500).json({ message: err.message || 'Server error' });
   }
 });
 
