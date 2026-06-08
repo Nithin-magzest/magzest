@@ -46,6 +46,7 @@ const StudentSchema = new mongoose.Schema({
   dateOfBirth: String,
   gender: String,
   maritalStatus: String,
+  placeOfBirth: String,
   passport: PassportSchema,
   address: AddressSchema,
   educationLevel: String,

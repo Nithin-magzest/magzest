@@ -614,8 +614,8 @@ const MARQUEE_COURSES: {
   {
     name: "MSc Supply Chain Management",
     emoji: "🚚",
-    color: "text-teal-700",
-    bg: "bg-teal-50 border-teal-100",
+    color: "text-blue-500",
+    bg: "bg-blue-50 border-blue-100",
   },
 ];
 
@@ -2065,28 +2065,27 @@ export default function Home() {
   ).slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-sky-50">
+    <div className="min-h-screen bg-white">
       {/* ── HERO ── */}
-      <section className="relative bg-gradient-to-br from-[#0d1b4b] via-[#1a2d6e] to-[#060e26] pt-16 pb-20 overflow-hidden">
-        {/* Decorative glows */}
-        <div className="absolute -top-40 -right-32 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-400/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <section className="relative bg-gradient-to-br from-[#0d1b4b] via-[#0f2258] to-[#1a3a8a] pt-16 pb-24 overflow-hidden">
+        {/* Brand glow: navy + blue-500 */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-10 w-80 h-80 bg-blue-400/15 rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="animate-fade-in-up animate-float-y inline-flex items-center gap-2 bg-white/10 text-sky-100 border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6 backdrop-blur-sm">
-            ⭐ Trusted by students across India & beyond — by GradZest
+          <div className="animate-fade-in-up inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+            <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse inline-block flex-shrink-0" />
+            🎓 1,000+ Students Placed in Top Universities
           </div>
           <div className="animate-fade-in-up delay-80">
-            <h1 className="text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-5">
-              Find Your Perfect <span className="text-sky-300">Program</span>
-              <br className="hidden sm:block" />
-              to Study Abroad
+            <h1 className="text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-5 tracking-tight">
+              Turn Your Dream of<br className="hidden sm:block" />
+              <span className="text-blue-400">Studying Abroad</span> into Reality
             </h1>
           </div>
           <div className="animate-fade-in-up delay-160">
-            <p className="text-xl text-sky-100 mb-7 max-w-2xl mx-auto">
-              Search 200,000+ courses at top universities across 40+ countries.
-              Free counseling included.
+            <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Get matched with the right university, the right course, and the right counselor.
+              Free expert guidance from application to visa — every step of the way.
             </p>
           </div>
 
@@ -2095,23 +2094,23 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => open("register")}
-                className="bg-white text-[#0d1b4b] font-semibold px-7 py-3 rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-lg shadow-black/20 flex items-center gap-2"
+                className="bg-blue-500 hover:bg-blue-400 text-white font-bold px-8 py-3.5 rounded-xl active:scale-95 transition-all shadow-lg shadow-blue-500/40 flex items-center gap-2"
               >
-                <UserPlus className="w-4 h-4" /> Register Free{" "}
+                <UserPlus className="w-4 h-4" /> Start Free Today
                 <ChevronRight className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={() => open("login")}
-                className="border-2 border-white/40 text-white font-semibold px-7 py-3 rounded-xl hover:bg-white/10 active:scale-95 transition-all flex items-center gap-2 backdrop-blur-sm"
+                className="bg-white/10 border border-white/30 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/20 active:scale-95 transition-all flex items-center gap-2"
               >
-                <LogIn className="w-4 h-4" /> Log In
+                <LogIn className="w-4 h-4" /> Sign In
               </button>
             </div>
           )}
 
           {/* Search box */}
-          <div className="animate-fade-in-up delay-320 bg-white rounded-2xl shadow-lg border border-gray-100 p-3 max-w-4xl mx-auto">
+          <div className="animate-fade-in-up delay-320 bg-white rounded-2xl shadow-xl p-3 max-w-4xl mx-auto">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 relative">
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -2175,16 +2174,16 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleSearch}
-                className="bg-[#0d1b4b] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#152258] active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                className="bg-[#0d1b4b] hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
-                <Search className="w-4 h-4" /> Search
+                <Search className="w-4 h-4" /> Search Programs
               </button>
             </div>
           </div>
 
           {/* Popular tags */}
           <div className="animate-fade-in-up delay-400 flex flex-wrap justify-center gap-2 mt-5 items-center">
-            <span className="text-sm text-sky-300">Popular:</span>
+            <span className="text-sm text-blue-100">Popular:</span>
             {[
               { label: "Canada", param: "country=Canada", icon: "🇨🇦" },
               { label: "Germany", param: "country=Germany", icon: "🇩🇪" },
@@ -2200,7 +2199,7 @@ export default function Home() {
                 key={tag.label}
                 type="button"
                 onClick={() => navigate(`/search?${tag.param}`)}
-                className="text-sm text-sky-100 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 active:scale-95 px-3 py-1 rounded-full transition-all flex items-center gap-1 backdrop-blur-sm"
+                className="text-sm text-white hover:text-white bg-white/15 hover:bg-white/25 border border-white/20 active:scale-95 px-3 py-1 rounded-full transition-all flex items-center gap-1"
               >
                 <span>{tag.icon}</span>
                 {tag.label}
@@ -2213,18 +2212,19 @@ export default function Home() {
       {/* ── STATS ── */}
       <section
         ref={statsRef}
-        className="bg-sky-50 border-y border-sky-100 py-10"
+        className="bg-white py-12 border-b border-gray-100"
       >
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: "96%", label: "Visa Success Rate" },
-              { value: "1,000+", label: "Students Placed Abroad" },
-              { value: "20+", label: "Partner Countries" },
-              { value: "10+", label: "Expert Counselors" },
+              { value: "96%", label: "Visa Success Rate", icon: "✈️", color: "text-[#0d1b4b]" },
+              { value: "1,000+", label: "Students Placed", icon: "🎓", color: "text-[#0d1b4b]" },
+              { value: "20+", label: "Partner Countries", icon: "🌍", color: "text-[#0d1b4b]" },
+              { value: "10+", label: "Expert Counselors", icon: "👩‍💼", color: "text-[#0d1b4b]" },
             ].map((s, i) => (
               <FadeIn key={s.label} delayClass={STAGGER[i * 100]}>
-                <div className="text-3xl font-extrabold text-[#0d1b4b]">
+                <div className="text-2xl mb-1">{s.icon}</div>
+                <div className={`text-3xl font-extrabold ${s.color}`}>
                   <StatCounter raw={s.value} active={statsActive} />
                 </div>
                 <div className="text-sm text-gray-500 mt-1">{s.label}</div>
@@ -2235,11 +2235,11 @@ export default function Home() {
       </section>
 
       {/* ── SCROLLING TICKER ── */}
-      <section className="py-10 bg-white border-y border-gray-100 overflow-hidden">
-        <div className="text-center mb-7">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-            Explore our network of countries, universities &amp; courses
-          </p>
+      <section className="py-12 bg-white border-y border-gray-100 overflow-hidden">
+        <div className="text-center mb-8">
+          <span className="inline-block bg-blue-50 text-blue-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 uppercase tracking-widest">Our Global Network</span>
+          <h3 className="text-2xl font-bold text-gray-900">Explore Destinations, Universities &amp; Courses</h3>
+          <p className="text-gray-400 text-sm mt-2">Click any card to see visa info, rankings, and more</p>
         </div>
 
         {/* Row 1 — Countries scrolling left */}
@@ -2346,32 +2346,27 @@ export default function Home() {
       </section>
 
       {/* ── ABOUT US ── */}
-      <section ref={aboutRef} className="py-16 bg-[#0d1b4b] text-white">
+      <section ref={aboutRef} className="py-16 bg-[#eef2ff]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <FadeIn direction="left">
-              <span className="inline-block bg-white/20 text-white text-sm font-medium px-3 py-1 rounded-full mb-4">
+              <span className="inline-block bg-blue-100 text-blue-500 text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
                 About GradZest
               </span>
-              <h2 className="text-3xl font-bold mb-4">
-                Your Trusted Partner for Studying Abroad
+              <h2 className="text-3xl font-extrabold text-gray-900 mb-4 leading-tight">
+                We Make Studying Abroad<br/>
+                <span className="text-[#0d1b4b]">Simple, <span className="text-blue-500">Stress-Free</span> & Successful</span>
               </h2>
-              <p className="text-sky-100 leading-relaxed mb-4">
-                GradZest Consultancy Services was founded with a single mission:
-                to help every Indian student access world-class education
-                without the confusion and stress of applying abroad alone.
+              <p className="text-gray-600 leading-relaxed mb-4">
+                GradZest is India's trusted study abroad platform. We connect ambitious students with the right universities, the right programs, and the right support — completely free.
               </p>
-              <p className="text-sky-100 leading-relaxed mb-6">
-                With a team of experienced counselors, visa specialists, and
-                university relationship managers, we guide students from
-                shortlisting the right program to landing at their dream
-                university — handling every document, deadline, and detail along
-                the way.
+              <p className="text-gray-600 leading-relaxed mb-6">
+                From shortlisting universities and writing your SOP, to scholarship hunting and visa prep — our expert counselors handle every step so you can focus on your future.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
                   to="/universities"
-                  className="inline-flex items-center gap-2 bg-white text-[#0d1b4b] font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-50 active:scale-95 transition-all shadow-md text-sm"
+                  className="inline-flex items-center gap-2 bg-blue-500 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-600 active:scale-95 transition-all text-sm"
                 >
                   <BookOpen className="w-4 h-4" /> Browse Programs{" "}
                   <ChevronRight className="w-4 h-4" />
@@ -2389,53 +2384,58 @@ export default function Home() {
                         )
                       : open("register")
                   }
-                  className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 border border-white/30 text-white font-semibold px-5 py-2.5 rounded-xl active:scale-95 transition-all text-sm backdrop-blur-sm"
+                  className="inline-flex items-center gap-2 bg-white border border-blue-200 text-blue-500 font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-50 active:scale-95 transition-all text-sm"
                 >
                   <UserPlus className="w-4 h-4" /> Get Free Counseling
                 </button>
               </div>
             </FadeIn>
             <FadeIn direction="right">
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-2 gap-4">
                 {[
                   {
                     value: "10+",
                     label: "Years of Experience",
                     to: "/universities",
                     desc: "Explore our programs",
+                    icon: "🏆",
                   },
                   {
                     value: "1,000+",
                     label: "Students Placed Abroad",
                     to: "/universities",
                     desc: "See partner universities",
+                    icon: "🎓",
                   },
                   {
                     value: "20+",
                     label: "Partner Countries",
                     to: "/search",
                     desc: "Search by country",
+                    icon: "🌍",
                   },
                   {
                     value: "10+",
                     label: "Expert Counselors",
                     to: null,
                     desc: "Talk to an advisor",
+                    icon: "👩‍💼",
                   },
                 ].map((s) => (
                   <button
                     key={s.label}
                     type="button"
                     onClick={() => (s.to ? navigate(s.to) : open("register"))}
-                    className="bg-white/10 rounded-2xl p-5 text-center backdrop-blur-sm hover:bg-white/25 active:scale-95 transition-all cursor-pointer group text-left"
+                    className="bg-white rounded-2xl p-5 text-center border border-blue-100 hover:border-blue-300 hover:shadow-md active:scale-95 transition-all cursor-pointer group"
                   >
-                    <div className="text-3xl font-extrabold group-hover:scale-110 transition-transform duration-200 text-center">
+                    <div className="text-2xl mb-2">{s.icon}</div>
+                    <div className="text-2xl font-extrabold text-[#0d1b4b] group-hover:scale-110 transition-transform duration-200">
                       <StatCounter raw={s.value} active={aboutActive} />
                     </div>
-                    <div className="text-sky-100 text-sm mt-1 text-center">
+                    <div className="text-gray-600 text-sm mt-1">
                       {s.label}
                     </div>
-                    <div className="text-white/60 text-xs mt-2 text-center flex items-center justify-center gap-1 group-hover:text-white transition-colors">
+                    <div className="text-gray-400 text-xs mt-1.5 flex items-center justify-center gap-1 group-hover:text-[#0d1b4b] transition-colors">
                       {s.desc} <ChevronRight className="w-3 h-3" />
                     </div>
                   </button>
@@ -2447,15 +2447,16 @@ export default function Home() {
       </section>
 
       {/* ── FEATURED PROGRAMS ── */}
-      <section className="py-20 bg-sky-50">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">
-                Featured Programs
+              <span className="inline-block bg-blue-50 text-blue-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 uppercase tracking-wide">Top Programs</span>
+              <h2 className="text-3xl font-extrabold text-gray-900">
+                Featured <span className="text-blue-500">Programs</span>
               </h2>
               <p className="text-gray-500 mt-2">
-                Handpicked programs from top-ranked universities
+                Handpicked programs from world's top-ranked universities
               </p>
             </div>
             <Link
@@ -2551,7 +2552,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleApply}
-                      className="bg-[#0d1b4b] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#152258] active:scale-95 transition-all inline-flex items-center gap-1.5"
+                      className="bg-blue-500 text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-blue-600 active:scale-95 transition-all inline-flex items-center gap-1.5"
                     >
                       <Zap className="w-3.5 h-3.5" /> Apply Now
                     </button>
@@ -2564,7 +2565,7 @@ export default function Home() {
           <FadeIn className="text-center mt-10" delayClass="delay-200">
             <Link
               to="/universities"
-              className="inline-flex items-center gap-2 border-2 border-[#0d1b4b] text-[#0d1b4b] font-semibold px-8 py-3 rounded-xl hover:bg-[#0d1b4b] hover:text-white active:scale-95 transition-all"
+              className="inline-flex items-center gap-2 border-2 border-[#1740d9] text-blue-500 font-semibold px-8 py-3 rounded-xl hover:bg-blue-600 hover:text-white active:scale-95 transition-all"
             >
               Browse All Programs <ArrowRight className="w-4 h-4" />
             </Link>
@@ -2573,10 +2574,11 @@ export default function Home() {
       </section>
 
       {/* ── PARTNER UNIVERSITIES ── */}
-      <section className="py-20 bg-sky-50">
+      <section className="py-20 bg-[#eef2ff]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="flex items-end justify-between mb-10">
             <div>
+              <span className="inline-block bg-blue-100 text-blue-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 uppercase tracking-wide">Our Partners</span>
               <h2 className="text-3xl font-bold text-gray-900">
                 Partner Universities
               </h2>
@@ -2596,7 +2598,7 @@ export default function Home() {
               <FadeIn key={u.id} delayClass={STAGGER[i * 60]}>
                 <Link
                   to={`/university/${u.id}`}
-                  className="block bg-white rounded-2xl p-5 border border-[#0d1b4b]/10 hover:border-[#0d1b4b]/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group text-center"
+                  className="block bg-white rounded-2xl p-5 border border-blue-100 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group text-center"
                 >
                   <UniLogo
                     name={u.name}
@@ -2610,7 +2612,7 @@ export default function Home() {
                   <p className="text-xs text-gray-400 mt-1">
                     {FLAGS[u.country] || ""} {u.city}, {u.country}
                   </p>
-                  <p className="text-xs text-[#0d1b4b] font-medium mt-2">
+                  <p className="text-xs text-blue-500 font-medium mt-2">
                     #{u.ranking} World
                   </p>
                   <p className="text-xs text-gray-400">
@@ -2625,14 +2627,15 @@ export default function Home() {
       </section>
 
       {/* ── STUDY DESTINATIONS ── */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="text-center mb-12">
+            <span className="inline-block bg-blue-50 text-blue-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 uppercase tracking-wide">Destinations</span>
             <h2 className="text-3xl font-bold text-gray-900">
               Top Study Destinations
             </h2>
-            <p className="text-gray-500 mt-3">
-              Choose your dream country and explore programs
+            <p className="text-gray-500 mt-2">
+              Choose your dream country and explore available programs
             </p>
           </FadeIn>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -2669,11 +2672,12 @@ export default function Home() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-20 bg-sky-50">
+      <section id="how-it-works" className="py-20 bg-[#eef2ff]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="text-center mb-14">
+            <span className="inline-block bg-blue-100 text-blue-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 uppercase tracking-wide">Simple Process</span>
             <h2 className="text-3xl font-bold text-gray-900">How It Works</h2>
-            <p className="text-gray-500 mt-3 text-lg">
+            <p className="text-gray-500 mt-2">
               Six simple steps to your dream university abroad
             </p>
           </FadeIn>
@@ -2684,7 +2688,7 @@ export default function Home() {
                 delayClass={STAGGER[i * 90]}
                 className="flex gap-4 group"
               >
-                <div className="flex-shrink-0 w-11 h-11 bg-[#0d1b4b] text-white rounded-xl flex items-center justify-center font-bold shadow-sm shadow-[#0d1b4b]/30 group-hover:scale-110 group-hover:bg-[#152258] transition-all duration-300">
+                <div className="flex-shrink-0 w-11 h-11 bg-blue-500 text-white rounded-xl flex items-center justify-center font-bold shadow-sm shadow-blue-800/30 group-hover:scale-110 group-hover:bg-blue-600 transition-all duration-300">
                   {s.num}
                 </div>
                 <div>
@@ -2700,9 +2704,9 @@ export default function Home() {
             <button
               type="button"
               onClick={() => open("register")}
-              className="bg-[#0d1b4b] text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-[#152258] active:scale-95 transition-all inline-flex items-center gap-2"
+              className="bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-600 active:scale-95 transition-all inline-flex items-center gap-2"
             >
-              <Rocket className="w-4 h-4" /> Register Free{" "}
+              <Rocket className="w-4 h-4" /> Start Free Today{" "}
               <ChevronRight className="w-4 h-4" />
             </button>
           </FadeIn>
@@ -2710,19 +2714,18 @@ export default function Home() {
       </section>
 
       {/* ── APPLICATION TRACKER ── */}
-      <section className="py-20 bg-sky-50">
+      <section className="py-20 bg-[#f8faff]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <FadeIn direction="left">
-              <span className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
+              <span className="inline-block bg-blue-100 text-blue-500 text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
                 Real-time Tracking
               </span>
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Track Every Application in Real Time
+                Know Exactly Where Every Application Stands
               </h2>
               <p className="text-gray-500 text-lg mb-6 leading-relaxed">
-                See exactly where each application stands — from document
-                submission to final acceptance. Never miss a deadline again.
+                Track every application from document submission to final acceptance — all in one place. Never miss a deadline again.
               </p>
               <button
                 type="button"
@@ -2731,7 +2734,7 @@ export default function Home() {
                     navigate("/student/applications");
                   else open("register");
                 }}
-                className="inline-flex items-center gap-2 bg-[#0d1b4b] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#152258] active:scale-95 transition-all"
+                className="inline-flex items-center gap-2 bg-blue-500 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-600 active:scale-95 transition-all"
               >
                 <Activity className="w-4 h-4" /> Start Tracking Free{" "}
                 <ArrowRight className="w-4 h-4" />
@@ -2771,7 +2774,7 @@ export default function Home() {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
                       <div
-                        className={`bg-[#0d1b4b] h-1.5 rounded-full transition-all duration-1000 ${progressWidth(item.progress)}`}
+                        className={`bg-blue-500 h-1.5 rounded-full transition-all duration-1000 ${progressWidth(item.progress)}`}
                       />
                     </div>
                     <p className="text-xs text-gray-400 mt-1">
@@ -2786,15 +2789,15 @@ export default function Home() {
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section className="py-20 bg-sky-50">
+      <section className="py-20 bg-[#f8faff]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="text-center mb-12">
+            <span className="inline-block bg-yellow-50 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full mb-3 uppercase tracking-wide">Student Stories</span>
             <h2 className="text-3xl font-bold text-gray-900">
               What Our Students Say
             </h2>
-            <p className="text-gray-500 mt-3">
-              Real stories from Indian students who achieved their dream abroad
-              with GradZest
+            <p className="text-gray-500 mt-2">
+              Real stories from students who achieved their dream abroad with GradZest
             </p>
           </FadeIn>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -2817,7 +2820,7 @@ export default function Home() {
                     "{t.text}"
                   </p>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                       {t.name.charAt(0)}
                     </div>
                     <div>
@@ -2825,7 +2828,7 @@ export default function Home() {
                         {t.name}
                       </p>
                       <p className="text-xs text-gray-500">{t.from}</p>
-                      <p className="text-xs text-[#0d1b4b] font-medium mt-0.5">
+                      <p className="text-xs text-blue-500 font-medium mt-0.5">
                         → {t.uni}
                       </p>
                     </div>
@@ -2838,16 +2841,16 @@ export default function Home() {
       </section>
 
       {/* ── SUCCESS RATE ── */}
-      <section ref={successRef} className="py-20 bg-sky-50">
+      <section ref={successRef} className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="text-center mb-12">
-            <span className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
+            <span className="inline-block bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full mb-3 uppercase tracking-wide">
               Proven Results
             </span>
             <h2 className="text-3xl font-bold text-gray-900">
-              Our Track Record Speaks
+              Our Track Record
             </h2>
-            <p className="text-gray-500 mt-3">
+            <p className="text-gray-500 mt-2">
               Numbers that reflect our commitment to every student's success
             </p>
           </FadeIn>
@@ -2873,7 +2876,7 @@ export default function Home() {
       </section>
 
       {/* ── MEET OUR TEAM ── */}
-      <section className="py-20 bg-sky-50">
+      <section className="py-20 bg-[#f8faff]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn className="text-center mb-12">
             <span className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
@@ -2889,8 +2892,8 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {TEAM.map((member, i) => (
               <FadeIn key={member.name} delayClass={STAGGER[i * 80]}>
-                <div className="bg-white rounded-2xl p-6 border border-[#0d1b4b]/10 text-center hover:border-[#0d1b4b]/40 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
-                  <div className="w-28 h-28 rounded-2xl overflow-hidden mx-auto mb-4 border-4 border-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                <div className="bg-white rounded-2xl p-6 border border-blue-100 text-center hover:border-blue-300 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
+                  <div className="w-28 h-28 rounded-2xl overflow-hidden mx-auto mb-4 border-4 border-blue-50 shadow-md group-hover:scale-105 transition-transform duration-300">
                     <img
                       src={member.photo}
                       alt={member.name}
@@ -2898,13 +2901,13 @@ export default function Home() {
                     />
                   </div>
                   <h3 className="font-bold text-gray-900">{member.name}</h3>
-                  <p className="text-[#0d1b4b] text-sm font-medium mt-0.5">
+                  <p className="text-blue-500 text-sm font-medium mt-0.5">
                     {member.role}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {member.exp} experience
                   </p>
-                  <span className="inline-block mt-3 bg-[#f0f4ff] text-[#0d1b4b] text-xs px-3 py-1 rounded-full font-medium border border-[#0d1b4b]/10">
+                  <span className="inline-block mt-3 bg-blue-50 text-blue-500 text-xs px-3 py-1 rounded-full font-medium border border-blue-100">
                     {member.specialization}
                   </span>
                 </div>
@@ -2915,7 +2918,7 @@ export default function Home() {
       </section>
 
       {/* ── FAQ ── */}
-      <section className="py-20 bg-sky-50">
+      <section className="py-20 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <FadeIn className="text-center mb-12">
             <span className="inline-block bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full mb-4">
@@ -2932,26 +2935,26 @@ export default function Home() {
             {FAQS.map((faq, i) => (
               <FadeIn key={i} delayClass={STAGGER[Math.min(i * 60, 450)]}>
                 <div
-                  className={`border rounded-2xl overflow-hidden transition-all duration-300 ${openFaq === i ? "border-[#0d1b4b]/40 shadow-md" : "border-gray-200 hover:border-[#0d1b4b]/20 hover:shadow-sm"}`}
+                  className={`border rounded-2xl overflow-hidden transition-all duration-300 ${openFaq === i ? "border-blue-400 shadow-md" : "border-gray-200 hover:border-blue-200 hover:shadow-sm"}`}
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left bg-white hover:bg-[#f0f4ff] active:bg-[#f0f4ff] transition-colors"
+                    className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left bg-white hover:bg-blue-50 active:bg-blue-50 transition-colors"
                   >
                     <span
-                      className={`font-semibold transition-colors ${openFaq === i ? "text-[#0d1b4b]" : "text-gray-900"}`}
+                      className={`font-semibold transition-colors ${openFaq === i ? "text-blue-500" : "text-gray-900"}`}
                     >
                       {faq.q}
                     </span>
                     <ChevronDown
-                      className={`w-5 h-5 text-[#0d1b4b] flex-shrink-0 transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`}
+                      className={`w-5 h-5 text-blue-500 flex-shrink-0 transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`}
                     />
                   </button>
                   <div
                     className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === i ? "max-h-48" : "max-h-0"}`}
                   >
-                    <p className="px-6 pb-5 pt-1 text-gray-600 leading-relaxed border-t border-[#0d1b4b]/10">
+                    <p className="px-6 pb-5 pt-1 text-gray-600 leading-relaxed border-t border-blue-100">
                       {faq.a}
                     </p>
                   </div>
@@ -2965,7 +2968,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => open("register")}
-                className="text-[#0d1b4b] font-semibold hover:underline"
+                className="text-[#0d1b4b] font-semibold hover:text-blue-500 transition-colors"
               >
                 Talk to a counselor for free →
               </button>
@@ -2975,15 +2978,14 @@ export default function Home() {
       </section>
 
       {/* ── FOOTER CTA ── */}
-      <section className="bg-gradient-to-br from-[#0d1b4b] via-[#1a2d6e] to-[#060e26] py-20 text-white">
+      <section className="bg-gradient-to-br from-[#0d1b4b] to-[#1a3a8a] py-20 text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <FadeIn>
             <h2 className="text-4xl font-bold mb-4">
-              Your Dream University Starts with GradZest
+              Your Future is Global — Start Today
             </h2>
-            <p className="text-sky-100 text-lg mb-8">
-              Join students across India who found their perfect program with
-              GradZest
+            <p className="text-blue-100 text-lg mb-8">
+              Join 1,000+ students who found their dream university with GradZest. Free guidance, every step of the way.
             </p>
           </FadeIn>
           <FadeIn
@@ -2993,7 +2995,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => open("register")}
-              className="bg-white text-[#0d1b4b] font-bold px-8 py-4 rounded-xl hover:bg-gray-50 active:scale-95 transition-all inline-flex items-center justify-center gap-2"
+              className="bg-blue-500 hover:bg-blue-400 text-white font-bold px-8 py-4 rounded-xl active:scale-95 transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-900/30"
             >
               <Rocket className="w-4 h-4" /> Register for Free
             </button>
@@ -3057,7 +3059,7 @@ export default function Home() {
                     type="button"
                     onClick={handleSubscribe}
                     disabled={subLoading}
-                    className="bg-white text-[#0d1b4b] font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap text-sm inline-flex items-center gap-1.5 disabled:opacity-60"
+                    className="bg-blue-500 hover:bg-blue-400 text-white font-semibold px-5 py-2.5 rounded-xl active:scale-95 transition-all whitespace-nowrap text-sm inline-flex items-center gap-1.5 disabled:opacity-60"
                   >
                     <Mail className="w-3.5 h-3.5" />{" "}
                     {subLoading ? "Submitting…" : "Register Free"}
@@ -3078,7 +3080,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             <div>
               <div className="flex items-center mb-4">
-                <div className="flex flex-col items-center justify-center bg-[#0d1b4b] rounded-xl px-3 py-1.5 min-w-[72px]">
+                <div className="flex flex-col items-center justify-center bg-blue-500 rounded-xl px-3 py-1.5 min-w-[72px]">
                   <GraduationCap className="w-5 h-5 text-white" />
                   <span className="font-bold text-white text-xs tracking-tight leading-tight">
                     GradZest

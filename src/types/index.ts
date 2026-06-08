@@ -17,6 +17,7 @@ export interface Student extends User {
   dateOfBirth?: string;
   gender?: string;
   maritalStatus?: string;
+  placeOfBirth?: string;
   passport?: { number: string; issueDate: string; expiryDate: string; issuingCountry: string };
   address?: { street: string; city: string; state: string; country: string; postalCode: string };
   educationLevel: string;

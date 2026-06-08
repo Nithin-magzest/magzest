@@ -122,6 +122,7 @@ export default function StudentProfile() {
     dateOfBirth: student?.dateOfBirth || '',
     gender: student?.gender || '',
     maritalStatus: student?.maritalStatus || '',
+    placeOfBirth: student?.placeOfBirth || '',
     passport: {
       number: student?.passport?.number || '',
       issueDate: student?.passport?.issueDate || '',
@@ -171,6 +172,7 @@ export default function StudentProfile() {
       await api.students.updateMe({
         ...form,
         name: [form.firstName, form.lastName].filter(Boolean).join(' '),
+        placeOfBirth: form.placeOfBirth || undefined,
         passport: form.passport.number ? form.passport : undefined,
         address: form.address.city ? form.address : undefined,
         academicDetails: academicEntries.map(({ id, ...rest }) => rest),
@@ -324,6 +326,21 @@ export default function StudentProfile() {
               <FileText className="w-5 h-5 text-blue-600" /> Passport Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Place of Birth */}
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Place of Birth</label>
+                {editing ? (
+                  <input
+                    aria-label="Place of Birth"
+                    value={form.placeOfBirth}
+                    onChange={e => setForm(f => ({ ...f, placeOfBirth: e.target.value }))}
+                    placeholder="City, Country"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900 font-medium">{student.placeOfBirth || '—'}</p>
+                )}
+              </div>
               {([
                 { label: 'Passport Number', key: 'number', type: 'text' },
                 { label: 'Issuing Country', key: 'issuingCountry', type: 'text' },
