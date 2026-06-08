@@ -9,6 +9,18 @@ const EDUCATION_LEVELS = ['10th Grade', '12th Grade / Intermediate', 'Diploma', 
 type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; course: string; year: string; percentage: string; city: string; comment: string; status: string; yearOfStudying: string; yearOfPassing: string; backlogs: string; attempts: string; };
 function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', course: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '' }; }
 const BACHELOR_LEVELS = ["Bachelor's Degree", "Master's Degree"];
+const COURSE_LEVELS = ['12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
+function courseFieldLabel(level: string) {
+  if (level === '12th Grade / Intermediate') return 'Stream';
+  if (level === 'PhD') return 'Field / Subject';
+  return 'Course / Program';
+}
+function courseFieldPlaceholder(level: string) {
+  if (level === '12th Grade / Intermediate') return 'e.g. Science (MPC), Science (BiPC), Commerce, Arts';
+  if (level === 'PhD') return 'e.g. Computer Science, Biotechnology, Management';
+  if (level === 'Diploma') return 'e.g. Diploma in Civil Engineering, Pharmacy';
+  return 'e.g. B.Tech Computer Science, MBA, M.Sc Mathematics';
+}
 
 const EXP_TYPES = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Volunteer'];
 type ExperienceEntry = { id: string; company: string; role: string; employmentType: string; from: string; to: string; current: boolean; noticePeriod: string; description: string; };
@@ -565,15 +577,17 @@ export default function StudentProfile() {
                                 className="w-full px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                             </div>
                           )}
+                          {COURSE_LEVELS.includes(entry.level) && (
+                            <div className="sm:col-span-2">
+                              <label className="block text-xs font-medium text-gray-500 mb-1">{courseFieldLabel(entry.level)} <span className="text-red-400">*</span></label>
+                              <input aria-label={courseFieldLabel(entry.level)} value={entry.course}
+                                placeholder={courseFieldPlaceholder(entry.level)}
+                                onChange={e => updateAcademicEntry(entry.id, 'course', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            </div>
+                          )}
                           {BACHELOR_LEVELS.includes(entry.level) && (
                             <>
-                              <div className="sm:col-span-2">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Course / Program <span className="text-red-400">*</span></label>
-                                <input aria-label="Course or Program" value={entry.course}
-                                  placeholder="e.g. B.Tech Computer Science, MBA, M.Sc Mathematics"
-                                  onChange={e => updateAcademicEntry(entry.id, 'course', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                              </div>
                               <div className="sm:col-span-2">
                                 <label className="block text-xs font-medium text-gray-500 mb-1">Current Status</label>
                                 <div className="flex gap-3">
@@ -675,7 +689,7 @@ export default function StudentProfile() {
                           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
                             {entry.institution && <div><p className="text-xs text-gray-400">Institution</p><p className="font-medium text-gray-800">{entry.institution}</p></div>}
                             {entry.board && <div><p className="text-xs text-gray-400">{entry.level === "Bachelor's Degree" || entry.level === "Master's Degree" || entry.level === 'PhD' || entry.level === 'Diploma' ? 'University' : 'Board'}</p><p className="font-medium text-gray-800">{entry.board}</p></div>}
-                            {BACHELOR_LEVELS.includes(entry.level) && entry.course && <div><p className="text-xs text-gray-400">Course</p><p className="font-medium text-gray-800">{entry.course}</p></div>}
+                            {COURSE_LEVELS.includes(entry.level) && entry.course && <div><p className="text-xs text-gray-400">{courseFieldLabel(entry.level)}</p><p className="font-medium text-gray-800">{entry.course}</p></div>}
                             {entry.year && <div><p className="text-xs text-gray-400">Year</p><p className="font-medium text-gray-800">{entry.year}</p></div>}
                             {entry.percentage && <div><p className="text-xs text-gray-400">Score</p><p className="font-medium text-gray-800">{entry.percentage}</p></div>}
                             {entry.city && <div><p className="text-xs text-gray-400">City</p><p className="font-medium text-gray-800">{entry.city}</p></div>}
