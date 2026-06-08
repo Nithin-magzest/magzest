@@ -26,13 +26,14 @@ const EXP_TYPES = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Volunte
 type ExperienceEntry = { id: string; company: string; role: string; employmentType: string; from: string; to: string; current: boolean; noticePeriod: string; description: string; };
 function newExperienceEntry(): ExperienceEntry { return { id: crypto.randomUUID(), company: '', role: '', employmentType: 'Full-time', from: '', to: '', current: false, noticePeriod: '', description: '' }; }
 
-const DOC_TYPES = ['Passport', 'Transcript', 'Diploma/Degree Certificate', 'English Test Certificate', 'SOP', 'LOR', 'CV/Resume', 'Bank Statement', 'Other'];
+const DOC_TYPES = ['Passport', '10th Certificate', 'Intermediate Certificate', 'Diploma Certificate', 'Degree Certificate', 'Transcript', 'English Test Certificate', 'SOP', 'LOR', 'Bank Statement', 'Other'];
 const ALL_COUNTRIES = ['Australia', 'Canada', 'France', 'Germany', 'Ireland', 'Netherlands', 'New Zealand', 'Singapore', 'United Kingdom', 'United States', 'Other'];
 const ALL_COURSES = ['Arts & Humanities', 'Business', 'Computer Science', 'Data Science', 'Engineering', 'Finance', 'Law', 'Medicine', 'MBA', 'Pharmacy', 'Psychology', 'Other'];
 
 function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onUploaded: () => void }) {
   const [name, setName] = useState('');
   const [type, setType] = useState(DOC_TYPES[0]);
+  const [comment, setComment] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -53,7 +54,7 @@ function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onU
       const fd = new FormData();
       if (file) fd.append('file', file);
       fd.append('name', name.trim() || (file?.name ?? 'Document'));
-      fd.append('type', type);
+      fd.append('type', type === 'Other' && comment.trim() ? `Other - ${comment.trim()}` : type);
       await api.students.uploadDocument(fd);
       onUploaded();
       onClose();
@@ -99,11 +100,19 @@ function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onU
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Document Type</label>
-            <select aria-label="Document type" value={type} onChange={e => setType(e.target.value)}
+            <select aria-label="Document type" value={type} onChange={e => { setType(e.target.value); setComment(''); }}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
               {DOC_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
           </div>
+          {type === 'Other' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Describe the Document</label>
+              <textarea value={comment} onChange={e => setComment(e.target.value)} rows={2}
+                placeholder="e.g. Work Experience Letter, NOC Certificate…"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            </div>
+          )}
           {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
@@ -139,21 +148,7 @@ export default function StudentProfile() {
     setExperienceEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
   const removeExperienceEntry = (id: string) => setExperienceEntries(prev => prev.filter(e => e.id !== id));
 
-  const [resumeUploading, setResumeUploading] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const resumeInputRef = useRef<HTMLInputElement>(null);
-  const uploadResume = async (file: File) => {
-    setResumeUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('name', file.name.replace(/\.[^.]+$/, ''));
-      fd.append('type', 'CV/Resume');
-      await api.students.uploadDocument(fd);
-      await refreshUser();
-    } catch {}
-    setResumeUploading(false);
-  };
 
   const buildForm = (s: Student | null) => {
     const np = (s?.name || '').split(' ');
@@ -843,70 +838,22 @@ export default function StudentProfile() {
             </div>
           </div>
 
-          {/* Resume & Documents Section */}
+          {/* Documents Section */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-green-600" /> Resume &amp; Documents
+              <FileText className="w-5 h-5 text-green-600" /> Documents
             </h3>
-
-            {/* Resume subsection */}
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Resume / CV</p>
-            <input ref={resumeInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden"
-              aria-label="Upload Resume or CV"
-              onChange={e => { const f = e.target.files?.[0]; if (f) uploadResume(f); e.target.value = ''; }} />
-            {(() => {
-              const resumeDoc = docs.find((d: any) => d.type === 'CV/Resume') as any;
-              if (resumeDoc) {
-                const docId = resumeDoc._id || resumeDoc.id;
-                return (
-                  <div className="flex items-center justify-between gap-2 p-3 bg-green-50 border border-green-200 rounded-xl mb-5">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{resumeDoc.name}</p>
-                        <p className="text-xs text-green-600 font-medium">CV / Resume</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {resumeDoc.url && (
-                        <a href={resumeDoc.url} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
-                          <ExternalLink className="w-3 h-3" /> Open
-                        </a>
-                      )}
-                      <StatusBadge status={resumeDoc.status} />
-                      <button type="button" aria-label="Delete resume"
-                        onClick={async () => { await api.students.deleteDocument(docId); refreshUser(); }}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              }
-              return (
-                <button type="button" disabled={resumeUploading}
-                  onClick={() => resumeInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 bg-green-50 border-2 border-dashed border-green-300 text-green-700 hover:bg-green-100 hover:border-green-400 py-4 rounded-xl transition-colors text-sm font-semibold disabled:opacity-60 mb-5">
-                  <Upload className="w-4 h-4" />
-                  {resumeUploading ? 'Uploading…' : 'Upload Resume / CV'}
-                </button>
-              );
-            })()}
-
-            {/* Other documents */}
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Other Documents</p>
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
               <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700 leading-relaxed">
                 <span className="font-semibold">Tip:</span> Upload your important certificates here — <span className="font-medium">10th Grade certificate</span>, <span className="font-medium">Intermediate / 12th certificate</span>, <span className="font-medium">Degree certificate (B.Tech / B.Sc etc.)</span>, and <span className="font-medium">Passport</span>. These documents will be needed when applying to universities.
               </p>
             </div>
-            {docs.filter((d: any) => d.type !== 'CV/Resume').length === 0 && (
+            {docs.length === 0 && (
               <p className="text-sm text-gray-400 text-center py-2 mb-2">No other documents uploaded yet.</p>
             )}
             <div className="space-y-3">
-              {docs.filter((d: any) => d.type !== 'CV/Resume').map((doc: any) => {
+              {docs.map((doc: any) => {
                 const docId = doc._id || doc.id;
                 return (
                   <div key={docId} className="flex items-start justify-between gap-2 p-3 bg-gray-50 rounded-xl">
