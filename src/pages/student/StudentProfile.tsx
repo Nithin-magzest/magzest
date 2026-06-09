@@ -201,6 +201,12 @@ export default function StudentProfile() {
 
   const [form, setForm] = useState(() => buildForm(student));
 
+  // "Other" free-text for study preferences
+  const initOtherCountry = (student?.preferredCountries || []).find((c: string) => !ALL_COUNTRIES.includes(c)) || '';
+  const initOtherCourse  = (student?.interestedCourses  || []).find((c: string) => !ALL_COURSES.includes(c))  || '';
+  const [otherCountry, setOtherCountry] = useState(initOtherCountry);
+  const [otherCourse,  setOtherCourse]  = useState(initOtherCourse);
+
   // Re-initialize form and lists from server data after save + refreshUser
   useEffect(() => {
     if (!editing) {
@@ -212,6 +218,8 @@ export default function StudentProfile() {
       setExperienceEntries(
         (s?.experienceDetails || []).map((e: any) => ({ employmentType: 'Full-time', noticePeriod: '', ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
       );
+      setOtherCountry((s?.preferredCountries || []).find((c: string) => !ALL_COUNTRIES.includes(c)) || '');
+      setOtherCourse((s?.interestedCourses || []).find((c: string) => !ALL_COURSES.includes(c)) || '');
     }
   }, [user, editing]);
 
@@ -256,8 +264,8 @@ export default function StudentProfile() {
         gpa: form.gpa !== '' ? Number(form.gpa) : undefined,
         englishScore: form.englishTestType ? { type: form.englishTestType, score: Number(form.englishTestScore) } : undefined,
         budget: form.budget !== '' ? Number(form.budget) : undefined,
-        preferredCountries: form.preferredCountries,
-        interestedCourses: form.interestedCourses,
+        preferredCountries: form.preferredCountries.map(c => c === 'Other' && otherCountry.trim() ? otherCountry.trim() : c),
+        interestedCourses: form.interestedCourses.map(c => c === 'Other' && otherCourse.trim() ? otherCourse.trim() : c),
         academicDetails: academicEntries.map(({ id, ...rest }) => rest),
         experienceDetails: experienceEntries.map(({ id, ...rest }) => rest),
       });
@@ -957,20 +965,33 @@ export default function StudentProfile() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-2">Preferred Countries</label>
                 {editing ? (
-                  <div className="flex flex-wrap gap-2">
-                    {ALL_COUNTRIES.map(c => {
-                      const selected = form.preferredCountries.includes(c);
-                      return (
-                        <button key={c} type="button"
-                          onClick={() => setForm(f => ({
-                            ...f,
-                            preferredCountries: selected ? f.preferredCountries.filter(x => x !== c) : [...f.preferredCountries, c]
-                          }))}
-                          className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'}`}>
-                          {c}
-                        </button>
-                      );
-                    })}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {ALL_COUNTRIES.map(c => {
+                        const selected = c === 'Other'
+                          ? (form.preferredCountries.includes('Other') || !!otherCountry)
+                          : form.preferredCountries.includes(c);
+                        return (
+                          <button key={c} type="button"
+                            onClick={() => {
+                              if (c === 'Other') {
+                                if (selected) { setOtherCountry(''); setForm(f => ({ ...f, preferredCountries: f.preferredCountries.filter(x => x !== 'Other' && ALL_COUNTRIES.includes(x)) })); }
+                                else setForm(f => ({ ...f, preferredCountries: [...f.preferredCountries.filter(x => ALL_COUNTRIES.includes(x)), 'Other'] }));
+                              } else {
+                                setForm(f => ({ ...f, preferredCountries: selected ? f.preferredCountries.filter(x => x !== c) : [...f.preferredCountries.filter(x => ALL_COUNTRIES.includes(x) || x === 'Other'), c] }));
+                              }
+                            }}
+                            className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'}`}>
+                            {c}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {(form.preferredCountries.includes('Other') || !!otherCountry) && (
+                      <input value={otherCountry} onChange={e => setOtherCountry(e.target.value)}
+                        placeholder="Please specify the country…"
+                        className="w-full px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
@@ -985,20 +1006,33 @@ export default function StudentProfile() {
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-2">Interested Courses</label>
                 {editing ? (
-                  <div className="flex flex-wrap gap-2">
-                    {ALL_COURSES.map(c => {
-                      const selected = form.interestedCourses.includes(c);
-                      return (
-                        <button key={c} type="button"
-                          onClick={() => setForm(f => ({
-                            ...f,
-                            interestedCourses: selected ? f.interestedCourses.filter(x => x !== c) : [...f.interestedCourses, c]
-                          }))}
-                          className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-300 hover:border-purple-400'}`}>
-                          {c}
-                        </button>
-                      );
-                    })}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {ALL_COURSES.map(c => {
+                        const selected = c === 'Other'
+                          ? (form.interestedCourses.includes('Other') || !!otherCourse)
+                          : form.interestedCourses.includes(c);
+                        return (
+                          <button key={c} type="button"
+                            onClick={() => {
+                              if (c === 'Other') {
+                                if (selected) { setOtherCourse(''); setForm(f => ({ ...f, interestedCourses: f.interestedCourses.filter(x => x !== 'Other' && ALL_COURSES.includes(x)) })); }
+                                else setForm(f => ({ ...f, interestedCourses: [...f.interestedCourses.filter(x => ALL_COURSES.includes(x)), 'Other'] }));
+                              } else {
+                                setForm(f => ({ ...f, interestedCourses: selected ? f.interestedCourses.filter(x => x !== c) : [...f.interestedCourses.filter(x => ALL_COURSES.includes(x) || x === 'Other'), c] }));
+                              }
+                            }}
+                            className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-300 hover:border-purple-400'}`}>
+                            {c}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {(form.interestedCourses.includes('Other') || !!otherCourse) && (
+                      <input value={otherCourse} onChange={e => setOtherCourse(e.target.value)}
+                        placeholder="Please specify the course or field…"
+                        className="w-full px-3 py-2 border border-purple-300 bg-purple-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
