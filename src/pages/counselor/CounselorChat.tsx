@@ -290,6 +290,18 @@ export default function CounselorChat() {
     }
   };
 
+  const startChatWithStudent = async (student: any) => {
+    const sid = student._id || student.id;
+    try {
+      const newRoom = await api.chat.createRoom(
+        [String(user!.id), String(sid)],
+        [user!.name, student.name]
+      );
+      setRooms(prev => [...prev, newRoom]);
+      setSelectedRoom(newRoom);
+    } catch {}
+  };
+
   const getRoleLabel = (room: any): string => {
     if (room?.type === 'admin-counselor') return 'Admin';
     if (room?.type === 'appteam-counselor' || room.participantNames?.includes('Application Team')) return 'Application Team';
@@ -399,14 +411,15 @@ const studentsWithNoChat = myStudents.filter((s: any) => {
                   );
                 })}
                 {filteredStudentsWithNoChat.map((s: any) => (
-                  <div key={s._id || s.id} className="flex items-start gap-3 p-4 border-b border-gray-50 opacity-60">
+                  <button type="button" key={s._id || s.id} onClick={() => startChatWithStudent(s)}
+                    className="w-full flex items-start gap-3 p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-50">
                     <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 flex-shrink-0">{s.name.charAt(0)}</div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">{s.name}</p>
                       <p className={`text-[10px] font-medium mt-0.5 ${getRoleBadgeClass('Student')} inline-block px-1.5 py-0.5 rounded-full`}>Student</p>
-                      <p className="text-xs text-gray-400">No messages yet</p>
+                      <p className="text-xs text-gray-400">Start conversation</p>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </>
             )}
