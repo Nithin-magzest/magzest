@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu, X, ChevronDown, LogOut, User, LayoutDashboard,
-  Bell, Calendar, FileText, Tag, CheckCheck, ChevronUp,
+  Bell, Calendar, FileText, Tag, CheckCheck, ChevronUp, GraduationCap,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useAuthModal } from "../context/AuthModalContext";
@@ -108,7 +108,9 @@ export default function Navbar() {
           {/* Logo + nav links */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2 mr-8">
-              <img src="/logo.png" alt="Gradzest logo" className="h-8 w-auto object-contain" />
+              <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                <GraduationCap className="w-5 h-5 text-white" />
+              </div>
               <span className="text-xl font-extrabold tracking-tight select-none">
                 <span className="text-[#0d1b4b]">Grad</span><span className="text-blue-500">zest</span>
               </span>
