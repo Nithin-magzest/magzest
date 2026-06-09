@@ -157,6 +157,7 @@ export const api = {
 
   counselors: {
     me: () => req<any>('/counselors/me', { headers: authHeaders() }),
+    myStudents: () => req<any[]>('/counselors/me/students', { headers: authHeaders() }),
     updateMe: (data: any) => req<any>('/counselors/me', {
       method: 'PUT', headers: authHeaders(), body: JSON.stringify(data),
     }),
