@@ -57,6 +57,19 @@ router.post('/me/documents', authMiddleware, upload.single('file'), async (req, 
   }
 });
 
+// Get assigned students for the logged-in counselor
+router.get('/me/students', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'counselor') return res.status(403).json({ message: 'Forbidden' });
+  try {
+    const counselor = await User.findById(req.user.id).select('assignedStudents');
+    if (!counselor) return res.status(404).json({ message: 'Not found' });
+    const students = await User.find({ _id: { $in: counselor.assignedStudents || [] } }).select('-password');
+    res.json(students.map(s => s.toJSON()));
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Delete own document (counselor)
 router.delete('/me/documents/:docId', authMiddleware, async (req, res) => {
   if (req.user.role !== 'counselor') return res.status(403).json({ message: 'Forbidden' });

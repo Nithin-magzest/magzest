@@ -7,7 +7,6 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useCallContext } from '../../context/CallContext';
 import { api } from '../../api';
-import { Counselor } from '../../types';
 
 const formatDuration = (s: number) => {
   const m = Math.floor(s / 60);
@@ -157,7 +156,6 @@ function MeetingMessage({ msg, isMe, senderRole }: { msg: any; isMe: boolean; se
 
 export default function CounselorChat() {
   const { user } = useAuth();
-  const counselor = user as Counselor;
   const { callState, startCall, startVideoCall, lastMessageTime } = useCallContext();
   const [rooms, setRooms] = useState<any[]>([]);
   const [myStudents, setMyStudents] = useState<any[]>([]);
@@ -176,11 +174,10 @@ export default function CounselorChat() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([api.chat.rooms(), api.students.list()])
+    Promise.all([api.chat.rooms(), api.counselors.myStudents()])
       .then(([roomList, studentList]) => {
         setRooms(roomList);
-        const mine = studentList.filter((s: any) => counselor.assignedStudents?.includes(s._id || s.id));
-        setMyStudents(mine);
+        setMyStudents(studentList);
         if (roomList.length > 0) setSelectedRoom(roomList[0]);
       }).catch(() => {});
   }, []);
@@ -199,11 +196,9 @@ export default function CounselorChat() {
   useEffect(() => {
     if (!user) return;
     const id = setInterval(() => {
-      Promise.all([api.chat.rooms(), api.students.list()])
-        .then(([roomList, studentList]) => {
+      api.chat.rooms()
+        .then(roomList => {
           setRooms(roomList);
-          const mine = studentList.filter((s: any) => counselor.assignedStudents?.includes(s._id || s.id));
-          setMyStudents(mine);
           if (selectedRoom) {
             const updated = roomList.find((r: any) => r.id === selectedRoom.id);
             if (updated) setSelectedRoom(updated);
