@@ -14,6 +14,15 @@ const formatDuration = (s: number) => {
   return m > 0 ? `${m}m ${s % 60}s` : `${s}s`;
 };
 const formatTime = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const formatChatTime = (iso: string) => {
+  const d = new Date(iso);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  if (d >= today) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (d >= yesterday) return 'Yesterday';
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+};
 
 function CallMessage({ msg, isMe }: { msg: any; isMe: boolean }) {
   const { callStatus, callDuration, senderName, timestamp } = msg;
@@ -238,10 +247,18 @@ export default function StudentChat() {
   const remoteId = selectedRoom?.participants?.find((id: string) => id !== user?.id) ?? '';
   const messages = selectedRoom?.messages || [];
   const hasMultipleRooms = rooms.length > 1;
-  const filteredRooms = rooms.filter((r: any) => {
-    const other = r.participantNames?.find((n: string) => n !== user?.name) || '';
-    return other.toLowerCase().includes(search.toLowerCase());
-  });
+  const filteredRooms = rooms
+    .filter((r: any) => {
+      const other = r.participantNames?.find((n: string) => n !== user?.name) || '';
+      return other.toLowerCase().includes(search.toLowerCase());
+    })
+    .sort((a: any, b: any) => {
+      const aTime = a.messages?.[a.messages.length - 1]?.timestamp ?? '';
+      const bTime = b.messages?.[b.messages.length - 1]?.timestamp ?? '';
+      if (aTime && !bTime) return -1;
+      if (!aTime && bTime) return 1;
+      return bTime > aTime ? 1 : bTime < aTime ? -1 : 0;
+    });
 
   return (
     <div className="space-y-4">
@@ -272,6 +289,7 @@ export default function StudentChat() {
                   : lastMsg?.type === 'file' ? `📎 ${lastMsg.fileName || 'Document'}`
                   : lastMsg?.type === 'meeting' ? `📅 ${lastMsg.meetingDate}`
                   : lastMsg?.content;
+                const chatTime = lastMsg?.timestamp ? formatChatTime(lastMsg.timestamp) : '';
                 return (
                   <button type="button" key={r.id} onClick={() => setSelectedRoom(r)}
                     className={`w-full flex items-start gap-3 p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 ${isActive ? 'bg-sky-50' : ''}`}>
@@ -281,9 +299,10 @@ export default function StudentChat() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
                         <span className={`text-sm font-semibold truncate ${isActive ? 'text-blue-700' : 'text-gray-900'}`}>{other}</span>
-                        {unread > 0 && (
-                          <span className="bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>
-                        )}
+                        <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                          {chatTime && <span className="text-[10px] text-gray-400">{chatTime}</span>}
+                          {unread > 0 && <span className="bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">{unread}</span>}
+                        </div>
                       </div>
                       {preview
                         ? <p className="text-xs text-gray-400 truncate mt-0.5">{preview}</p>

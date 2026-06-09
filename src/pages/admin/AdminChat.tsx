@@ -15,6 +15,15 @@ const formatDuration = (s: number) => {
 };
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const formatChatTime = (iso: string) => {
+  const d = new Date(iso);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  if (d >= today) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (d >= yesterday) return 'Yesterday';
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+};
 
 function getRoleBadgeClass(role: string) {
   if (role === 'Admin Team') return 'text-purple-700 bg-purple-50';
@@ -364,6 +373,7 @@ export default function AdminChat() {
                 : lastMsg?.type === 'file' ? `📎 ${lastMsg.fileName || 'Document'}`
                 : lastMsg?.type === 'meeting' ? `📅 ${lastMsg.meetingDate}`
                 : lastMsg?.content;
+              const chatTime = lastMsg?.timestamp ? formatChatTime(lastMsg.timestamp) : '';
               return (
                 <button type="button" key={pid} onClick={() => openChat(person)}
                   className={`w-full flex items-start gap-3 p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 ${isActive ? 'bg-purple-50' : ''}`}>
@@ -375,9 +385,10 @@ export default function AdminChat() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
                       <span className={`text-sm font-semibold truncate ${isActive ? 'text-purple-700' : 'text-gray-900'}`}>{person.name}</span>
-                      {unread > 0 && (
-                        <span className="bg-purple-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>
-                      )}
+                      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                        {chatTime && <span className="text-[10px] text-gray-400">{chatTime}</span>}
+                        {unread > 0 && <span className="bg-purple-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">{unread}</span>}
+                      </div>
                     </div>
                     {preview
                       ? <p className="text-xs text-gray-400 truncate mt-0.5">{preview}</p>
