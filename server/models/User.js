@@ -173,6 +173,10 @@ const UserSchema = new mongoose.Schema({
   loginAttempts: { type: Number, default: 0 },
   lockedUntil: { type: Date, default: null },
 
+  // JWT refresh token (stored as SHA-256 hash)
+  refreshTokenHash: { type: String, default: null },
+  refreshTokenExpires: { type: Date, default: null },
+
   // Counselor fields
   specialization: [String],
   assignedStudents: [String],

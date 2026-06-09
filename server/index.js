@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
@@ -72,6 +73,7 @@ app.use('/api', generalLimiter);
 
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(cookieParser());
 
 // Protect uploaded files — only authenticated users can access them
 const jwt = require('jsonwebtoken');

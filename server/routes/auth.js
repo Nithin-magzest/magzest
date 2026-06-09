@@ -20,8 +20,29 @@ function createMailer() {
 
 const router = express.Router();
 
-function issueToken(user) {
-  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+function issueAccessToken(user) {
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
+}
+
+// Keep old name as alias so social-login callers still work
+const issueToken = issueAccessToken;
+
+async function issueRefreshToken(user) {
+  const raw = crypto.randomBytes(40).toString('hex');
+  const hash = crypto.createHash('sha256').update(raw).digest('hex');
+  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  await User.findByIdAndUpdate(user._id, { refreshTokenHash: hash, refreshTokenExpires: expires });
+  return { raw, expires };
+}
+
+function setRefreshCookie(res, token, expires) {
+  res.cookie('refreshToken', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    expires,
+    path: '/api/auth',
+  });
 }
 
 function sanitize(user) {
@@ -92,7 +113,9 @@ router.post('/google', async (req, res) => {
       avatar: picture,
     });
 
-    res.json({ token: issueToken(user), user: sanitize(user) });
+    const { raw, expires } = await issueRefreshToken(user);
+    setRefreshCookie(res, raw, expires);
+    res.json({ token: issueAccessToken(user), user: sanitize(user) });
   } catch (err) {
     console.error('[auth/google]', err);
     res.status(401).json({ message: 'Google authentication failed' });
@@ -185,7 +208,9 @@ router.post('/facebook', async (req, res) => {
       avatar: picture?.data?.url,
     });
 
-    res.json({ token: issueToken(user), user: sanitize(user) });
+    const { raw, expires } = await issueRefreshToken(user);
+    setRefreshCookie(res, raw, expires);
+    res.json({ token: issueAccessToken(user), user: sanitize(user) });
   } catch (err) {
     console.error('[auth/facebook]', err);
     res.status(401).json({ message: 'Facebook authentication failed' });
@@ -230,11 +255,14 @@ router.post('/login', async (req, res) => {
     // Success — reset lockout counters
     await User.findByIdAndUpdate(user._id, { loginAttempts: 0, lockedUntil: null });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const accessToken = issueAccessToken(user);
+    const { raw: refreshRaw, expires: refreshExpires } = await issueRefreshToken(user);
+    setRefreshCookie(res, refreshRaw, refreshExpires);
+
     const userObj = user.toJSON();
     delete userObj.password;
 
-    res.json({ token, user: userObj });
+    res.json({ token: accessToken, user: userObj });
   } catch (err) {
     console.error('[auth/login]', err);
     res.status(500).json({ message: 'Server error' });
@@ -294,10 +322,19 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+function validatePasswordStrength(password) {
+  if (!password || password.length < 8) return 'Password must be at least 8 characters.';
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter.';
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number.';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password must contain at least one special character.';
+  return null;
+}
+
 router.post('/register', async (req, res) => {
   const { name, email, password, phone, nationality } = req.body;
   if (!name || !email || !password) return res.status(400).json({ message: 'Name, email and password are required' });
-  if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  const pwError = validatePasswordStrength(password);
+  if (pwError) return res.status(400).json({ message: pwError });
   try {
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) return res.status(409).json({ message: 'An account with this email already exists' });
@@ -357,7 +394,8 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
   const { token, password } = req.body || {};
   if (!token || !password) return res.status(400).json({ message: 'Token and password are required' });
-  if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  const pwError = validatePasswordStrength(password);
+  if (pwError) return res.status(400).json({ message: pwError });
   try {
     const hashed = crypto.createHash('sha256').update(token).digest('hex');
     const user = await User.findOne({ resetPasswordToken: hashed, resetPasswordExpires: { $gt: Date.now() } });
@@ -373,6 +411,40 @@ router.post('/reset-password', async (req, res) => {
     console.error('[auth/reset-password]', err);
     res.status(500).json({ message: 'Server error' });
   }
+});
+
+// POST /auth/refresh — exchange refresh token cookie for a new access token
+router.post('/refresh', async (req, res) => {
+  const raw = req.cookies?.refreshToken;
+  if (!raw) return res.status(401).json({ message: 'No refresh token' });
+  try {
+    const hash = crypto.createHash('sha256').update(raw).digest('hex');
+    const user = await User.findOne({
+      refreshTokenHash: hash,
+      refreshTokenExpires: { $gt: new Date() },
+    });
+    if (!user) return res.status(401).json({ message: 'Invalid or expired refresh token. Please log in again.' });
+
+    // Rotate refresh token on every use (prevents token reuse attacks)
+    const { raw: newRaw, expires } = await issueRefreshToken(user);
+    setRefreshCookie(res, newRaw, expires);
+
+    res.json({ token: issueAccessToken(user) });
+  } catch (err) {
+    console.error('[auth/refresh]', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /auth/logout — revoke refresh token and clear cookie
+router.post('/logout', async (req, res) => {
+  const raw = req.cookies?.refreshToken;
+  if (raw) {
+    const hash = crypto.createHash('sha256').update(raw).digest('hex');
+    await User.findOneAndUpdate({ refreshTokenHash: hash }, { refreshTokenHash: null, refreshTokenExpires: null }).catch(() => {});
+  }
+  res.clearCookie('refreshToken', { path: '/api/auth' });
+  res.json({ message: 'Logged out' });
 });
 
 module.exports = router;

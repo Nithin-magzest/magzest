@@ -4,6 +4,8 @@ import { X, GraduationCap, Eye, EyeOff, AlertCircle, UserPlus, LogIn } from 'luc
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
 import { api } from '../api';
+import PasswordStrengthBar from './PasswordStrengthBar';
+import { checkPasswordStrength } from '../utils/passwordStrength';
 
 export default function AuthModal() {
   const { isOpen, tab, close, setTab } = useAuthModal();
@@ -61,6 +63,8 @@ export default function AuthModal() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegError('');
+    const strength = checkPasswordStrength(regPassword);
+    if (!strength.valid) { setRegError('Password must be 8+ characters with an uppercase letter, a number, and a special character.'); return; }
     if (regPassword !== regConfirm) { setRegError('Passwords do not match.'); return; }
     setRegLoading(true);
     try {
@@ -228,12 +232,13 @@ export default function AuthModal() {
                   <input
                     type={showRegPw ? 'text' : 'password'} value={regPassword} onChange={e => setRegPassword(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm pr-12"
-                    placeholder="Min. 6 characters" required minLength={6}
+                    placeholder="Min. 8 characters" required minLength={8}
                   />
                   <button type="button" onClick={() => setShowRegPw(!showRegPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showRegPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                <PasswordStrengthBar password={regPassword} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password</label>
