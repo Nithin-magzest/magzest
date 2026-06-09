@@ -107,7 +107,8 @@ export default function Navbar() {
 
           {/* Logo + nav links */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center mr-8">
+            <Link to="/" className="flex items-center gap-2 mr-8">
+              <img src="/logo.png" alt="Gradzest logo" className="h-8 w-auto object-contain" />
               <span className="text-xl font-extrabold tracking-tight select-none">
                 <span className="text-[#0d1b4b]">Grad</span><span className="text-blue-500">zest</span>
               </span>
