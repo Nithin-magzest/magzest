@@ -193,10 +193,13 @@ export default function AdminChat() {
   }, []);
 
   useEffect(() => {
-    if (!lastMessageTime || !selectedRoom) return;
-    api.chat.room(selectedRoom.id).then(updated => {
-      setSelectedRoom(updated);
-      setRooms(prev => prev.map(r => r.id === updated.id ? updated : r));
+    if (!lastMessageTime) return;
+    api.chat.rooms().then(roomList => {
+      setRooms(roomList);
+      if (selectedRoom) {
+        const updated = roomList.find((r: any) => r.id === selectedRoom.id);
+        if (updated) setSelectedRoom(updated);
+      }
     }).catch(() => {});
   }, [lastMessageTime]);
 
@@ -215,7 +218,13 @@ export default function AdminChat() {
   }, [user, selectedRoom?.id]);
 
   useEffect(() => {
-    if (selectedRoom?.id) api.chat.markRead(selectedRoom.id).catch(() => {});
+    if (!selectedRoom?.id) return;
+    api.chat.markRead(selectedRoom.id).catch(() => {});
+    setRooms(prev => prev.map(r =>
+      r.id === selectedRoom.id
+        ? { ...r, messages: r.messages?.map((m: any) => ({ ...m, read: true })) }
+        : r
+    ));
   }, [selectedRoom?.id]);
 
   useEffect(() => {
