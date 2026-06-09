@@ -45,6 +45,8 @@ const mailer = nodemailer.createTransport({
   },
 });
 
+app.set('mailer', mailer);
+
 // Public email subscription / free registration
 const Subscriber = require('./models/Subscriber');
 app.post('/api/subscribe', async (req, res) => {
@@ -130,7 +132,8 @@ app.use('/api/meetings', require('./routes/meetings'));
 app.use('/api/favicon', require('./routes/favicon'));
 app.use('/api/unilogo', require('./routes/unilogo'));
 app.use('/api/activity', require('./routes/activity'));
-app.use('/api/tasks',   require('./routes/tasks'));
+app.use('/api/tasks',         require('./routes/tasks'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // WebRTC signaling
 io.on('connection', (socket) => {

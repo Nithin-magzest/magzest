@@ -116,6 +116,37 @@ router.post('/:id/documents', authMiddleware, async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.id, { $push: { documents: doc } }, { new: true }).select('-password');
     if (!user) return res.status(404).json({ message: 'Student not found' });
     const newDoc = user.documents[user.documents.length - 1];
+
+    // Notify student via socket
+    const io = req.app.get('io');
+    const userSockets = req.app.get('userSockets');
+    const sids = userSockets?.get(String(req.params.id));
+    if (io && sids) sids.forEach(sid => io.to(sid).emit('document:requested', { name: doc.name, type: doc.type }));
+
+    // Email fallback
+    if (user.email) {
+      const mailer = req.app.get('mailer');
+      if (mailer) mailer.sendMail({
+        from: '"Gradzest" <nithin@magzest.in>',
+        to: user.email,
+        subject: `Document Requested: ${doc.name}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
+            <div style="background:#3b0764;padding:28px 24px;border-radius:8px 8px 0 0;text-align:center;">
+              <h1 style="color:#fff;margin:0;font-size:22px;">Gradzest</h1>
+            </div>
+            <div style="background:#fff;padding:28px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+              <p style="font-size:16px;">Hi ${user.name},</p>
+              <p style="font-size:15px;">Your counselor has requested the following document:</p>
+              <div style="margin:20px 0;padding:16px 20px;background:#fff7ed;border-left:4px solid #ea580c;border-radius:4px;">
+                <p style="margin:0;font-size:16px;font-weight:bold;">📄 ${doc.name}${doc.type ? ` (${doc.type})` : ''}</p>
+              </div>
+              <p style="font-size:14px;color:#6b7280;">Please log in to your Gradzest portal and upload it at your earliest convenience.</p>
+            </div>
+          </div>`,
+      }).catch(() => {});
+    }
+
     res.json(newDoc.toJSON());
   } catch {
     res.status(500).json({ message: 'Server error' });
@@ -133,6 +164,14 @@ router.put('/:id/documents/:docId', authMiddleware, async (req, res) => {
       { new: true }
     ).select('-password');
     if (!user) return res.status(404).json({ message: 'Not found' });
+
+    // Notify student of document status change
+    const doc = user.documents.id(req.params.docId);
+    const io = req.app.get('io');
+    const userSockets = req.app.get('userSockets');
+    const sids = userSockets?.get(String(req.params.id));
+    if (io && sids && doc) sids.forEach(sid => io.to(sid).emit('document:status_updated', { name: doc.name, status }));
+
     res.json(user.toJSON());
   } catch {
     res.status(500).json({ message: 'Server error' });

@@ -59,6 +59,20 @@ router.post('/:appId/comments', authMiddleware, async (req, res) => {
     ).select('-password');
     if (!user) return res.status(404).json({ message: 'Application not found' });
     const app = user.applications.find(a => a._id.toString() === req.params.appId);
+
+    // Notify the student if the commenter is not the student themselves
+    if (req.user.role !== 'student') {
+      const io = req.app.get('io');
+      const userSockets = req.app.get('userSockets');
+      const sids = userSockets?.get(String(user._id));
+      if (io && sids) sids.forEach(sid => io.to(sid).emit('application:commented', {
+        appId: req.params.appId,
+        universityName: app.universityName,
+        courseName: app.courseName,
+        author: poster.name,
+      }));
+    }
+
     res.json(app.toJSON());
   } catch {
     res.status(500).json({ message: 'Server error' });
@@ -98,6 +112,35 @@ router.put('/:appId', authMiddleware, async (req, res) => {
           universityName: app.universityName,
           courseName: app.courseName,
         }));
+      }
+    }
+
+    // Email fallback for critical status changes
+    const CRITICAL = ['offer_received', 'accepted', 'rejected'];
+    if (CRITICAL.includes(status) && user.email) {
+      const STATUS_LABEL = { offer_received: 'Offer Received', accepted: 'Accepted', rejected: 'Rejected' };
+      const isGood = status !== 'rejected';
+      const mailer = req.app.get('mailer');
+      if (mailer) {
+        mailer.sendMail({
+          from: '"Gradzest" <nithin@magzest.in>',
+          to: user.email,
+          subject: `Application Update: ${app.universityName} — ${STATUS_LABEL[status]}`,
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
+              <div style="background:#3b0764;padding:28px 24px;border-radius:8px 8px 0 0;text-align:center;">
+                <h1 style="color:#fff;margin:0;font-size:22px;">Gradzest</h1>
+              </div>
+              <div style="background:#fff;padding:28px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+                <p style="font-size:16px;">Hi ${user.name},</p>
+                <p style="font-size:15px;line-height:1.6;">Your application for <strong>${app.courseName}</strong> at <strong>${app.universityName}</strong> has been updated:</p>
+                <div style="margin:20px 0;padding:16px 20px;background:${isGood ? '#f0fdf4' : '#fef2f2'};border-left:4px solid ${isGood ? '#16a34a' : '#dc2626'};border-radius:4px;">
+                  <p style="margin:0;font-size:18px;font-weight:bold;color:${isGood ? '#15803d' : '#b91c1c'};">${STATUS_LABEL[status]}</p>
+                </div>
+                <p style="font-size:14px;color:#6b7280;">Log in to your Gradzest portal to view full details and take action.</p>
+              </div>
+            </div>`,
+        }).catch(() => {});
       }
     }
 
