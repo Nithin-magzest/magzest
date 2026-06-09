@@ -196,6 +196,7 @@ app.use('/api/unilogo', require('./routes/unilogo'));
 app.use('/api/activity', require('./routes/activity'));
 app.use('/api/tasks',         require('./routes/tasks'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/onboarding',    require('./routes/onboarding'));
 
 // WebRTC signaling
 io.on('connection', (socket) => {
@@ -261,7 +262,12 @@ async function autoSeedIfEmpty() {
   }
 }
 
-connectDB().then(autoSeedIfEmpty).catch((err) => {
+const { startDeadlineReminders } = require('./jobs/deadlineReminders');
+
+connectDB().then(async () => {
+  await autoSeedIfEmpty();
+  startDeadlineReminders(io, userSockets, mailer);
+}).catch((err) => {
   console.error('[Startup] Fatal DB error:', err.message);
   process.exit(1);
 });

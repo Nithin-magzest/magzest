@@ -3,6 +3,7 @@ import { LayoutDashboard, GraduationCap, User, MessageSquare, BookOpen, Calendar
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
 import { useUnreadMessages } from '../../hooks/useUnreadMessages';
+import EmailVerificationBanner from '../../components/EmailVerificationBanner';
 
 type NavIcon = React.ComponentType<{ className?: string }> | string;
 
@@ -36,6 +37,7 @@ export default function StudentLayout() {
   return (
     <div className="min-h-screen bg-blue-50">
       <Navbar />
+      <EmailVerificationBanner />
       <div className="flex">
         {/* Sidebar */}
         <aside className="hidden md:flex flex-col w-64 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto bg-white border-r border-gray-200 p-4 gap-1">

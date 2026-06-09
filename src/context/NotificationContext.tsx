@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { api } from '../api';
 import { useAuth } from './AuthContext';
 
-export type NotifType = 'meeting' | 'application' | 'discount' | 'subscriber' | 'counselor' | 'task';
+export type NotifType = 'meeting' | 'application' | 'discount' | 'subscriber' | 'counselor' | 'task' | 'deadline';
 export type NotifPriority = 'urgent' | 'normal' | 'info';
 
 export interface AppNotification {
@@ -621,6 +621,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         title: isApproved ? '✅ Document Approved' : '❌ Document Rejected',
         message: `Your document "${data.name}" has been ${data.status}.${!isApproved ? ' Please re-upload.' : ''}`,
         link: '/student/profile',
+      });
+    });
+
+    // Students only: intake deadline reminder from cron job
+    socket.on('deadline:reminder', (data: any) => {
+      if (userRole !== 'student') return;
+      addNotif({
+        type: 'deadline',
+        priority: data.daysUntil <= 7 ? 'urgent' : 'normal',
+        title: data.title,
+        message: data.message,
+        link: data.link || '/student/applications',
       });
     });
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { GraduationCap, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
@@ -79,11 +79,17 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const { login, loginWithToken } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Show success message when redirected from email verification
+  useEffect(() => {
+    if (searchParams.get('verified') === '1') setSuccessMsg('✅ Email verified! You can now sign in.');
+  }, []);
 
   // Handle GitHub OAuth callback redirect (token comes back in URL)
   useEffect(() => {
@@ -241,6 +247,13 @@ export default function Login() {
             <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
             <p className="text-gray-500 mt-2 text-sm">Sign in to access your dashboard</p>
           </div>
+
+          {successMsg && (
+            <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+              <p className="text-green-700 text-sm">{successMsg}</p>
+            </div>
+          )}
 
           {error && (
             <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 mb-6">

@@ -330,6 +330,35 @@ function validatePasswordStrength(password) {
   return null;
 }
 
+async function sendVerificationEmail(user, mailer, frontendUrl) {
+  const raw = crypto.randomBytes(32).toString('hex');
+  const hash = crypto.createHash('sha256').update(raw).digest('hex');
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await User.findByIdAndUpdate(user._id, { emailVerifyToken: hash, emailVerifyExpires: expires });
+  if (mailer) {
+    const verifyUrl = `${frontendUrl}/verify-email?token=${raw}`;
+    mailer.sendMail({
+      from: '"Gradzest" <nithin@magzest.in>',
+      to: user.email,
+      subject: 'Verify your Gradzest email address',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
+          <div style="background:#0d1b4b;padding:28px 24px;border-radius:8px 8px 0 0;text-align:center;">
+            <h1 style="color:#fff;margin:0;font-size:22px;">GradZest</h1>
+          </div>
+          <div style="background:#fff;padding:28px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+            <p style="font-size:16px;">Hi ${user.name},</p>
+            <p style="font-size:15px;">Please verify your email address to activate your account:</p>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="${verifyUrl}" style="background:#0d1b4b;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Verify Email Address</a>
+            </div>
+            <p style="font-size:13px;color:#6b7280;">This link expires in 24 hours. If you didn't create this account, you can ignore this email.</p>
+          </div>
+        </div>`,
+    }).catch(() => {});
+  }
+}
+
 router.post('/register', async (req, res) => {
   const { name, email, password, phone, nationality } = req.body;
   if (!name || !email || !password) return res.status(400).json({ message: 'Name, email and password are required' });
@@ -343,15 +372,51 @@ router.post('/register', async (req, res) => {
       name, email: email.toLowerCase(), password: hashed, role: 'student',
       phone: phone || '', nationality: nationality || '',
       status: 'active', joinedDate: new Date().toISOString().split('T')[0],
+      emailVerified: false,
     });
     await user.save();
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    await sendVerificationEmail(user, createMailer(), frontendUrl);
+    const accessToken = issueAccessToken(user);
+    const { raw, expires } = await issueRefreshToken(user);
+    setRefreshCookie(res, raw, expires);
     const userObj = user.toJSON();
     delete userObj.password;
-    res.status(201).json({ token, user: userObj });
+    res.status(201).json({ token: accessToken, user: userObj });
   } catch (err) {
     console.error('[auth/register]', err);
     res.status(500).json({ message: err.message || 'Server error' });
+  }
+});
+
+// GET /auth/verify-email?token=...
+router.get('/verify-email', async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ message: 'Token required' });
+  try {
+    const hash = crypto.createHash('sha256').update(String(token)).digest('hex');
+    const user = await User.findOne({ emailVerifyToken: hash, emailVerifyExpires: { $gt: new Date() } });
+    if (!user) return res.status(400).json({ message: 'Invalid or expired verification link.' });
+    await User.findByIdAndUpdate(user._id, { emailVerified: true, emailVerifyToken: undefined, emailVerifyExpires: undefined });
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}/login?verified=1`);
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /auth/resend-verification
+router.post('/resend-verification', async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ message: 'Email required' });
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user || user.emailVerified) return res.json({ message: 'If that email exists and is unverified, a new link has been sent.' });
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    await sendVerificationEmail(user, createMailer(), frontendUrl);
+    res.json({ message: 'Verification email sent.' });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
