@@ -192,6 +192,9 @@ router.post('/facebook', async (req, res) => {
   }
 });
 
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
 router.post('/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
@@ -199,8 +202,33 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
 
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ message: 'Invalid email or password' });
+    // Check if account is locked
+    if (user.lockedUntil && user.lockedUntil > Date.now()) {
+      const minutesLeft = Math.ceil((user.lockedUntil - Date.now()) / 60000);
+      return res.status(423).json({
+        message: `Account temporarily locked due to too many failed attempts. Try again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}.`,
+      });
+    }
+
+    const valid = await bcrypt.compare(password, user.password || '');
+    if (!valid) {
+      const attempts = (user.loginAttempts || 0) + 1;
+      const shouldLock = attempts >= MAX_LOGIN_ATTEMPTS;
+      await User.findByIdAndUpdate(user._id, {
+        loginAttempts: attempts,
+        ...(shouldLock && { lockedUntil: new Date(Date.now() + LOCK_DURATION_MS) }),
+      });
+      const remaining = MAX_LOGIN_ATTEMPTS - attempts;
+      if (shouldLock) {
+        return res.status(423).json({ message: 'Account locked for 15 minutes after too many failed attempts.' });
+      }
+      return res.status(401).json({
+        message: `Invalid email or password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before lockout.`,
+      });
+    }
+
+    // Success — reset lockout counters
+    await User.findByIdAndUpdate(user._id, { loginAttempts: 0, lockedUntil: null });
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const userObj = user.toJSON();

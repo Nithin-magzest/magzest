@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 ﻿import { useEffect, useRef, useState } from 'react';
 import { User, GraduationCap, BookOpen, Upload, Edit3, Save, X, FileText, Trash2, ExternalLink, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -884,7 +885,7 @@ export default function StudentProfile() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {resumeDoc.url && (
-                        <a href={resumeDoc.url} target="_blank" rel="noopener noreferrer"
+                        <a href={uploadUrl(resumeDoc.url)} target="_blank" rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
                           <ExternalLink className="w-3 h-3" /> Open
                         </a>
@@ -938,7 +939,7 @@ export default function StudentProfile() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {doc.url && (
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                        <a href={uploadUrl(doc.url)} target="_blank" rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs bg-sky-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
                           <ExternalLink className="w-3 h-3" /> Open
                         </a>
@@ -1097,7 +1098,7 @@ export default function StudentProfile() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {doc.url && (
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                        <a href={uploadUrl(doc.url)} target="_blank" rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs bg-sky-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
                           <ExternalLink className="w-3 h-3" /> Open
                         </a>

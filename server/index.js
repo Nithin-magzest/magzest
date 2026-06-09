@@ -2,6 +2,9 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
@@ -36,7 +39,53 @@ const io = new Server(httpServer, {
 });
 
 app.use(cors(corsOptions));
-app.use(express.json());
+
+// Security headers — disables fingerprinting, enables XSS/clickjacking/MIME protections
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'same-site' },
+  contentSecurityPolicy: false, // managed by frontend build
+}));
+
+// Strip $ and . from user input to block NoSQL injection
+app.use(mongoSanitize());
+
+// Rate limiters
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts. Please try again in 15 minutes.' },
+});
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests. Please slow down.' },
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api', generalLimiter);
+
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+// Protect uploaded files — only authenticated users can access them
+const jwt = require('jsonwebtoken');
+app.use('/uploads', (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1]
+    || req.query.token; // allow ?token= for direct <img src> links
+  if (!token) return res.status(401).json({ message: 'Authentication required' });
+  try {
+    jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ message: 'Invalid or expired token' });
+  }
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Share io and userSockets with route handlers

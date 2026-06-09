@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
@@ -773,7 +774,7 @@ export default function AppTeamApplications() {
                           </div>
                         </div>
                         {doc.url ? (
-                          <a href={doc.url} download target="_blank" rel="noopener noreferrer"
+                          <a href={uploadUrl(doc.url)} download target="_blank" rel="noopener noreferrer"
                             onClick={e => e.stopPropagation()}
                             className="flex items-center gap-1 px-2.5 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-xs font-semibold flex-shrink-0">
                             <Download className="w-3 h-3" /> Download

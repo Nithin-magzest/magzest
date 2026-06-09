@@ -169,6 +169,10 @@ const UserSchema = new mongoose.Schema({
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 
+  // Account lockout — incremented on each failed login, cleared on success
+  loginAttempts: { type: Number, default: 0 },
+  lockedUntil: { type: Date, default: null },
+
   // Counselor fields
   specialization: [String],
   assignedStudents: [String],
