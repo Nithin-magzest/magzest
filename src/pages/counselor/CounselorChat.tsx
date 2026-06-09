@@ -25,7 +25,7 @@ const formatChatTime = (iso: string) => {
 };
 
 function mapRoleToDisplay(dbRole: string): string {
-  if (dbRole === 'admin') return 'Admin Team';
+  if (dbRole === 'admin') return 'Admin';
   if (dbRole === 'appteam') return 'Application Team';
   if (dbRole === 'counselor') return 'Counselor';
   if (dbRole === 'student') return 'Student';
@@ -34,7 +34,7 @@ function mapRoleToDisplay(dbRole: string): string {
 }
 
 function resolveDisplayName(senderName: string, senderRole?: string) {
-  if (senderRole === 'Admin Team' || senderRole === 'Application Team') return senderRole;
+  if (senderRole === 'Admin' || senderRole === 'Application Team') return senderRole;
   return senderName;
 }
 
@@ -42,7 +42,7 @@ function getRoleBadgeClass(role: string) {
   if (role === 'Counselor') return 'text-teal-700 bg-teal-50';
   if (role === 'Student') return 'text-sky-700 bg-sky-50';
   if (role === 'Application Team') return 'text-orange-700 bg-orange-50';
-  if (role === 'Admin Team') return 'text-purple-700 bg-purple-50';
+  if (role === 'Admin' || role === 'Admin Team') return 'text-purple-700 bg-purple-50';
   return 'text-gray-600 bg-gray-100';
 }
 
@@ -85,7 +85,7 @@ function FileMessage({ msg, isMe, senderRole }: { msg: any; isMe: boolean; sende
           <div className="flex items-center gap-1.5 mb-1">
             <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{resolveDisplayName(msg.senderName, senderRole).charAt(0)}</div>
             <span className="text-xs text-gray-500">{resolveDisplayName(msg.senderName, senderRole)}</span>
-            {senderRole && senderRole !== 'Admin Team' && senderRole !== 'Application Team' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
+            {senderRole && senderRole !== 'Admin' && senderRole !== 'Admin Team' && senderRole !== 'Application Team' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
           </div>
         )}
         <div className={`rounded-2xl overflow-hidden border shadow-sm ${isMe ? 'border-green-400' : isOffer ? 'border-emerald-300 ring-2 ring-emerald-200' : 'border-gray-200'}`}>
@@ -128,7 +128,7 @@ function MeetingMessage({ msg, isMe, senderRole }: { msg: any; isMe: boolean; se
           <div className="flex items-center gap-1.5 mb-1">
             <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{resolveDisplayName(msg.senderName, senderRole).charAt(0)}</div>
             <span className="text-xs text-gray-500">{resolveDisplayName(msg.senderName, senderRole)}</span>
-            {senderRole && senderRole !== 'Admin Team' && senderRole !== 'Application Team' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
+            {senderRole && senderRole !== 'Admin' && senderRole !== 'Admin Team' && senderRole !== 'Application Team' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
           </div>
         )}
         <div className={`rounded-2xl overflow-hidden border shadow-sm ${isMe ? 'bg-green-600 border-green-400' : 'bg-white border-blue-200'}`}>
@@ -186,10 +186,13 @@ export default function CounselorChat() {
   }, []);
 
   useEffect(() => {
-    if (!lastMessageTime || !selectedRoom) return;
-    api.chat.room(selectedRoom.id).then(updated => {
-      setSelectedRoom(updated);
-      setRooms(prev => prev.map(r => r.id === updated.id ? updated : r));
+    if (!lastMessageTime) return;
+    api.chat.rooms().then(roomList => {
+      setRooms(roomList);
+      if (selectedRoom) {
+        const updated = roomList.find((r: any) => r.id === selectedRoom.id);
+        if (updated) setSelectedRoom(updated);
+      }
     }).catch(() => {});
   }, [lastMessageTime]);
 
@@ -211,7 +214,13 @@ export default function CounselorChat() {
   }, [user, selectedRoom?.id]);
 
   useEffect(() => {
-    if (selectedRoom?.id) api.chat.markRead(selectedRoom.id).catch(() => {});
+    if (!selectedRoom?.id) return;
+    api.chat.markRead(selectedRoom.id).catch(() => {});
+    setRooms(prev => prev.map(r =>
+      r.id === selectedRoom.id
+        ? { ...r, messages: r.messages?.map((m: any) => ({ ...m, read: true })) }
+        : r
+    ));
   }, [selectedRoom?.id]);
 
   useEffect(() => {
@@ -282,34 +291,25 @@ export default function CounselorChat() {
   };
 
   const getRoleLabel = (room: any): string => {
+    if (room?.type === 'admin-counselor') return 'Admin';
     if (room?.type === 'appteam-counselor' || room.participantNames?.includes('Application Team')) return 'Application Team';
-    if (room?.type === 'admin-counselor') return 'Admin Team';
     return 'Student';
   };
 
-  const relabelToAppTeam = async () => {
-    if (!selectedRoom) return;
-    try {
-      const updated = await api.chat.updateRoomType(selectedRoom.id, 'appteam-counselor');
-      setSelectedRoom(updated);
-      setRooms(prev => prev.map(r => r.id === updated.id ? updated : r));
-    } catch {}
-  };
-
   const getStudentName = (room: any): string => {
+    if (room?.type === 'admin-counselor') return 'Admin';
     if (room?.type === 'appteam-counselor' || room.participantNames?.includes('Application Team')) {
       return 'Application Team';
     }
-    if (room?.type === 'admin-counselor') return 'Admin Team';
     const actual = room.participantNames?.find(
-      (n: string) => n !== user?.name && n !== 'Application Team' && n !== 'Admin Team'
+      (n: string) => n !== user?.name && n !== 'Application Team' && n !== 'Admin' && n !== 'Admin Team'
     );
     return actual || 'Student';
   };
 
   const getRoomPartnerRole = (room: any) => {
+    if (room?.type === 'admin-counselor') return 'Admin';
     if (room?.type === 'appteam-counselor' || room.participantNames?.includes('Application Team')) return 'Application Team';
-    if (room?.type === 'admin-counselor') return 'Admin Team';
     return 'Counselor';
   };
 
@@ -425,12 +425,6 @@ const studentsWithNoChat = myStudents.filter((s: any) => {
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full" />
                   <span className="text-xs text-gray-500">{getRoleLabel(selectedRoom)}</span>
-                  {selectedRoom?.type === 'admin-counselor' && (
-                    <button type="button" onClick={relabelToAppTeam}
-                      className="text-[10px] text-orange-500 hover:text-orange-700 underline leading-none">
-                      Set as Application Team
-                    </button>
-                  )}
                 </div>
               </div>
               <button type="button" title="Voice call" aria-label="Voice call"
@@ -472,7 +466,7 @@ const studentsWithNoChat = myStudents.filter((s: any) => {
                         <div className="flex items-center gap-1.5 mb-1">
                           <div className="w-6 h-6 bg-[#0d1b4b] rounded-full flex items-center justify-center text-white text-xs font-bold">{resolveDisplayName(msg.senderName, senderRole).charAt(0)}</div>
                           <span className="text-xs text-gray-500">{resolveDisplayName(msg.senderName, senderRole)}</span>
-                          {senderRole && senderRole !== 'Admin Team' && senderRole !== 'Application Team' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
+                          {senderRole && senderRole !== 'Admin' && senderRole !== 'Admin Team' && senderRole !== 'Application Team' && <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${getRoleBadgeClass(senderRole)}`}>{senderRole}</span>}
                         </div>
                       )}
                       <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${isMe ? 'bg-green-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
