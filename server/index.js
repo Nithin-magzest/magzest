@@ -9,14 +9,25 @@ if (!process.env.JWT_SECRET || !process.env.MONGODB_URI) {
   console.error('Missing required env vars: JWT_SECRET and MONGODB_URI must be set in server/.env');
   process.exit(1);
 }
+if (!process.env.SMTP_PASS) {
+  console.warn('[warn] SMTP_PASS is not set — emails will not be delivered. Set SMTP_PASS in server/.env to enable email features.');
+}
 
 const { connectDB } = require('./db');
 const { initActivityLogger } = require('./middleware/logActivity');
 
 const app = express();
 const httpServer = createServer(app);
+const ALLOWED_ORIGINS = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL]
+  : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
 const corsOptions = {
-  origin: (origin, callback) => callback(null, true),
+  origin: (origin, callback) => {
+    // Allow server-to-server requests (no origin) and listed origins
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 };
 

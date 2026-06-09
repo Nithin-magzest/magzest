@@ -75,8 +75,8 @@ function GoogleButtonUnconfigured({ onClick, disabled }: { onClick: () => void; 
 }
 
 export default function Login() {
-  const [email, setEmail] = useState('aryan@example.com');
-  const [password, setPassword] = useState('student123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -338,7 +338,7 @@ export default function Login() {
             </Link>
           </form>
 
-          <div className="mt-8">
+          {import.meta.env.DEV && <div className="mt-8">
             <p className="text-center text-xs text-gray-400 mb-3 font-medium uppercase tracking-wide">Demo Accounts</p>
             <div className="space-y-3">
               <div>
@@ -406,7 +406,7 @@ export default function Login() {
                 </div>
               </div>
             </div>
-          </div>
+          </div>}
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Don't have an account?{' '}

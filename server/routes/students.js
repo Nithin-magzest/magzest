@@ -83,13 +83,45 @@ router.post('/', authMiddleware, async (req, res) => {
     const existing = await User.findOne({ email: data.email.toLowerCase() });
     if (existing) return res.status(409).json({ message: 'An account with this email already exists' });
     const bcrypt = require('bcryptjs');
-    const hashed = await bcrypt.hash('student123', 10);
+    const crypto = require('crypto');
+    // Generate a random 12-char password instead of a hardcoded default
+    const tempPassword = crypto.randomBytes(6).toString('hex'); // e.g. "a3f8c1d2e5b7"
+    const hashed = await bcrypt.hash(tempPassword, 10);
     const student = new User({ ...data, email: data.email.toLowerCase(), password: hashed, role: 'student' });
     await student.save();
     await User.findByIdAndUpdate(req.user.id, { $push: { assignedStudents: student._id.toString() } });
+
+    // Email the student their login credentials
+    const mailer = req.app.get('mailer');
+    if (mailer && data.email) {
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      mailer.sendMail({
+        from: '"Gradzest" <nithin@magzest.in>',
+        to: data.email.toLowerCase(),
+        subject: 'Your Gradzest Account Has Been Created',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
+            <div style="background:#0d1b4b;padding:28px 24px;border-radius:8px 8px 0 0;text-align:center;">
+              <h1 style="color:#fff;margin:0;font-size:22px;">Gradzest</h1>
+            </div>
+            <div style="background:#fff;padding:28px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+              <p style="font-size:16px;">Hi ${data.name},</p>
+              <p style="font-size:15px;">Your counselor has created a Gradzest account for you. Here are your login credentials:</p>
+              <div style="margin:20px 0;padding:16px 20px;background:#f0f4ff;border-left:4px solid #0d1b4b;border-radius:4px;">
+                <p style="margin:0 0 8px;font-size:14px;"><strong>Email:</strong> ${data.email.toLowerCase()}</p>
+                <p style="margin:0;font-size:14px;"><strong>Temporary Password:</strong> <code style="background:#e5e7eb;padding:2px 6px;border-radius:4px;">${tempPassword}</code></p>
+              </div>
+              <p style="font-size:14px;color:#6b7280;">Please log in and change your password as soon as possible.</p>
+              <a href="${frontendUrl}/login" style="display:inline-block;margin-top:16px;background:#0d1b4b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Log In to Gradzest</a>
+            </div>
+          </div>`,
+      }).catch(() => {});
+    }
+
     const obj = student.toJSON();
     delete obj.password;
-    res.status(201).json(obj);
+    // Return tempPassword so the counselor can share it manually if email fails
+    res.status(201).json({ ...obj, tempPassword });
   } catch (err) {
     res.status(500).json({ message: err.message || 'Server error' });
   }
