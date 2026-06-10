@@ -643,7 +643,29 @@ router.get('/analytics', authMiddleware, adminOnly, async (req, res) => {
       return { name: c.name, students: assigned.length, applications: appCount, offers: offerCount, workload, score };
     });
 
-    res.json({ newStudents, visaApprovalRate, conversionRate, revenue, monthlyRegistrations, applicationsByCountry, conversionFunnel, counselorPerformance });
+    // Top universities by number of applications
+    const uniCount = {};
+    students.forEach(s => (s.applications || []).forEach(a => {
+      if (!a.universityName) return;
+      uniCount[a.universityName] = (uniCount[a.universityName] || 0) + 1;
+    }));
+    const topUniversities = Object.entries(uniCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, count]) => ({ name: name.length > 28 ? name.slice(0, 26) + '…' : name, count }));
+
+    // Application status breakdown
+    const statusMap = {};
+    allApps.forEach(a => { statusMap[a.status] = (statusMap[a.status] || 0) + 1; });
+    const STATUS_LABELS = {
+      submitted: 'Submitted', under_review: 'Under Review', offer_received: 'Offer Received',
+      accepted: 'Accepted', rejected: 'Rejected', enrolled: 'Enrolled', draft: 'Draft',
+    };
+    const applicationsByStatus = Object.entries(statusMap)
+      .map(([status, count]) => ({ status: STATUS_LABELS[status] || status, count }))
+      .sort((a, b) => b.count - a.count);
+
+    res.json({ newStudents, visaApprovalRate, conversionRate, revenue, monthlyRegistrations, applicationsByCountry, conversionFunnel, counselorPerformance, topUniversities, applicationsByStatus });
   } catch (err) {
     res.status(500).json({ message: err.message || 'Server error' });
   }

@@ -11,6 +11,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 import AuthModal from './components/AuthModal';
 import ToastContainer from './components/ToastNotification';
 import { useNotifications } from './context/NotificationContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Public pages
 const Home             = lazy(() => import('./pages/Home'));
@@ -110,6 +111,7 @@ function PageSpinner() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <AuthProvider>
       <CallProvider>
@@ -215,5 +217,6 @@ export default function App() {
       </CallProvider>
     </AuthProvider>
     </GoogleOAuthProvider>
+    </ErrorBoundary>
   );
 }

@@ -7,6 +7,12 @@ const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+// Load env file: .env.production or .env.development first, fall back to .env
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production'
+  : process.env.NODE_ENV === 'development' ? '.env.development'
+  : '.env';
+require('dotenv').config({ path: path.join(__dirname, envFile) });
+// Also load base .env for any missing keys
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 if (!process.env.JWT_SECRET || !process.env.MONGODB_URI) {
@@ -198,6 +204,27 @@ app.use('/api/tasks',         require('./routes/tasks'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/onboarding',    require('./routes/onboarding'));
 
+// Health check — no auth required, used by hosting platforms and monitoring
+const mongoose = require('mongoose');
+const startTime = Date.now();
+app.get('/api/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = dbState === 1 ? 'connected' : dbState === 2 ? 'connecting' : 'disconnected';
+  const uptimeMs = Date.now() - startTime;
+  const h = Math.floor(uptimeMs / 3600000);
+  const m = Math.floor((uptimeMs % 3600000) / 60000);
+  const s = Math.floor((uptimeMs % 60000) / 1000);
+  const uptime = `${h}h ${m}m ${s}s`;
+  const ok = dbState === 1;
+  res.status(ok ? 200 : 503).json({
+    status: ok ? 'ok' : 'degraded',
+    db: dbStatus,
+    uptime,
+    env: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // WebRTC signaling
 io.on('connection', (socket) => {
   socket.on('register', async (userId) => {
@@ -237,8 +264,16 @@ io.on('connection', (socket) => {
   });
 });
 
+// Global error handler — catches anything thrown in routes
+app.use((err, req, res, next) => {
+  const status = err.status || err.statusCode || 500;
+  const message = status < 500 ? err.message : 'Internal server error';
+  if (status >= 500) console.error(`[error] ${req.method} ${req.path}`, err);
+  res.status(status).json({ message });
+});
+
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+httpServer.listen(PORT, () => console.log(`Server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`));
 
 async function autoSeedIfEmpty() {
   const User = require('./models/User');
