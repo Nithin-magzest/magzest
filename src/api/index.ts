@@ -145,6 +145,18 @@ export const api = {
       req<any>(`/students/${studentId}/documents`, {
         method: 'POST', headers: authHeaders(), body: JSON.stringify(data),
       }),
+    addNote: (studentId: string, text: string) =>
+      req<any>(`/students/${studentId}/notes`, {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify({ text }),
+      }),
+    editNote: (studentId: string, noteId: string, text: string) =>
+      req<any>(`/students/${studentId}/notes/${noteId}`, {
+        method: 'PUT', headers: authHeaders(), body: JSON.stringify({ text }),
+      }),
+    deleteNote: (studentId: string, noteId: string) =>
+      req<any>(`/students/${studentId}/notes/${noteId}`, {
+        method: 'DELETE', headers: authHeaders(),
+      }),
   },
 
   applications: {

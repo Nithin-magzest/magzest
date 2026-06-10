@@ -276,6 +276,7 @@ export default function CounselorCourses() {
   const [query, setQuery] = useState('');
   const [level, setLevel] = useState('');
   const [uniFilter, setUniFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
   const [applyModal, setApplyModal] = useState<any | null>(null);
 
   useEffect(() => {
@@ -289,16 +290,18 @@ export default function CounselorCourses() {
   );
 
   const uniNames = [...new Set(universities.map(u => u.name))].sort() as string[];
+  const countryList = [...new Set(universities.map((u: any) => u.country).filter(Boolean))].sort() as string[];
 
   const filtered = allCourses.filter(c => {
     const q = query.toLowerCase();
     const matchQ = !query || c.name?.toLowerCase().includes(q) || c.uniName?.toLowerCase().includes(q) || c.department?.toLowerCase().includes(q);
     const matchLevel = !level || c.level === level;
     const matchUni = !uniFilter || c.uniName === uniFilter;
-    return matchQ && matchLevel && matchUni;
+    const matchCountry = !countryFilter || c.country === countryFilter;
+    return matchQ && matchLevel && matchUni && matchCountry;
   }).sort((a: any, b: any) => new Date(b._uniUpdatedAt).getTime() - new Date(a._uniUpdatedAt).getTime());
 
-  const hasFilters = query || level || uniFilter;
+  const hasFilters = query || level || uniFilter || countryFilter;
 
   const modalCountry = applyModal
     ? (countries.find((c: any) => c.name?.toLowerCase() === applyModal.country?.toLowerCase()) || null)
@@ -345,8 +348,13 @@ export default function CounselorCourses() {
             <option value="">All Universities</option>
             {uniNames.map(n => <option key={n}>{n}</option>)}
           </select>
+          <select aria-label="Filter by country" value={countryFilter} onChange={e => setCountryFilter(e.target.value)}
+            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">All Countries</option>
+            {countryList.map(c => <option key={c}>{c}</option>)}
+          </select>
           {hasFilters && (
-            <button type="button" onClick={() => { setQuery(''); setLevel(''); setUniFilter(''); }}
+            <button type="button" onClick={() => { setQuery(''); setLevel(''); setUniFilter(''); setCountryFilter(''); }}
               className="flex items-center gap-1 px-3 py-2.5 text-red-500 hover:bg-red-50 rounded-xl text-sm">
               <X className="w-4 h-4" />Clear
             </button>

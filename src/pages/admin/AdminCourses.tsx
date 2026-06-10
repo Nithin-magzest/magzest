@@ -682,6 +682,7 @@ export default function AdminCourses() {
   const [query, setQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState('');
   const [uniFilter, setUniFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<{ course: any; uniId: string } | null>(null);
   const [applyModal, setApplyModal] = useState<any | null>(null);
@@ -704,18 +705,22 @@ export default function AdminCourses() {
       ...c,
       _uniId: normalId(uni),
       _uniName: uni.name,
+      _uniCountry: uni.country || '',
       website: uni.website,
       _uniLogo: uni.logo,
       _uniUpdatedAt: uni.updatedAt || uni.createdAt || 0,
     }))
   );
 
+  const countryList = [...new Set(universities.map((u: any) => u.country).filter(Boolean))].sort() as string[];
+
   const filtered = allCourses.filter(c => {
     const q = query.toLowerCase();
     const matchQ = !query || c.name?.toLowerCase().includes(q) || c._uniName?.toLowerCase().includes(q) || c.department?.toLowerCase().includes(q);
     const matchLevel = !levelFilter || c.level === levelFilter;
     const matchUni = !uniFilter || c._uniId === uniFilter;
-    return matchQ && matchLevel && matchUni;
+    const matchCountry = !countryFilter || c._uniCountry === countryFilter;
+    return matchQ && matchLevel && matchUni && matchCountry;
   }).sort((a, b) => new Date(b._uniUpdatedAt).getTime() - new Date(a._uniUpdatedAt).getTime());
 
   const handleDelete = async (uniId: string, courseId: string) => {
@@ -805,6 +810,11 @@ export default function AdminCourses() {
             className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm text-gray-700 max-w-[220px]">
             <option value="">All Universities</option>
             {uniNames.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+          <select aria-label="Filter by country" value={countryFilter} onChange={e => setCountryFilter(e.target.value)}
+            className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm text-gray-700">
+            <option value="">All Countries</option>
+            {countryList.map(c => <option key={c}>{c}</option>)}
           </select>
         </div>
 
