@@ -142,6 +142,12 @@ const AcademicDetailSchema = new mongoose.Schema({
   attempts: String,
 }, { _id: false });
 
+const CounselorNoteSchema = new mongoose.Schema({
+  text: { type: String, required: true },
+  counselorId: String,
+  counselorName: String,
+}, { timestamps: true });
+
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   firstName: String,
@@ -181,6 +187,7 @@ const UserSchema = new mongoose.Schema({
   experienceDetails: [ExperienceSchema],
   applications: [ApplicationSchema],
   documents: [DocumentSchema],
+  counselorNotes: [CounselorNoteSchema],
   counselorId: String,
   joinedDate: String,
   status: { type: String, enum: ['active', 'inactive', 'enrolled'], default: 'active' },

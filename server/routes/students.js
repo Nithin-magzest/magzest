@@ -210,4 +210,51 @@ router.put('/:id/documents/:docId', authMiddleware, async (req, res) => {
   }
 });
 
+// POST /api/students/:id/notes — add a note
+router.post('/:id/notes', authMiddleware, async (req, res) => {
+  if (!['counselor', 'admin'].includes(req.user.role)) return res.status(403).json({ message: 'Forbidden' });
+  const { text } = req.body;
+  if (!text?.trim()) return res.status(400).json({ message: 'Note text is required' });
+  try {
+    const author = await User.findById(req.user.id).select('name');
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $push: { counselorNotes: { text: text.trim(), counselorId: req.user.id, counselorName: author?.name || 'Counselor' } } },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'Student not found' });
+    res.json(user.toJSON());
+  } catch { res.status(500).json({ message: 'Server error' }); }
+});
+
+// PUT /api/students/:id/notes/:noteId — edit a note
+router.put('/:id/notes/:noteId', authMiddleware, async (req, res) => {
+  if (!['counselor', 'admin'].includes(req.user.role)) return res.status(403).json({ message: 'Forbidden' });
+  const { text } = req.body;
+  if (!text?.trim()) return res.status(400).json({ message: 'Note text is required' });
+  try {
+    const user = await User.findOneAndUpdate(
+      { _id: req.params.id, 'counselorNotes._id': req.params.noteId },
+      { $set: { 'counselorNotes.$.text': text.trim() } },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'Not found' });
+    res.json(user.toJSON());
+  } catch { res.status(500).json({ message: 'Server error' }); }
+});
+
+// DELETE /api/students/:id/notes/:noteId — delete a note
+router.delete('/:id/notes/:noteId', authMiddleware, async (req, res) => {
+  if (!['counselor', 'admin'].includes(req.user.role)) return res.status(403).json({ message: 'Forbidden' });
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $pull: { counselorNotes: { _id: req.params.noteId } } },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'Not found' });
+    res.json(user.toJSON());
+  } catch { res.status(500).json({ message: 'Server error' }); }
+});
+
 module.exports = router;

@@ -1,5 +1,5 @@
 import { uploadUrl } from '../../utils/uploadUrl';
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { User, GraduationCap, BookOpen, Upload, Edit3, Save, X, FileText, Trash2, ExternalLink, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
@@ -8,7 +8,7 @@ import StatusBadge from '../../components/StatusBadge';
 
 const EDUCATION_LEVELS = ['10th Grade', '12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
 type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; course: string; year: string; percentage: string; city: string; comment: string; status: string; yearOfStudying: string; yearOfPassing: string; backlogs: string; attempts: string; };
-function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '10th Grade', customLevel: '', institution: '', board: '', course: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '' }; }
+function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '', customLevel: '', institution: '', board: '', course: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '' }; }
 const BACHELOR_LEVELS = ["Bachelor's Degree", "Master's Degree"];
 const COURSE_LEVELS = ['12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
 function courseFieldLabel(level: string) {
@@ -392,7 +392,7 @@ export default function StudentProfile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-5">
-          {/* Personal Information */}
+          {/* 1. Personal Information */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2"><User className="w-5 h-5 text-blue-600" /> Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -475,79 +475,7 @@ export default function StudentProfile() {
             </div>
           </div>
 
-          {/* Passport Details */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600" /> Passport Details
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Place of Birth */}
-              <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Place of Birth</label>
-                {editing ? (
-                  <input
-                    aria-label="Place of Birth"
-                    value={form.placeOfBirth}
-                    onChange={e => setForm(f => ({ ...f, placeOfBirth: e.target.value }))}
-                    placeholder="City, Country"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ) : (
-                  <p className="text-gray-900 font-medium">{student.placeOfBirth || '—'}</p>
-                )}
-              </div>
-              {([
-                { label: 'Passport Number', key: 'number', type: 'text' },
-                { label: 'Issuing Country', key: 'issuingCountry', type: 'text' },
-                { label: 'Issue Date', key: 'issueDate', type: 'date' },
-                { label: 'Expiry Date', key: 'expiryDate', type: 'date' },
-              ] as { label: string; key: keyof typeof form.passport; type: string }[]).map(field => (
-                <div key={field.label}>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{field.label}</label>
-                  {editing ? (
-                    <input type={field.type} aria-label={field.label} value={form.passport[field.key]}
-                      onChange={e => setForm(f => ({ ...f, passport: { ...f.passport, [field.key]: e.target.value } }))}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  ) : (
-                    <p className="text-gray-900 font-medium">{student.passport?.[field.key] || '—'}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Address */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
-              <User className="w-5 h-5 text-blue-600" /> Address
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Street Address</label>
-                {editing ? (
-                  <input aria-label="Street Address" value={form.address.street}
-                    onChange={e => setForm(f => ({ ...f, address: { ...f.address, street: e.target.value } }))}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                ) : <p className="text-gray-900 font-medium">{student.address?.street || '—'}</p>}
-              </div>
-              {([
-                { label: 'City', key: 'city' },
-                { label: 'State / Province', key: 'state' },
-                { label: 'Country', key: 'country' },
-                { label: 'Postal Code', key: 'postalCode' },
-              ] as { label: string; key: keyof typeof form.address }[]).map(field => (
-                <div key={field.label}>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{field.label}</label>
-                  {editing ? (
-                    <input aria-label={field.label} value={form.address[field.key]}
-                      onChange={e => setForm(f => ({ ...f, address: { ...f.address, [field.key]: e.target.value } }))}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  ) : <p className="text-gray-900 font-medium">{student.address?.[field.key] || '—'}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-
+          {/* 2. Academic Details */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2"><GraduationCap className="w-5 h-5 text-blue-600" /> Academic Background</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
@@ -721,9 +649,10 @@ export default function StudentProfile() {
                         )}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="sm:col-span-2">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Education Level</label>
-                            <select aria-label="Education Level" value={entry.level} onChange={e => updateAcademicEntry(entry.id, 'level', e.target.value)}
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Highest Education Level</label>
+                            <select aria-label="Highest Education Level" value={entry.level} onChange={e => updateAcademicEntry(entry.id, 'level', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                              <option value="">Select education level</option>
                               {EDUCATION_LEVELS.map(l => <option key={l}>{l}</option>)}
                             </select>
                           </div>
@@ -879,7 +808,96 @@ export default function StudentProfile() {
             </div>
           </div>
 
-          {/* Experience Section */}
+          {/* 3. Study Preference */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2"><BookOpen className="w-5 h-5 text-blue-600" /> Study Preference</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-2">Preferred Countries</label>
+                {editing ? (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {ALL_COUNTRIES.map(c => {
+                        const selected = c === 'Other'
+                          ? (form.preferredCountries.includes('Other') || !!otherCountry)
+                          : form.preferredCountries.includes(c);
+                        return (
+                          <button key={c} type="button"
+                            onClick={() => {
+                              if (c === 'Other') {
+                                if (selected) { setOtherCountry(''); setForm(f => ({ ...f, preferredCountries: f.preferredCountries.filter(x => x !== 'Other' && ALL_COUNTRIES.includes(x)) })); }
+                                else setForm(f => ({ ...f, preferredCountries: [...f.preferredCountries.filter(x => ALL_COUNTRIES.includes(x)), 'Other'] }));
+                              } else {
+                                setForm(f => ({ ...f, preferredCountries: selected ? f.preferredCountries.filter(x => x !== c) : [...f.preferredCountries.filter(x => ALL_COUNTRIES.includes(x) || x === 'Other'), c] }));
+                              }
+                            }}
+                            className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'}`}>
+                            {c}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {(form.preferredCountries.includes('Other') || !!otherCountry) && (
+                      <input value={otherCountry} onChange={e => setOtherCountry(e.target.value)}
+                        placeholder="Please specify the country…"
+                        className="w-full px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {(student.preferredCountries || []).length > 0
+                      ? (student.preferredCountries || []).map((c: string) => (
+                          <span key={c} className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
+                        ))
+                      : <span className="text-gray-400 text-sm">No countries selected</span>}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-2">Interested Courses</label>
+                {editing ? (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {ALL_COURSES.map(c => {
+                        const selected = c === 'Other'
+                          ? (form.interestedCourses.includes('Other') || !!otherCourse)
+                          : form.interestedCourses.includes(c);
+                        return (
+                          <button key={c} type="button"
+                            onClick={() => {
+                              if (c === 'Other') {
+                                if (selected) { setOtherCourse(''); setForm(f => ({ ...f, interestedCourses: f.interestedCourses.filter(x => x !== 'Other' && ALL_COURSES.includes(x)) })); }
+                                else setForm(f => ({ ...f, interestedCourses: [...f.interestedCourses.filter(x => ALL_COURSES.includes(x)), 'Other'] }));
+                              } else {
+                                setForm(f => ({ ...f, interestedCourses: selected ? f.interestedCourses.filter(x => x !== c) : [...f.interestedCourses.filter(x => ALL_COURSES.includes(x) || x === 'Other'), c] }));
+                              }
+                            }}
+                            className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-300 hover:border-purple-400'}`}>
+                            {c}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {(form.interestedCourses.includes('Other') || !!otherCourse) && (
+                      <input value={otherCourse} onChange={e => setOtherCourse(e.target.value)}
+                        placeholder="Please specify the course or field…"
+                        className="w-full px-3 py-2 border border-purple-300 bg-purple-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {(student.interestedCourses || []).length > 0
+                      ? (student.interestedCourses || []).map((c: string) => (
+                          <span key={c} className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
+                        ))
+                      : <span className="text-gray-400 text-sm">No courses selected</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Work Experience */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-bold text-gray-900 flex items-center gap-2">
@@ -1046,7 +1064,80 @@ export default function StudentProfile() {
             </div>
           </div>
 
-          {/* Resume & CV Section */}
+          {/* 5. Address */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
+              <User className="w-5 h-5 text-blue-600" /> Address
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Street Address</label>
+                {editing ? (
+                  <input aria-label="Street Address" value={form.address.street}
+                    onChange={e => setForm(f => ({ ...f, address: { ...f.address, street: e.target.value } }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                ) : <p className="text-gray-900 font-medium">{student.address?.street || '—'}</p>}
+              </div>
+              {([
+                { label: 'City', key: 'city' },
+                { label: 'State / Province', key: 'state' },
+                { label: 'Country', key: 'country' },
+                { label: 'Postal Code', key: 'postalCode' },
+              ] as { label: string; key: keyof typeof form.address }[]).map(field => (
+                <div key={field.label}>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{field.label}</label>
+                  {editing ? (
+                    <input aria-label={field.label} value={form.address[field.key]}
+                      onChange={e => setForm(f => ({ ...f, address: { ...f.address, [field.key]: e.target.value } }))}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  ) : <p className="text-gray-900 font-medium">{student.address?.[field.key] || '—'}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 6. Passport Details */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-600" /> Passport Details
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Place of Birth */}
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Place of Birth</label>
+                {editing ? (
+                  <input
+                    aria-label="Place of Birth"
+                    value={form.placeOfBirth}
+                    onChange={e => setForm(f => ({ ...f, placeOfBirth: e.target.value }))}
+                    placeholder="City, Country"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="text-gray-900 font-medium">{student.placeOfBirth || '—'}</p>
+                )}
+              </div>
+              {([
+                { label: 'Passport Number', key: 'number', type: 'text' },
+                { label: 'Issuing Country', key: 'issuingCountry', type: 'text' },
+                { label: 'Issue Date', key: 'issueDate', type: 'date' },
+                { label: 'Expiry Date', key: 'expiryDate', type: 'date' },
+              ] as { label: string; key: keyof typeof form.passport; type: string }[]).map(field => (
+                <div key={field.label}>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{field.label}</label>
+                  {editing ? (
+                    <input type={field.type} aria-label={field.label} value={form.passport[field.key]}
+                      onChange={e => setForm(f => ({ ...f, passport: { ...f.passport, [field.key]: e.target.value } }))}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  ) : (
+                    <p className="text-gray-900 font-medium">{student.passport?.[field.key] || '—'}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 7. Resume & CV */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
               <FileText className="w-5 h-5 text-green-600" /> Resume &amp; CV
@@ -1095,10 +1186,10 @@ export default function StudentProfile() {
             })()}
           </div>
 
-          {/* Documents Section */}
+          {/* 8. Documents to Upload */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-green-600" /> Documents
+              <FileText className="w-5 h-5 text-green-600" /> Documents to Upload
             </h3>
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
               <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -1142,94 +1233,6 @@ export default function StudentProfile() {
             <button type="button" onClick={() => setShowUpload(true)} className="mt-4 w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600 py-3 rounded-xl transition-colors text-sm font-medium">
               <Upload className="w-4 h-4" /> Upload Other Document
             </button>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2"><BookOpen className="w-5 h-5 text-blue-600" /> Study Preferences</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">Preferred Countries</label>
-                {editing ? (
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-2">
-                      {ALL_COUNTRIES.map(c => {
-                        const selected = c === 'Other'
-                          ? (form.preferredCountries.includes('Other') || !!otherCountry)
-                          : form.preferredCountries.includes(c);
-                        return (
-                          <button key={c} type="button"
-                            onClick={() => {
-                              if (c === 'Other') {
-                                if (selected) { setOtherCountry(''); setForm(f => ({ ...f, preferredCountries: f.preferredCountries.filter(x => x !== 'Other' && ALL_COUNTRIES.includes(x)) })); }
-                                else setForm(f => ({ ...f, preferredCountries: [...f.preferredCountries.filter(x => ALL_COUNTRIES.includes(x)), 'Other'] }));
-                              } else {
-                                setForm(f => ({ ...f, preferredCountries: selected ? f.preferredCountries.filter(x => x !== c) : [...f.preferredCountries.filter(x => ALL_COUNTRIES.includes(x) || x === 'Other'), c] }));
-                              }
-                            }}
-                            className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'}`}>
-                            {c}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {(form.preferredCountries.includes('Other') || !!otherCountry) && (
-                      <input value={otherCountry} onChange={e => setOtherCountry(e.target.value)}
-                        placeholder="Please specify the country…"
-                        className="w-full px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {(student.preferredCountries || []).length > 0
-                      ? (student.preferredCountries || []).map((c: string) => (
-                          <span key={c} className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
-                        ))
-                      : <span className="text-gray-400 text-sm">No countries selected</span>}
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">Interested Courses</label>
-                {editing ? (
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-2">
-                      {ALL_COURSES.map(c => {
-                        const selected = c === 'Other'
-                          ? (form.interestedCourses.includes('Other') || !!otherCourse)
-                          : form.interestedCourses.includes(c);
-                        return (
-                          <button key={c} type="button"
-                            onClick={() => {
-                              if (c === 'Other') {
-                                if (selected) { setOtherCourse(''); setForm(f => ({ ...f, interestedCourses: f.interestedCourses.filter(x => x !== 'Other' && ALL_COURSES.includes(x)) })); }
-                                else setForm(f => ({ ...f, interestedCourses: [...f.interestedCourses.filter(x => ALL_COURSES.includes(x)), 'Other'] }));
-                              } else {
-                                setForm(f => ({ ...f, interestedCourses: selected ? f.interestedCourses.filter(x => x !== c) : [...f.interestedCourses.filter(x => ALL_COURSES.includes(x) || x === 'Other'), c] }));
-                              }
-                            }}
-                            className={`text-sm px-3 py-1 rounded-full font-medium border transition-colors ${selected ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-300 hover:border-purple-400'}`}>
-                            {c}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {(form.interestedCourses.includes('Other') || !!otherCourse) && (
-                      <input value={otherCourse} onChange={e => setOtherCourse(e.target.value)}
-                        placeholder="Please specify the course or field…"
-                        className="w-full px-3 py-2 border border-purple-300 bg-purple-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {(student.interestedCourses || []).length > 0
-                      ? (student.interestedCourses || []).map((c: string) => (
-                          <span key={c} className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
-                        ))
-                      : <span className="text-gray-400 text-sm">No courses selected</span>}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 

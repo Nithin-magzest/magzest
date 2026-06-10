@@ -1,7 +1,7 @@
 import { uploadUrl } from '../../utils/uploadUrl';
 ﻿import { useState, useEffect } from 'react';
 import { Link, Routes, Route, useParams, useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus, Users, BookOpen } from 'lucide-react';
+import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus, Users, BookOpen, StickyNote, Edit2, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -387,11 +387,17 @@ function StudentDetail() {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'documents' | 'courses'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'applications' | 'documents' | 'courses' | 'notes'>('overview');
   const [updating, setUpdating] = useState(false);
   const [showRequestDoc, setShowRequestDoc] = useState(false);
   const [universities, setUniversities] = useState<any[]>([]);
   const [eligFilter, setEligFilter] = useState('');
+  const [noteText, setNoteText] = useState('');
+  const [editingNote, setEditingNote] = useState<{ id: string; text: string } | null>(null);
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [countryFilter, setCountryFilter] = useState('');
+  const [courseSearch, setCourseSearch] = useState('');
+  const { user: counselor } = useAuth();
 
   useEffect(() => {
     if (studentId) api.students.get(studentId).then(setStudent).catch(() => {});
@@ -432,14 +438,23 @@ function StudentDetail() {
   });
   const docs = student.documents || [];
   const allCourses = universities.flatMap(uni =>
-    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, _elig: checkCourseEligibility(student, c) }))
+    (uni.courses || []).map((c: any) => ({ ...c, uniName: uni.name, uniCountry: uni.country || '', _elig: checkCourseEligibility(student, c) }))
   );
+  const courseCountries = Array.from(new Set(universities.map((u: any) => u.country).filter(Boolean))).sort() as string[];
   const eligCounts = {
     eligible: allCourses.filter(c => c._elig.status === 'eligible').length,
     partial: allCourses.filter(c => c._elig.status === 'partial').length,
     not_eligible: allCourses.filter(c => c._elig.status === 'not_eligible').length,
   };
-  const visibleCourses = eligFilter ? allCourses.filter(c => c._elig.status === eligFilter) : allCourses;
+  const visibleCourses = allCourses.filter(c => {
+    if (eligFilter && c._elig.status !== eligFilter) return false;
+    if (countryFilter && c.uniCountry !== countryFilter) return false;
+    if (courseSearch) {
+      const q = courseSearch.toLowerCase();
+      if (!c.name?.toLowerCase().includes(q) && !c.uniName?.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-5">
@@ -487,8 +502,8 @@ function StudentDetail() {
       </div>
 
       <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-xl w-fit">
-        {(['overview', 'applications', 'documents', 'courses'] as const).map(t => (
-          <button type="button" key={t} onClick={() => { setActiveTab(t); setEligFilter(''); }}
+        {(['overview', 'applications', 'documents', 'courses', 'notes'] as const).map(t => (
+          <button type="button" key={t} onClick={() => { setActiveTab(t); setEligFilter(''); setCountryFilter(''); setCourseSearch(''); }}
             className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${activeTab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
             {t === 'courses' ? 'Course Eligibility' : t}
           </button>
@@ -567,6 +582,27 @@ function StudentDetail() {
 
       {activeTab === 'courses' && (
         <div className="space-y-4">
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={courseSearch}
+                onChange={e => setCourseSearch(e.target.value)}
+                placeholder="Search course or university…"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <select
+              aria-label="Filter by country"
+              value={countryFilter}
+              onChange={e => setCountryFilter(e.target.value)}
+              className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white min-w-[140px]"
+            >
+              <option value="">All Countries</option>
+              {courseCountries.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
           <div className="flex flex-wrap gap-2">
             {[
               { key: '', label: `All (${allCourses.length})`, active: 'bg-gray-200 text-gray-700 border-gray-300' },
@@ -593,7 +629,7 @@ function StudentDetail() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm">{course.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{course.uniName} · {course.level}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{course.uniName} · {course.level}{course.uniCountry ? ` · ${course.uniCountry}` : ''}</p>
                     </div>
                     <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border flex-shrink-0 ${badge.classes}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
@@ -664,6 +700,125 @@ function StudentDetail() {
           </div>
         </div>
       )}
+
+      {activeTab === 'notes' && (() => {
+        const myNotes = (student.counselorNotes || []).filter((n: any) => n.counselorId === (counselor?._id || counselor?.id));
+
+        const handleAddNote = async () => {
+          if (!noteText.trim() || !studentId) return;
+          setNotesSaving(true);
+          try {
+            const updated = await api.students.addNote(studentId, noteText.trim());
+            setStudent(updated);
+            setNoteText('');
+          } catch {}
+          setNotesSaving(false);
+        };
+
+        const handleSaveEdit = async () => {
+          if (!editingNote || !editingNote.text.trim() || !studentId) return;
+          setNotesSaving(true);
+          try {
+            const updated = await api.students.editNote(studentId, editingNote.id, editingNote.text.trim());
+            setStudent(updated);
+            setEditingNote(null);
+          } catch {}
+          setNotesSaving(false);
+        };
+
+        const handleDelete = async (noteId: string) => {
+          if (!studentId) return;
+          try {
+            const updated = await api.students.deleteNote(studentId, noteId);
+            setStudent(updated);
+          } catch {}
+        };
+
+        return (
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <StickyNote className="w-4 h-4 text-yellow-500" />
+                <h3 className="font-bold text-gray-900">My Notes</h3>
+                <span className="text-xs text-gray-400 ml-auto">Only visible to you</span>
+              </div>
+
+              <div className="flex gap-2 mb-5">
+                <textarea
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  placeholder="Add a private note about this student…"
+                  rows={3}
+                  className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"
+                />
+                <button
+                  type="button"
+                  disabled={!noteText.trim() || notesSaving}
+                  onClick={handleAddNote}
+                  className="self-end px-4 py-2.5 bg-yellow-500 text-white rounded-xl text-sm font-medium hover:bg-yellow-600 transition-colors disabled:opacity-50 whitespace-nowrap"
+                >
+                  {notesSaving ? 'Saving…' : 'Add Note'}
+                </button>
+              </div>
+
+              {myNotes.length === 0 ? (
+                <div className="text-center py-8">
+                  <StickyNote className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                  <p className="text-sm text-gray-400">No notes yet. Add your first note above.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {[...myNotes].reverse().map((note: any) => {
+                    const noteId = note._id || note.id;
+                    const isEditing = editingNote?.id === noteId;
+                    return (
+                      <div key={noteId} className="bg-yellow-50 border border-yellow-100 rounded-xl p-4">
+                        {isEditing ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={editingNote.text}
+                              onChange={e => setEditingNote({ ...editingNote, text: e.target.value })}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-yellow-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none bg-white"
+                            />
+                            <div className="flex gap-2 justify-end">
+                              <button type="button" onClick={() => setEditingNote(null)}
+                                className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                                Cancel
+                              </button>
+                              <button type="button" disabled={!editingNote.text.trim() || notesSaving} onClick={handleSaveEdit}
+                                className="px-3 py-1.5 text-xs bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50">
+                                {notesSaving ? 'Saving…' : 'Save'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-start gap-3">
+                            <p className="flex-1 text-sm text-gray-800 whitespace-pre-wrap">{note.text}</p>
+                            <div className="flex gap-1.5 flex-shrink-0">
+                              <button type="button" onClick={() => setEditingNote({ id: noteId, text: note.text })}
+                                className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-100 rounded-lg transition-colors" title="Edit note">
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button type="button" onClick={() => handleDelete(noteId)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete note">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400 mt-2">
+                          {note.createdAt ? new Date(note.createdAt).toLocaleString() : ''}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

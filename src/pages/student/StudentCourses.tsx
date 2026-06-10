@@ -39,6 +39,7 @@ export default function StudentCourses() {
   const [query, setQuery] = useState('');
   const [level, setLevel] = useState('');
   const [uniFilter, setUniFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
   const [eligibleOnly, setEligibleOnly] = useState(false);
   const [applyModal, setApplyModal] = useState<{ course: any; uni: any } | null>(null);
 
@@ -52,6 +53,7 @@ export default function StudentCourses() {
   );
 
   const uniNames = [...new Set(universities.map(u => u.name))].sort() as string[];
+  const countryList = [...new Set(universities.map((u: any) => u.country).filter(Boolean))].sort() as string[];
 
   const coursesWithElig = allCourses.map(c => ({
     ...c,
@@ -63,11 +65,12 @@ export default function StudentCourses() {
     const matchQ = !query || c.name?.toLowerCase().includes(q) || c.uniName?.toLowerCase().includes(q) || c.department?.toLowerCase().includes(q);
     const matchLevel = !level || c.level === level;
     const matchUni = !uniFilter || c.uniName === uniFilter;
+    const matchCountry = !countryFilter || c.country === countryFilter;
     const matchElig = !eligibleOnly || c._elig.status === 'eligible';
-    return matchQ && matchLevel && matchUni && matchElig;
+    return matchQ && matchLevel && matchUni && matchCountry && matchElig;
   }).sort((a, b) => new Date(b._uniUpdatedAt).getTime() - new Date(a._uniUpdatedAt).getTime());
 
-  const hasFilters = query || level || uniFilter || eligibleOnly;
+  const hasFilters = query || level || uniFilter || countryFilter || eligibleOnly;
 
   return (
     <div className="space-y-6">
@@ -102,12 +105,17 @@ export default function StudentCourses() {
             <option value="">All Universities</option>
             {uniNames.map(n => <option key={n}>{n}</option>)}
           </select>
+          <select aria-label="Filter by country" value={countryFilter} onChange={e => setCountryFilter(e.target.value)}
+            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">All Countries</option>
+            {countryList.map(c => <option key={c}>{c}</option>)}
+          </select>
           <button type="button" onClick={() => setEligibleOnly(v => !v)}
             className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${eligibleOnly ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'}`}>
             <ShieldCheck className="w-4 h-4" />Eligible Only
           </button>
           {hasFilters && (
-            <button type="button" onClick={() => { setQuery(''); setLevel(''); setUniFilter(''); setEligibleOnly(false); }}
+            <button type="button" onClick={() => { setQuery(''); setLevel(''); setUniFilter(''); setCountryFilter(''); setEligibleOnly(false); }}
               className="flex items-center gap-1 px-3 py-2.5 text-red-500 hover:bg-red-50 rounded-xl text-sm">
               <X className="w-4 h-4" />Clear
             </button>
