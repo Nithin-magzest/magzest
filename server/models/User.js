@@ -190,7 +190,7 @@ const UserSchema = new mongoose.Schema({
   counselorNotes: [CounselorNoteSchema],
   counselorId: String,
   joinedDate: String,
-  status: { type: String, enum: ['active', 'inactive', 'enrolled'], default: 'active' },
+  status: { type: String, enum: ['active', 'inactive', 'counseling', 'shortlisting', 'application', 'test_preparation', 'visa_process', 'loan_process', 'enrolled'], default: 'counseling' },
 
   // Email verification
   emailVerified: { type: Boolean, default: false },

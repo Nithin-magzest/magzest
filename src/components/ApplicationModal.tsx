@@ -110,7 +110,6 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
     englishCertificate: false,
     bankStatement: false,
     referenceLetters: false,
-    sop: false,
   });
 
   const validateStep = (): string => {
@@ -135,9 +134,6 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
       if (finance.englishTestType && finance.englishTestType !== 'Not Attempted' && !finance.englishTestScore) return 'Please enter your English test score';
     }
     if (step === 3) {
-      if (sop.whyCourse.trim().length < 50) return 'Please write at least 50 characters for why you chose this course';
-      if (sop.careerGoals.trim().length < 50) return 'Please describe your career goals (min 50 characters)';
-      if (sop.whyUniversity.trim().length < 50) return 'Please write why you chose this university (min 50 characters)';
       if (!Object.values(docs).every(Boolean)) return 'Please confirm all required documents are ready';
     }
     return '';
@@ -513,25 +509,22 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
                 <h3 className="font-semibold text-gray-800 mb-3">Statement of Purpose</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className={labelCls}>Why do you want to study <em>{course.name}</em>? <span className="text-red-500">*</span></label>
+                    <label className={labelCls}>Why do you want to study <em>{course.name}</em>? <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                     <textarea rows={3} value={sop.whyCourse} onChange={e => setSop(s => ({ ...s, whyCourse: e.target.value }))}
                       placeholder="Describe your motivation for choosing this course..."
                       className={`${inputCls} resize-none`} />
-                    <p className={`text-xs mt-1 ${sop.whyCourse.length < 50 ? 'text-gray-400' : 'text-green-600'}`}>{sop.whyCourse.length} / 50 minimum characters</p>
                   </div>
                   <div>
-                    <label className={labelCls}>What are your career goals? <span className="text-red-500">*</span></label>
+                    <label className={labelCls}>What are your career goals? <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                     <textarea rows={3} value={sop.careerGoals} onChange={e => setSop(s => ({ ...s, careerGoals: e.target.value }))}
                       placeholder="Describe your career aspirations and how this program will help..."
                       className={`${inputCls} resize-none`} />
-                    <p className={`text-xs mt-1 ${sop.careerGoals.length < 50 ? 'text-gray-400' : 'text-green-600'}`}>{sop.careerGoals.length} / 50 minimum characters</p>
                   </div>
                   <div>
-                    <label className={labelCls}>Why did you choose <em>{uni.name}</em>? <span className="text-red-500">*</span></label>
+                    <label className={labelCls}>Why did you choose <em>{uni.name}</em>? <span className="text-xs text-gray-400 font-normal">(optional)</span></label>
                     <textarea rows={3} value={sop.whyUniversity} onChange={e => setSop(s => ({ ...s, whyUniversity: e.target.value }))}
                       placeholder="Explain what attracted you to this university..."
                       className={`${inputCls} resize-none`} />
-                    <p className={`text-xs mt-1 ${sop.whyUniversity.length < 50 ? 'text-gray-400' : 'text-green-600'}`}>{sop.whyUniversity.length} / 50 minimum characters</p>
                   </div>
                 </div>
               </div>
@@ -546,8 +539,7 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
                     { key: 'degreeCertificate', label: 'Degree / Graduation Certificate' },
                     { key: 'englishCertificate', label: 'English Proficiency Certificate (IELTS / TOEFL / PTE or equivalent)' },
                     { key: 'bankStatement', label: 'Bank Statement / Proof of Funds (last 3 months)' },
-                    { key: 'referenceLetters', label: 'Reference / Recommendation Letters (at least 2)' },
-                    { key: 'sop', label: 'Statement of Purpose (completed above)' },
+                    { key: 'referenceLetters', label: 'Reference / Recommendation Letters (at least 3)' },
                   ] as { key: keyof typeof docs; label: string }[]).map(doc => (
                     <label key={doc.key} className="flex items-start gap-3 cursor-pointer p-2.5 rounded-xl hover:bg-gray-50 transition-colors">
                       <input type="checkbox" checked={docs[doc.key]} onChange={e => setDocs(d => ({ ...d, [doc.key]: e.target.checked }))} className="w-4 h-4 mt-0.5 accent-blue-600 flex-shrink-0" />

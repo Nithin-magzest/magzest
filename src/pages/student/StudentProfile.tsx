@@ -1,6 +1,6 @@
 import { uploadUrl } from '../../utils/uploadUrl';
 import { useEffect, useRef, useState } from 'react';
-import { User, GraduationCap, BookOpen, Upload, Edit3, Save, X, FileText, Trash2, ExternalLink, CheckCircle, AlertCircle, Plus } from 'lucide-react';
+import { User, GraduationCap, BookOpen, Upload, Edit3, Save, X, FileText, Trash2, ExternalLink, CheckCircle, AlertCircle, Plus, ArrowUp, ArrowDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Student } from '../../types';
@@ -74,6 +74,15 @@ function ExpCertUpload({ onUploaded }: { onUploaded: (doc: ExpCert) => void }) {
 const DOC_TYPES = ['Passport', '10th Certificate', 'Intermediate Certificate', 'Diploma Certificate', 'Degree Certificate', 'Transcript', 'English Test Certificate', 'SOP', 'LOR', 'Bank Statement', 'Other'];
 const ALL_COUNTRIES = ['Australia', 'Canada', 'France', 'Germany', 'Ireland', 'Netherlands', 'New Zealand', 'Singapore', 'United Kingdom', 'United States', 'Other'];
 const ALL_COURSES = ['Arts & Humanities', 'Business', 'Computer Science', 'Data Science', 'Engineering', 'Finance', 'Law', 'Medicine', 'MBA', 'Pharmacy', 'Psychology', 'Other'];
+
+function ordinal(n: number) {
+  if (n === 1) return '1st'; if (n === 2) return '2nd'; if (n === 3) return '3rd'; return `${n}th`;
+}
+function moveItem(arr: string[], idx: number, dir: -1 | 1): string[] {
+  const t = idx + dir;
+  if (t < 0 || t >= arr.length) return arr;
+  const next = [...arr]; [next[idx], next[t]] = [next[t], next[idx]]; return next;
+}
 
 function UploadDocumentModal({ onClose, onUploaded }: { onClose: () => void; onUploaded: () => void }) {
   const [name, setName] = useState('');
@@ -811,11 +820,14 @@ export default function StudentProfile() {
           {/* 3. Study Preference */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2"><BookOpen className="w-5 h-5 text-blue-600" /> Study Preference</h3>
-            <div className="space-y-4">
+            <div className="space-y-6">
+
+              {/* Preferred Countries */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">Preferred Countries</label>
+                <label className="block text-xs font-medium text-gray-500 mb-2">Preferred Countries <span className="text-gray-400 font-normal">(select and arrange in priority order)</span></label>
                 {editing ? (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
+                    {/* Chip selector */}
                     <div className="flex flex-wrap gap-2">
                       {ALL_COUNTRIES.map(c => {
                         const selected = c === 'Other'
@@ -842,21 +854,62 @@ export default function StudentProfile() {
                         placeholder="Please specify the country…"
                         className="w-full px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     )}
+                    {/* Priority order list */}
+                    {form.preferredCountries.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-xs font-semibold text-gray-500 mb-1">Priority Order — use arrows to reorder</p>
+                        {form.preferredCountries.map((item, idx) => {
+                          const displayVal = item === 'Other' ? (otherCountry.trim() || 'Other') : item;
+                          return (
+                            <div key={item} className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
+                              <span className="text-xs font-bold text-blue-700 bg-blue-200 px-2 py-0.5 rounded-full min-w-[36px] text-center">{ordinal(idx + 1)}</span>
+                              <span className="flex-1 text-sm font-medium text-gray-800">{displayVal}</span>
+                              <div className="flex gap-1">
+                                <button type="button" disabled={idx === 0}
+                                  onClick={() => setForm(f => ({ ...f, preferredCountries: moveItem(f.preferredCountries, idx, -1) }))}
+                                  className="p-1 text-blue-500 hover:text-blue-700 disabled:opacity-30 rounded transition-colors" title="Move up">
+                                  <ArrowUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" disabled={idx === form.preferredCountries.length - 1}
+                                  onClick={() => setForm(f => ({ ...f, preferredCountries: moveItem(f.preferredCountries, idx, 1) }))}
+                                  className="p-1 text-blue-500 hover:text-blue-700 disabled:opacity-30 rounded transition-colors" title="Move down">
+                                  <ArrowDown className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button"
+                                  onClick={() => {
+                                    if (item === 'Other') setOtherCountry('');
+                                    setForm(f => ({ ...f, preferredCountries: f.preferredCountries.filter((_, i) => i !== idx) }));
+                                  }}
+                                  className="p-1 text-red-400 hover:text-red-600 rounded transition-colors" title="Remove">
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {(student.preferredCountries || []).length > 0
-                      ? (student.preferredCountries || []).map((c: string) => (
-                          <span key={c} className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
+                      ? (student.preferredCountries || []).map((c: string, idx: number) => (
+                          <div key={c} className="flex items-center gap-2 bg-white border border-gray-200 rounded-full pl-1.5 pr-3.5 py-1.5 shadow-sm">
+                            <span className="w-5 h-5 flex items-center justify-center bg-blue-600 text-white text-[10px] font-bold rounded-full flex-shrink-0">{idx + 1}</span>
+                            <span className="text-sm font-medium text-gray-800">{c}</span>
+                          </div>
                         ))
                       : <span className="text-gray-400 text-sm">No countries selected</span>}
                   </div>
                 )}
               </div>
+
+              {/* Interested Courses */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">Interested Courses</label>
+                <label className="block text-xs font-medium text-gray-500 mb-2">Interested Courses <span className="text-gray-400 font-normal">(select and arrange in priority order)</span></label>
                 {editing ? (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
+                    {/* Chip selector */}
                     <div className="flex flex-wrap gap-2">
                       {ALL_COURSES.map(c => {
                         const selected = c === 'Other'
@@ -883,17 +936,56 @@ export default function StudentProfile() {
                         placeholder="Please specify the course or field…"
                         className="w-full px-3 py-2 border border-purple-300 bg-purple-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
                     )}
+                    {/* Priority order list */}
+                    {form.interestedCourses.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-xs font-semibold text-gray-500 mb-1">Priority Order — use arrows to reorder</p>
+                        {form.interestedCourses.map((item, idx) => {
+                          const displayVal = item === 'Other' ? (otherCourse.trim() || 'Other') : item;
+                          return (
+                            <div key={item} className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2">
+                              <span className="text-xs font-bold text-purple-700 bg-purple-200 px-2 py-0.5 rounded-full min-w-[36px] text-center">{ordinal(idx + 1)}</span>
+                              <span className="flex-1 text-sm font-medium text-gray-800">{displayVal}</span>
+                              <div className="flex gap-1">
+                                <button type="button" disabled={idx === 0}
+                                  onClick={() => setForm(f => ({ ...f, interestedCourses: moveItem(f.interestedCourses, idx, -1) }))}
+                                  className="p-1 text-purple-500 hover:text-purple-700 disabled:opacity-30 rounded transition-colors" title="Move up">
+                                  <ArrowUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" disabled={idx === form.interestedCourses.length - 1}
+                                  onClick={() => setForm(f => ({ ...f, interestedCourses: moveItem(f.interestedCourses, idx, 1) }))}
+                                  className="p-1 text-purple-500 hover:text-purple-700 disabled:opacity-30 rounded transition-colors" title="Move down">
+                                  <ArrowDown className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button"
+                                  onClick={() => {
+                                    if (item === 'Other') setOtherCourse('');
+                                    setForm(f => ({ ...f, interestedCourses: f.interestedCourses.filter((_, i) => i !== idx) }));
+                                  }}
+                                  className="p-1 text-red-400 hover:text-red-600 rounded transition-colors" title="Remove">
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {(student.interestedCourses || []).length > 0
-                      ? (student.interestedCourses || []).map((c: string) => (
-                          <span key={c} className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium">{c}</span>
+                      ? (student.interestedCourses || []).map((c: string, idx: number) => (
+                          <div key={c} className="flex items-center gap-2 bg-white border border-gray-200 rounded-full pl-1.5 pr-3.5 py-1.5 shadow-sm">
+                            <span className="w-5 h-5 flex items-center justify-center bg-purple-600 text-white text-[10px] font-bold rounded-full flex-shrink-0">{idx + 1}</span>
+                            <span className="text-sm font-medium text-gray-800">{c}</span>
+                          </div>
                         ))
                       : <span className="text-gray-400 text-sm">No courses selected</span>}
                   </div>
                 )}
               </div>
+
             </div>
           </div>
 
