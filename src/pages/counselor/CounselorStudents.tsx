@@ -74,7 +74,7 @@ function CreateStudentModal({ onClose, onCreated }: { onClose: () => void; onCre
     educationLevel: '', gpa: '', budget: '',
     englishType: 'IELTS', englishScore: '',
     preferredCountries: [] as string[],
-    status: 'active',
+    status: 'counseling',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -318,18 +318,27 @@ function StudentsList() {
       </div>
 
       <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by name, email, nationality..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-          </div>
-          <select aria-label="Filter by status" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="enrolled">Enrolled</option>
-          </select>
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by name, email, nationality..."
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: '', label: 'All' },
+            { value: 'counseling', label: 'Counseling' },
+            { value: 'shortlisting', label: 'Shortlisting' },
+            { value: 'application', label: 'Application' },
+            { value: 'test_preparation', label: 'Test Preparation' },
+            { value: 'visa_process', label: 'Visa Process' },
+            { value: 'loan_process', label: 'Loan Process' },
+            { value: 'enrolled', label: 'Enrolled' },
+          ].map(f => (
+            <button key={f.value} type="button" onClick={() => setStatusFilter(f.value)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${statusFilter === f.value ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:border-green-400'}`}>
+              {f.label}
+            </button>
+          ))}
         </div>
         <p className="text-sm text-gray-500 mt-3">{filtered.length} students found</p>
       </div>

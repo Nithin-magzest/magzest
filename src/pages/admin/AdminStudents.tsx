@@ -684,6 +684,12 @@ function StatusPill({ status }: { status: string }) {
   let cls = 'bg-purple-100 text-purple-700 border border-purple-200';
   if (s === 'active') cls = 'bg-green-100 text-green-700 border border-green-200';
   else if (s === 'inactive') cls = 'bg-gray-100 text-gray-600 border border-gray-200';
+  else if (s === 'counseling') cls = 'bg-sky-100 text-sky-700 border border-sky-200';
+  else if (s === 'shortlisting') cls = 'bg-indigo-100 text-indigo-700 border border-indigo-200';
+  else if (s === 'application') cls = 'bg-blue-100 text-blue-700 border border-blue-200';
+  else if (s === 'test_preparation') cls = 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+  else if (s === 'visa_process') cls = 'bg-orange-100 text-orange-700 border border-orange-200';
+  else if (s === 'loan_process') cls = 'bg-pink-100 text-pink-700 border border-pink-200';
   else if (s === 'enrolled') cls = 'bg-emerald-100 text-emerald-700 border border-emerald-200';
   else if (s === 'registered') cls = 'bg-slate-100 text-slate-600 border border-slate-200';
   else if (s === 'under_review' || s === 'under review') cls = 'bg-blue-100 text-blue-700 border border-blue-200';
@@ -755,7 +761,7 @@ export default function AdminStudents() {
 
   const counts = {
     total: students.length,
-    active: students.filter(s => s.status === 'active').length,
+    active: students.filter(s => !['enrolled', 'inactive'].includes(s.status)).length,
     inactive: students.filter(s => s.status === 'inactive').length,
     enrolled: students.filter(s => s.status === 'enrolled').length,
     unassigned: students.filter(s => !s.counselorId).length,
@@ -937,9 +943,15 @@ export default function AdminStudents() {
             <div className="relative">
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} title="Status" className={dSel}>
                 <option value="">Status</option>
+                <option value="counseling">Counseling</option>
+                <option value="shortlisting">Shortlisting</option>
+                <option value="application">Application</option>
+                <option value="test_preparation">Test Preparation</option>
+                <option value="visa_process">Visa Process</option>
+                <option value="loan_process">Loan Process</option>
+                <option value="enrolled">Enrolled</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
-                <option value="enrolled">Enrolled</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
             </div>
