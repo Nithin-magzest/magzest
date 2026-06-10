@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
@@ -381,7 +382,7 @@ function DetailPanel({
                     <p className="text-[10px] text-gray-400">{doc.type} · {doc.status}</p>
                   </div>
                   {doc.url && (
-                    <a href={doc.url} download target="_blank" rel="noopener noreferrer"
+                    <a href={uploadUrl(doc.url)} download target="_blank" rel="noopener noreferrer"
                       className="p-1 rounded hover:bg-indigo-100 text-indigo-600 transition-colors flex-shrink-0">
                       <Download className="w-3.5 h-3.5" />
                     </a>

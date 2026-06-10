@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FileText, Search, X, RefreshCw, AlertTriangle, Download,
@@ -376,7 +377,7 @@ function DetailPanel({
                   </div>
                   {doc.url ? (
                     <a
-                      href={doc.url}
+                      href={uploadUrl(doc.url)}
                       download
                       target="_blank"
                       rel="noreferrer"

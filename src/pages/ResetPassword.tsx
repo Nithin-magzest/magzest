@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { GraduationCap, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { api } from '../api';
+import PasswordStrengthBar from '../components/PasswordStrengthBar';
+import { checkPasswordStrength } from '../utils/passwordStrength';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -18,8 +20,9 @@ export default function ResetPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    const strength = checkPasswordStrength(password);
+    if (!strength.valid) {
+      setError('Password must be at least 8 characters and include an uppercase letter, a number, and a special character.');
       return;
     }
     if (password !== confirm) {
@@ -103,7 +106,7 @@ export default function ResetPassword() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0d1b4b] text-sm pr-12"
-                      placeholder="Min. 6 characters"
+                      placeholder="Min. 8 characters"
                       required
                       autoComplete="new-password"
                       autoFocus
@@ -112,6 +115,7 @@ export default function ResetPassword() {
                       {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  <PasswordStrengthBar password={password} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password</label>

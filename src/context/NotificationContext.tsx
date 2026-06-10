@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { api } from '../api';
 import { useAuth } from './AuthContext';
 
-export type NotifType = 'meeting' | 'application' | 'discount' | 'subscriber' | 'counselor' | 'task';
+export type NotifType = 'meeting' | 'application' | 'discount' | 'subscriber' | 'counselor' | 'task' | 'deadline';
 export type NotifPriority = 'urgent' | 'normal' | 'info';
 
 export interface AppNotification {
@@ -21,19 +21,21 @@ interface NotificationContextValue {
   notifications: AppNotification[];
   toasts: AppNotification[];
   unreadCount: number;
+  newSinceLastOpen: number;
   addNotif: (notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => void;
   markRead: (id: string) => void;
   markAllRead: () => void;
   dismiss: (id: string) => void;
   dismissToast: (id: string) => void;
   clearAll: () => void;
+  markPanelOpened: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue>({
-  notifications: [], toasts: [], unreadCount: 0,
+  notifications: [], toasts: [], unreadCount: 0, newSinceLastOpen: 0,
   addNotif: () => {},
   markRead: () => {}, markAllRead: () => {}, dismiss: () => {},
-  dismissToast: () => {}, clearAll: () => {},
+  dismissToast: () => {}, clearAll: () => {}, markPanelOpened: () => {},
 });
 
 const STATUS_LABELS: Record<string, string> = {
@@ -96,18 +98,63 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => loadStored(userId));
   const [toasts, setToasts] = useState<AppNotification[]>([]);
+  const [lastOpenedAt, setLastOpenedAt] = useState<Date>(
+    () => new Date(localStorage.getItem(`notif_panel_opened_${userId}`) || 0)
+  );
 
-  // Reload when user changes
+  const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
+
+  // Load from DB on mount and when user changes
   const prevUserId = useRef(userId);
   useEffect(() => {
-    if (prevUserId.current !== userId) {
-      prevUserId.current = userId;
-      setNotifications(loadStored(userId));
-      setToasts([]);
-    }
-  }, [userId]);
+    if (!isAuthenticated || !userId) return;
+    if (prevUserId.current === userId) return;
+    prevUserId.current = userId;
+    setToasts([]);
 
-  // Persist
+    fetch('/api/notifications', { headers: authHeader() })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((data: any[]) => {
+        const loaded: AppNotification[] = data.map(n => ({
+          id: n._id,
+          type: n.type,
+          priority: n.priority,
+          title: n.title,
+          message: n.message,
+          link: n.link,
+          timestamp: new Date(n.createdAt),
+          read: n.read,
+        }));
+        setNotifications(loaded);
+        localStorage.setItem(storageKey(userId), JSON.stringify(loaded));
+      })
+      .catch(() => setNotifications(loadStored(userId)));
+  }, [isAuthenticated, userId]);
+
+  // Initial load on first mount
+  useEffect(() => {
+    if (!isAuthenticated || !userId) return;
+    fetch('/api/notifications', { headers: authHeader() })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((data: any[]) => {
+        const loaded: AppNotification[] = data.map(n => ({
+          id: n._id,
+          type: n.type,
+          priority: n.priority,
+          title: n.title,
+          message: n.message,
+          link: n.link,
+          timestamp: new Date(n.createdAt),
+          read: n.read,
+        }));
+        setNotifications(loaded);
+        localStorage.setItem(storageKey(userId), JSON.stringify(loaded));
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  // Write-through cache to localStorage as offline fallback
   useEffect(() => {
     localStorage.setItem(storageKey(userId), JSON.stringify(notifications.slice(0, MAX_NOTIFICATIONS)));
   }, [notifications, userId]);
@@ -123,19 +170,44 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // ── Core addNotif ────────────────────────────────────────────────────────
   const addNotif = useCallback((notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const full: AppNotification = { ...notif, id, timestamp: new Date(), read: false };
+    const tempId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const full: AppNotification = { ...notif, id: tempId, timestamp: new Date(), read: false };
 
     setNotifications(prev => [full, ...prev].slice(0, MAX_NOTIFICATIONS));
-    setToasts(prev => [...prev.slice(-4), full]); // max 5 toasts at once
 
-    // Sound
+    // Toast grouping: if a toast of same type already exists, update its title with a count
+    setToasts(prev => {
+      const sameIdx = prev.findIndex(t => t.type === notif.type);
+      if (sameIdx >= 0) {
+        const existing = prev[sameIdx];
+        const base = existing.title.replace(/ \+\d+ more$/, '');
+        const prevCount = parseInt(existing.title.match(/\+(\d+) more$/)?.[1] || '1');
+        const updated = { ...existing, title: `${base} +${prevCount} more` };
+        return [...prev.slice(0, sameIdx), updated, ...prev.slice(sameIdx + 1)];
+      }
+      return [...prev.slice(-4), full];
+    });
+
     playSound(notif.priority);
 
-    // Browser notification
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       new Notification(notif.title, { body: notif.message });
     }
+
+    // Save to DB async — update local id with DB _id on success
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: notif.type, priority: notif.priority, title: notif.title, message: notif.message, link: notif.link }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(saved => {
+        if (saved?._id && saved._id !== tempId) {
+          setNotifications(prev => prev.map(n => n.id === tempId ? { ...n, id: saved._id } : n));
+          setToasts(prev => prev.map(n => n.id === tempId ? { ...n, id: saved._id } : n));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // ── Request browser notification permission ──────────────────────────────
@@ -199,7 +271,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           const id = app._id || app.id;
           next[id] = app.status;
 
-          // Status change notification
+          const appLink = `/student/applications?app=${id}`;
+
+          // Status change notification — deep link to specific app
           if (prev[id] !== undefined && prev[id] !== app.status) {
             const isUrgent  = ['offer_received', 'rejected'].includes(app.status);
             const isGood    = ['offer_received', 'accepted', 'enrolled'].includes(app.status);
@@ -208,7 +282,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               priority: isUrgent ? 'urgent' : 'normal',
               title: isGood ? '🎉 Application Update!' : app.status === 'rejected' ? '❌ Application Update' : '📋 Application Updated',
               message: `${app.universityName} — ${app.courseName} is now "${STATUS_LABELS[app.status] ?? app.status}".`,
-              link: '/student/applications',
+              link: appLink,
             });
           }
 
@@ -221,13 +295,35 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 type: 'application', priority: 'urgent',
                 title: '⚠️ Offer Expires Soon!',
                 message: `Your offer from ${app.universityName} has been pending for ${Math.floor(daysOld)} days. Accept or reject it before it expires.`,
-                link: '/student/applications',
+                link: appLink,
               });
               smartNotifDates.current[smartKey] = new Date().toISOString();
               localStorage.setItem(`smart_notif_${userId}`, JSON.stringify(smartNotifDates.current));
             }
           }
         });
+
+        // Smart alert: pending documents older than 3 days
+        try {
+          const profile = await api.students.me();
+          (profile.documents || []).forEach((doc: any) => {
+            if (doc.status !== 'pending' || !doc.uploadedDate) return;
+            const daysOld = (Date.now() - new Date(doc.uploadedDate).getTime()) / 86400000;
+            const smartKey = `doc_pending_${doc._id || doc.name}`;
+            const lastNotified = smartNotifDates.current[smartKey];
+            const daysSince = lastNotified ? (Date.now() - new Date(lastNotified).getTime()) / 86400000 : Infinity;
+            if (daysOld >= 3 && daysSince >= 2) {
+              addNotif({
+                type: 'application', priority: 'normal',
+                title: '📄 Document Pending Upload',
+                message: `"${doc.name}" has been waiting for upload for ${Math.floor(daysOld)} days. Please upload it soon.`,
+                link: '/student/profile?tab=documents',
+              });
+              smartNotifDates.current[smartKey] = new Date().toISOString();
+              localStorage.setItem(`smart_notif_${userId}`, JSON.stringify(smartNotifDates.current));
+            }
+          });
+        } catch {}
 
         lastAppStatuses.current = next;
         localStorage.setItem(appStatusKey(userId), JSON.stringify(next));
@@ -252,9 +348,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
         students.forEach((s: any) => {
           const id = (s._id || s.id).toString();
+
+          // Only process students assigned to THIS counselor
+          const assignedTo = s.counselorId?._id || s.counselorId;
+          if (assignedTo && String(assignedTo) !== String(userId)) return;
+
           nextIds.add(id);
 
-          // New student assigned
+          // New student assigned to this counselor
           if (prevIds.size > 0 && !prevIds.has(id)) {
             addNotif({
               type: 'counselor', priority: 'normal',
@@ -343,7 +444,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const socket = import.meta.env.VITE_API_URL
       ? io(import.meta.env.VITE_API_URL)
       : io();
-    socket.emit('register', userId);
+
+    // Register after connection is established — and re-register on every reconnect
+    const registerSocket = () => socket.emit('register', userId);
+    socket.on('connect', registerSocket);
+    if (socket.connected) registerSocket(); // already connected (e.g. hot-reload)
 
     // Admin: new subscriber
     if (userRole === 'admin') {
@@ -357,22 +462,35 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       });
     }
 
-    // Student: new meeting scheduled
+    // Role-aware links
     const meetingsLink = userRole === 'counselor' ? '/counselor/meetings' : userRole === 'admin' ? '/admin/meetings' : '/student/meetings';
+    const activitiesLink = userRole === 'counselor' ? '/counselor/activities' : userRole === 'admin' ? '/admin/activities' : '/student/activities';
+
     if (userRole === 'student') {
+      // Student: counselor assigned
+      socket.on('counselor:assigned', (data: any) => {
+        addNotif({
+          type: 'counselor', priority: 'normal',
+          title: '🎓 Counselor Assigned',
+          message: `${data.counselorName} has been assigned as your counselor. They will guide your study abroad journey.`,
+          link: '/student/profile',
+        });
+      });
+
+      // Student: new meeting scheduled — deep link to meeting
       socket.on('meeting:scheduled', (m: any) => {
         addNotif({
           type: 'meeting', priority: 'urgent',
           title: '📅 New Meeting Scheduled',
           message: `"${m.title}" has been scheduled for ${m.scheduledDate} at ${m.scheduledTime} via ${m.platform}.`,
-          link: meetingsLink,
+          link: m._id ? `${meetingsLink}?id=${m._id}` : meetingsLink,
         });
-        // Push into Activities calendar + reminders in real-time
         window.dispatchEvent(new CustomEvent('meeting:scheduled', { detail: m }));
       });
 
-      // Student: real-time application status update
+      // Student: real-time application status update — deep link to specific app
       socket.on('application:updated', (data: any) => {
+        if (data.studentId && String(data.studentId) !== String(userId)) return;
         const STATUS_MAP: Record<string, string> = {
           submitted: 'Submitted', under_review: 'Under Review',
           offer_received: 'Offer Received', accepted: 'Accepted',
@@ -384,27 +502,60 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           type: 'application', priority: isUrgent ? 'urgent' : 'normal',
           title: isGood ? '🎉 Great News!' : data.status === 'rejected' ? '❌ Application Update' : '📋 Application Updated',
           message: `${data.universityName} — ${data.courseName} status is now "${STATUS_MAP[data.status] ?? data.status}".`,
-          link: '/student/applications',
+          link: `/student/applications?app=${data.appId}`,
         });
       });
     }
 
-    // All roles: real-time activity feed events
+    // Role-scoped activity feed notifications
     socket.on('new_activity', (event: any) => {
-      if (userRole === 'admin' || userRole === 'counselor') {
-        const isImportant = ['offer', 'payment', 'visa'].includes(event.type);
+      const isImportant = ['offer', 'payment', 'visa'].includes(event.type);
+
+      if (userRole === 'admin') {
+        // Admin sees all activity
         addNotif({
           type: 'application', priority: isImportant ? 'urgent' : 'info',
           title: isImportant ? `⚡ ${event.action}` : `📌 ${event.action}`,
           message: event.detail || `Activity from ${event.studentName || 'a student'}`,
-          link: userRole === 'admin' ? '/admin/live-feed' : '/counselor/activities',
+          link: '/admin/live-feed',
+        });
+
+      } else if (userRole === 'counselor') {
+        // Counselor only sees activities for their own students
+        // event.counsellorId is set when the activity belongs to a specific counselor
+        const isMine = !event.counsellorId || String(event.counsellorId) === String(userId);
+        if (!isMine) return;
+        addNotif({
+          type: 'application', priority: isImportant ? 'urgent' : 'info',
+          title: isImportant ? `⚡ ${event.action}` : `📌 ${event.action}`,
+          message: event.detail || `Activity from ${event.studentName || 'a student'}`,
+          link: '/counselor/activities',
+        });
+
+      } else if (userRole === 'student') {
+        // Student only sees activity logged specifically for them
+        if (!event.studentId || String(event.studentId) !== String(userId)) return;
+        const TITLES: Record<string, string> = {
+          offer: '🎉 Offer Received!', visa: '✈️ Visa Update',
+          payment: '💳 Payment Update', document: '📄 Document Update',
+          interview: '📅 Interview Scheduled', enquiry: '📋 Enquiry Update',
+          alert: '⚠️ Alert',
+        };
+        addNotif({
+          type: 'application',
+          priority: isImportant ? 'urgent' : 'normal',
+          title: TITLES[event.type] ?? `📌 ${event.action}`,
+          message: event.detail || event.action,
+          link: '/student/applications',
         });
       }
     });
 
     // Students only: call scheduled by their counselor
+    // Server targets this student's socket — extra userId guard for safety
     socket.on('call:scheduled', (data: any) => {
       if (userRole !== 'student') return;
+      if (data.scheduledForId && String(data.scheduledForId) !== String(userId)) return;
       const timeLabel = data.scheduledTimeFormatted || data.scheduledTime || '';
       addNotif({
         type: 'meeting', priority: 'urgent',
@@ -415,19 +566,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       window.dispatchEvent(new CustomEvent('call:scheduled', { detail: data }));
     });
 
-    // All roles: meeting rescheduled / updated
+    // All roles: meeting rescheduled / updated — deep link
     socket.on('meeting:updated', (m: any) => {
       addNotif({
         type: 'meeting', priority: 'urgent',
         title: '📅 Meeting Rescheduled',
         message: `"${m.title}" has been updated — ${m.scheduledDate} at ${m.scheduledTime} via ${m.platform}.`,
-        link: meetingsLink,
+        link: m._id ? `${meetingsLink}?id=${m._id}` : meetingsLink,
       });
-      // Sync updated details into Activities calendar
       window.dispatchEvent(new CustomEvent('meeting:updated', { detail: m }));
     });
 
-    // All roles: task assigned to me
+    // All roles: task assigned — link routes to the correct portal's activities page
     socket.on('task:assigned', (data: any) => {
       const priorityLabel = data.priority === 'high' ? '🔴 High' : data.priority === 'low' ? '🟢 Low' : '🟡 Medium';
       const dueText = data.dueDate ? ` · Due ${data.dueDate}` : '';
@@ -435,7 +585,76 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         type: 'task', priority: 'urgent',
         title: '📋 New Task Assigned',
         message: `${data.assignedByName} assigned you "${data.title}" [${priorityLabel}]${dueText}.`,
-        link: '/student/activities',
+        link: activitiesLink,
+      });
+    });
+
+    // All roles: meeting cancelled
+    socket.on('meeting:cancelled', (m: any) => {
+      addNotif({
+        type: 'meeting', priority: 'urgent',
+        title: '❌ Meeting Cancelled',
+        message: `"${m.title}" scheduled for ${m.scheduledDate} at ${m.scheduledTime} has been cancelled.`,
+        link: meetingsLink,
+      });
+      window.dispatchEvent(new CustomEvent('meeting:cancelled', { detail: m }));
+    });
+
+    // Students only: document requested by counselor
+    socket.on('document:requested', (data: any) => {
+      if (userRole !== 'student') return;
+      addNotif({
+        type: 'application', priority: 'normal',
+        title: '📄 Document Requested',
+        message: `Your counselor has requested "${data.name}"${data.type ? ` (${data.type})` : ''}. Please upload it.`,
+        link: '/student/profile',
+      });
+    });
+
+    // Students only: document status updated by counselor
+    socket.on('document:status_updated', (data: any) => {
+      if (userRole !== 'student') return;
+      const isApproved = data.status === 'approved';
+      addNotif({
+        type: 'application',
+        priority: isApproved ? 'normal' : 'urgent',
+        title: isApproved ? '✅ Document Approved' : '❌ Document Rejected',
+        message: `Your document "${data.name}" has been ${data.status}.${!isApproved ? ' Please re-upload.' : ''}`,
+        link: '/student/profile',
+      });
+    });
+
+    // Students only: intake deadline reminder from cron job
+    socket.on('deadline:reminder', (data: any) => {
+      if (userRole !== 'student') return;
+      addNotif({
+        type: 'deadline',
+        priority: data.daysUntil <= 7 ? 'urgent' : 'normal',
+        title: data.title,
+        message: data.message,
+        link: data.link || '/student/applications',
+      });
+    });
+
+    // Students only: comment added — deep link to specific app
+    socket.on('application:commented', (data: any) => {
+      if (userRole !== 'student') return;
+      addNotif({
+        type: 'application', priority: 'normal',
+        title: '💬 New Comment on Application',
+        message: `${data.author} left a comment on your ${data.universityName} — ${data.courseName} application.`,
+        link: `/student/applications?app=${data.appId}`,
+      });
+    });
+
+    // Counselors: new student assigned to them
+    socket.on('student:assigned', (data: any) => {
+      if (userRole !== 'counselor') return;
+      addNotif({
+        type: 'counselor', priority: 'normal',
+        title: '👤 New Student Assigned',
+        message: `${data.studentName} has been assigned to you. Review their profile to get started.`,
+        link: '/counselor/students',
       });
     });
 
@@ -443,15 +662,39 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [isAuthenticated, userRole, userId, addNotif]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+  const newSinceLastOpen = notifications.filter(n => !n.read && n.timestamp > lastOpenedAt).length;
 
-  const markRead     = (id: string) => setNotifications(p => p.map(n => n.id === id ? { ...n, read: true } : n));
-  const markAllRead  = ()           => setNotifications(p => p.map(n => ({ ...n, read: true })));
-  const dismiss      = (id: string) => setNotifications(p => p.filter(n => n.id !== id));
+  const markPanelOpened = () => {
+    const now = new Date();
+    setLastOpenedAt(now);
+    localStorage.setItem(`notif_panel_opened_${userId}`, now.toISOString());
+  };
+
+  const markRead = (id: string) => {
+    setNotifications(p => p.map(n => n.id === id ? { ...n, read: true } : n));
+    fetch(`/api/notifications/${id}/read`, { method: 'PUT', headers: authHeader() }).catch(() => {});
+  };
+
+  const markAllRead = () => {
+    setNotifications(p => p.map(n => ({ ...n, read: true })));
+    fetch('/api/notifications/read-all', { method: 'PUT', headers: authHeader() }).catch(() => {});
+  };
+
+  const dismiss = (id: string) => {
+    setNotifications(p => p.filter(n => n.id !== id));
+    fetch(`/api/notifications/${id}`, { method: 'DELETE', headers: authHeader() }).catch(() => {});
+  };
+
   const dismissToast = (id: string) => setToasts(p => p.filter(n => n.id !== id));
-  const clearAll     = ()           => { setNotifications([]); localStorage.removeItem(storageKey(userId)); };
+
+  const clearAll = () => {
+    setNotifications([]);
+    localStorage.removeItem(storageKey(userId));
+    fetch('/api/notifications', { method: 'DELETE', headers: authHeader() }).catch(() => {});
+  };
 
   return (
-    <NotificationContext.Provider value={{ notifications, toasts, unreadCount, addNotif, markRead, markAllRead, dismiss, dismissToast, clearAll }}>
+    <NotificationContext.Provider value={{ notifications, toasts, unreadCount, newSinceLastOpen, addNotif, markRead, markAllRead, dismiss, dismissToast, clearAll, markPanelOpened }}>
       {children}
     </NotificationContext.Provider>
   );

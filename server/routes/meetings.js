@@ -91,6 +91,37 @@ router.post('/', auth, async (req, res) => {
         });
     }
 
+    // Email fallback to student participants
+    const mailer = req.app.get('mailer');
+    if (mailer) {
+      const studentParticipants = allParticipants.filter(p => p.role === 'student');
+      for (const p of studentParticipants) {
+        const studentUser = await require('../models/User').findById(p.userId).select('email name');
+        if (studentUser?.email) {
+          mailer.sendMail({
+            from: '"Gradzest" <nithin@magzest.in>',
+            to: studentUser.email,
+            subject: `New Meeting Scheduled: ${title}`,
+            html: `
+              <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
+                <div style="background:#3b0764;padding:28px 24px;border-radius:8px 8px 0 0;text-align:center;">
+                  <h1 style="color:#fff;margin:0;font-size:22px;">Gradzest</h1>
+                </div>
+                <div style="background:#fff;padding:28px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+                  <p style="font-size:16px;">Hi ${studentUser.name},</p>
+                  <p style="font-size:15px;">A meeting has been scheduled for you:</p>
+                  <div style="margin:20px 0;padding:16px 20px;background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:4px;">
+                    <p style="margin:0 0 6px;font-size:16px;font-weight:bold;">${title}</p>
+                    <p style="margin:0;font-size:14px;color:#4b5563;">📅 ${scheduledDate} at ${scheduledTime} · via ${platform || 'other'}</p>
+                  </div>
+                  <p style="font-size:14px;color:#6b7280;">Log in to your Gradzest portal to view details.</p>
+                </div>
+              </div>`,
+          }).catch(() => {});
+        }
+      }
+    }
+
     res.status(201).json(meeting);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -144,6 +175,24 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Forbidden' });
     }
     await Meeting.findByIdAndDelete(req.params.id);
+
+    // Notify all participants except the one who deleted it
+    const io = req.app.get('io');
+    const userSockets = req.app.get('userSockets');
+    if (io && userSockets) {
+      meeting.participants
+        .filter(p => p.userId?.toString() !== req.user.id?.toString())
+        .forEach(p => {
+          const sids = userSockets.get(String(p.userId));
+          if (sids) sids.forEach(sid => io.to(sid).emit('meeting:cancelled', {
+            _id: meeting._id,
+            title: meeting.title,
+            scheduledDate: meeting.scheduledDate,
+            scheduledTime: meeting.scheduledTime,
+          }));
+        });
+    }
+
     res.json({ message: 'Deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });

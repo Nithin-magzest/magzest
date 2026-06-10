@@ -42,9 +42,11 @@ export function useCall(userId: string | undefined, userName: string | undefined
   useEffect(() => {
     if (!userId) return;
 
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+    const socket = import.meta.env.VITE_API_URL ? io(import.meta.env.VITE_API_URL) : io();
     socketRef.current = socket;
-    socket.emit('register', userId);
+    const registerSocket = () => socket.emit('register', userId);
+    socket.on('connect', registerSocket);
+    if (socket.connected) registerSocket();
 
     const buildPC = (targetId: string) => {
       const pc = new RTCPeerConnection(ICE_CONFIG);

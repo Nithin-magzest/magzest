@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
@@ -554,7 +555,7 @@ export default function AppDashboard() {
                         </div>
                         {doc.url ? (
                           <a
-                            href={doc.url}
+                            href={uploadUrl(doc.url)}
                             download
                             target="_blank"
                             rel="noopener noreferrer"

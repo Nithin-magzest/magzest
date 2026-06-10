@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -309,7 +310,7 @@ function StudentDetailModal({ student, onClose, onChat, onNewApplication }: { st
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {doc.url && (
-                            <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                            <a href={uploadUrl(doc.url)} target="_blank" rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md hover:bg-gray-200 font-medium transition-colors">
                               <ExternalLink className="w-3 h-3" /> Open
                             </a>

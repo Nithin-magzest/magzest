@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 ﻿import { useState, useEffect } from 'react';
 import { Link, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus, Users, BookOpen } from 'lucide-react';
@@ -642,7 +643,7 @@ function StudentDetail() {
                   </div>
                   <div className="flex items-center gap-2">
                     {doc.url && (
-                      <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                      <a href={uploadUrl(doc.url)} target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-200 font-medium transition-colors">
                         <ExternalLink className="w-3 h-3" /> Open
                       </a>

@@ -20,8 +20,29 @@ function createMailer() {
 
 const router = express.Router();
 
-function issueToken(user) {
-  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+function issueAccessToken(user) {
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
+}
+
+// Keep old name as alias so social-login callers still work
+const issueToken = issueAccessToken;
+
+async function issueRefreshToken(user) {
+  const raw = crypto.randomBytes(40).toString('hex');
+  const hash = crypto.createHash('sha256').update(raw).digest('hex');
+  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  await User.findByIdAndUpdate(user._id, { refreshTokenHash: hash, refreshTokenExpires: expires });
+  return { raw, expires };
+}
+
+function setRefreshCookie(res, token, expires) {
+  res.cookie('refreshToken', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    expires,
+    path: '/api/auth',
+  });
 }
 
 function sanitize(user) {
@@ -92,7 +113,9 @@ router.post('/google', async (req, res) => {
       avatar: picture,
     });
 
-    res.json({ token: issueToken(user), user: sanitize(user) });
+    const { raw, expires } = await issueRefreshToken(user);
+    setRefreshCookie(res, raw, expires);
+    res.json({ token: issueAccessToken(user), user: sanitize(user) });
   } catch (err) {
     console.error('[auth/google]', err);
     res.status(401).json({ message: 'Google authentication failed' });
@@ -185,12 +208,17 @@ router.post('/facebook', async (req, res) => {
       avatar: picture?.data?.url,
     });
 
-    res.json({ token: issueToken(user), user: sanitize(user) });
+    const { raw, expires } = await issueRefreshToken(user);
+    setRefreshCookie(res, raw, expires);
+    res.json({ token: issueAccessToken(user), user: sanitize(user) });
   } catch (err) {
     console.error('[auth/facebook]', err);
     res.status(401).json({ message: 'Facebook authentication failed' });
   }
 });
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body || {};
@@ -199,14 +227,42 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
 
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ message: 'Invalid email or password' });
+    // Check if account is locked
+    if (user.lockedUntil && user.lockedUntil > Date.now()) {
+      const minutesLeft = Math.ceil((user.lockedUntil - Date.now()) / 60000);
+      return res.status(423).json({
+        message: `Account temporarily locked due to too many failed attempts. Try again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}.`,
+      });
+    }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const valid = await bcrypt.compare(password, user.password || '');
+    if (!valid) {
+      const attempts = (user.loginAttempts || 0) + 1;
+      const shouldLock = attempts >= MAX_LOGIN_ATTEMPTS;
+      await User.findByIdAndUpdate(user._id, {
+        loginAttempts: attempts,
+        ...(shouldLock && { lockedUntil: new Date(Date.now() + LOCK_DURATION_MS) }),
+      });
+      const remaining = MAX_LOGIN_ATTEMPTS - attempts;
+      if (shouldLock) {
+        return res.status(423).json({ message: 'Account locked for 15 minutes after too many failed attempts.' });
+      }
+      return res.status(401).json({
+        message: `Invalid email or password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before lockout.`,
+      });
+    }
+
+    // Success — reset lockout counters
+    await User.findByIdAndUpdate(user._id, { loginAttempts: 0, lockedUntil: null });
+
+    const accessToken = issueAccessToken(user);
+    const { raw: refreshRaw, expires: refreshExpires } = await issueRefreshToken(user);
+    setRefreshCookie(res, refreshRaw, refreshExpires);
+
     const userObj = user.toJSON();
     delete userObj.password;
 
-    res.json({ token, user: userObj });
+    res.json({ token: accessToken, user: userObj });
   } catch (err) {
     console.error('[auth/login]', err);
     res.status(500).json({ message: 'Server error' });
@@ -266,10 +322,48 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+function validatePasswordStrength(password) {
+  if (!password || password.length < 8) return 'Password must be at least 8 characters.';
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter.';
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number.';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password must contain at least one special character.';
+  return null;
+}
+
+async function sendVerificationEmail(user, mailer, frontendUrl) {
+  const raw = crypto.randomBytes(32).toString('hex');
+  const hash = crypto.createHash('sha256').update(raw).digest('hex');
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await User.findByIdAndUpdate(user._id, { emailVerifyToken: hash, emailVerifyExpires: expires });
+  if (mailer) {
+    const verifyUrl = `${frontendUrl}/verify-email?token=${raw}`;
+    mailer.sendMail({
+      from: '"Gradzest" <nithin@magzest.in>',
+      to: user.email,
+      subject: 'Verify your Gradzest email address',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
+          <div style="background:#0d1b4b;padding:28px 24px;border-radius:8px 8px 0 0;text-align:center;">
+            <h1 style="color:#fff;margin:0;font-size:22px;">GradZest</h1>
+          </div>
+          <div style="background:#fff;padding:28px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+            <p style="font-size:16px;">Hi ${user.name},</p>
+            <p style="font-size:15px;">Please verify your email address to activate your account:</p>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="${verifyUrl}" style="background:#0d1b4b;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Verify Email Address</a>
+            </div>
+            <p style="font-size:13px;color:#6b7280;">This link expires in 24 hours. If you didn't create this account, you can ignore this email.</p>
+          </div>
+        </div>`,
+    }).catch(() => {});
+  }
+}
+
 router.post('/register', async (req, res) => {
   const { name, email, password, phone, nationality } = req.body;
   if (!name || !email || !password) return res.status(400).json({ message: 'Name, email and password are required' });
-  if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  const pwError = validatePasswordStrength(password);
+  if (pwError) return res.status(400).json({ message: pwError });
   try {
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) return res.status(409).json({ message: 'An account with this email already exists' });
@@ -278,15 +372,51 @@ router.post('/register', async (req, res) => {
       name, email: email.toLowerCase(), password: hashed, role: 'student',
       phone: phone || '', nationality: nationality || '',
       status: 'active', joinedDate: new Date().toISOString().split('T')[0],
+      emailVerified: false,
     });
     await user.save();
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    await sendVerificationEmail(user, createMailer(), frontendUrl);
+    const accessToken = issueAccessToken(user);
+    const { raw, expires } = await issueRefreshToken(user);
+    setRefreshCookie(res, raw, expires);
     const userObj = user.toJSON();
     delete userObj.password;
-    res.status(201).json({ token, user: userObj });
+    res.status(201).json({ token: accessToken, user: userObj });
   } catch (err) {
     console.error('[auth/register]', err);
     res.status(500).json({ message: err.message || 'Server error' });
+  }
+});
+
+// GET /auth/verify-email?token=...
+router.get('/verify-email', async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ message: 'Token required' });
+  try {
+    const hash = crypto.createHash('sha256').update(String(token)).digest('hex');
+    const user = await User.findOne({ emailVerifyToken: hash, emailVerifyExpires: { $gt: new Date() } });
+    if (!user) return res.status(400).json({ message: 'Invalid or expired verification link.' });
+    await User.findByIdAndUpdate(user._id, { emailVerified: true, emailVerifyToken: undefined, emailVerifyExpires: undefined });
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}/login?verified=1`);
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /auth/resend-verification
+router.post('/resend-verification', async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ message: 'Email required' });
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user || user.emailVerified) return res.json({ message: 'If that email exists and is unverified, a new link has been sent.' });
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    await sendVerificationEmail(user, createMailer(), frontendUrl);
+    res.json({ message: 'Verification email sent.' });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -329,7 +459,8 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
   const { token, password } = req.body || {};
   if (!token || !password) return res.status(400).json({ message: 'Token and password are required' });
-  if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  const pwError = validatePasswordStrength(password);
+  if (pwError) return res.status(400).json({ message: pwError });
   try {
     const hashed = crypto.createHash('sha256').update(token).digest('hex');
     const user = await User.findOne({ resetPasswordToken: hashed, resetPasswordExpires: { $gt: Date.now() } });
@@ -345,6 +476,40 @@ router.post('/reset-password', async (req, res) => {
     console.error('[auth/reset-password]', err);
     res.status(500).json({ message: 'Server error' });
   }
+});
+
+// POST /auth/refresh — exchange refresh token cookie for a new access token
+router.post('/refresh', async (req, res) => {
+  const raw = req.cookies?.refreshToken;
+  if (!raw) return res.status(401).json({ message: 'No refresh token' });
+  try {
+    const hash = crypto.createHash('sha256').update(raw).digest('hex');
+    const user = await User.findOne({
+      refreshTokenHash: hash,
+      refreshTokenExpires: { $gt: new Date() },
+    });
+    if (!user) return res.status(401).json({ message: 'Invalid or expired refresh token. Please log in again.' });
+
+    // Rotate refresh token on every use (prevents token reuse attacks)
+    const { raw: newRaw, expires } = await issueRefreshToken(user);
+    setRefreshCookie(res, newRaw, expires);
+
+    res.json({ token: issueAccessToken(user) });
+  } catch (err) {
+    console.error('[auth/refresh]', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /auth/logout — revoke refresh token and clear cookie
+router.post('/logout', async (req, res) => {
+  const raw = req.cookies?.refreshToken;
+  if (raw) {
+    const hash = crypto.createHash('sha256').update(raw).digest('hex');
+    await User.findOneAndUpdate({ refreshTokenHash: hash }, { refreshTokenHash: null, refreshTokenExpires: null }).catch(() => {});
+  }
+  res.clearCookie('refreshToken', { path: '/api/auth' });
+  res.json({ message: 'Logged out' });
 });
 
 module.exports = router;

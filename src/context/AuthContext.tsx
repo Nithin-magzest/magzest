@@ -57,9 +57,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    api.auth.logout();
     localStorage.removeItem('token');
     setUser(null);
   };
+
+  // Listen for forced logout triggered by the API interceptor when refresh fails
+  useEffect(() => {
+    const handler = () => { setUser(null); };
+    window.addEventListener('auth:logout', handler);
+    return () => window.removeEventListener('auth:logout', handler);
+  }, []);
 
   const refreshUser = async () => {
     try {

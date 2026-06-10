@@ -194,6 +194,44 @@ router.put('/students/:id/assign', authMiddleware, adminOnly, async (req, res) =
     }
 
     const updated = await User.findById(req.params.id).select('-password');
+
+    // Notify student and new counselor in real-time
+    const io = req.app.get('io');
+    const userSockets = req.app.get('userSockets');
+    if (io && userSockets && counselorId) {
+      const counselor = await User.findById(counselorId).select('name email');
+      // Notify student
+      const studentSids = userSockets.get(studentId);
+      if (studentSids) studentSids.forEach(sid => io.to(sid).emit('counselor:assigned', {
+        counselorName: counselor?.name || 'Your counselor',
+      }));
+      // Notify counselor
+      const counselorSids = userSockets.get(String(counselorId));
+      if (counselorSids) counselorSids.forEach(sid => io.to(sid).emit('student:assigned', {
+        studentName: student.name,
+      }));
+      // Email student
+      if (student.email && counselor) {
+        const mailer = req.app.get('mailer');
+        if (mailer) mailer.sendMail({
+          from: '"Gradzest" <nithin@magzest.in>',
+          to: student.email,
+          subject: 'Your Counselor Has Been Assigned',
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;">
+              <div style="background:#3b0764;padding:28px 24px;border-radius:8px 8px 0 0;text-align:center;">
+                <h1 style="color:#fff;margin:0;font-size:22px;">Gradzest</h1>
+              </div>
+              <div style="background:#fff;padding:28px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+                <p style="font-size:16px;">Hi ${student.name},</p>
+                <p style="font-size:15px;line-height:1.6;"><strong>${counselor.name}</strong> has been assigned as your counselor. They will guide you through your study abroad journey.</p>
+                <p style="font-size:14px;color:#6b7280;">Log in to your Gradzest portal to connect with your counselor.</p>
+              </div>
+            </div>`,
+        }).catch(() => {});
+      }
+    }
+
     res.json(updated.toJSON());
   } catch (err) {
     res.status(500).json({ message: err.message || 'Server error' });
@@ -605,7 +643,29 @@ router.get('/analytics', authMiddleware, adminOnly, async (req, res) => {
       return { name: c.name, students: assigned.length, applications: appCount, offers: offerCount, workload, score };
     });
 
-    res.json({ newStudents, visaApprovalRate, conversionRate, revenue, monthlyRegistrations, applicationsByCountry, conversionFunnel, counselorPerformance });
+    // Top universities by number of applications
+    const uniCount = {};
+    students.forEach(s => (s.applications || []).forEach(a => {
+      if (!a.universityName) return;
+      uniCount[a.universityName] = (uniCount[a.universityName] || 0) + 1;
+    }));
+    const topUniversities = Object.entries(uniCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, count]) => ({ name: name.length > 28 ? name.slice(0, 26) + '…' : name, count }));
+
+    // Application status breakdown
+    const statusMap = {};
+    allApps.forEach(a => { statusMap[a.status] = (statusMap[a.status] || 0) + 1; });
+    const STATUS_LABELS = {
+      submitted: 'Submitted', under_review: 'Under Review', offer_received: 'Offer Received',
+      accepted: 'Accepted', rejected: 'Rejected', enrolled: 'Enrolled', draft: 'Draft',
+    };
+    const applicationsByStatus = Object.entries(statusMap)
+      .map(([status, count]) => ({ status: STATUS_LABELS[status] || status, count }))
+      .sort((a, b) => b.count - a.count);
+
+    res.json({ newStudents, visaApprovalRate, conversionRate, revenue, monthlyRegistrations, applicationsByCountry, conversionFunnel, counselorPerformance, topUniversities, applicationsByStatus });
   } catch (err) {
     res.status(500).json({ message: err.message || 'Server error' });
   }

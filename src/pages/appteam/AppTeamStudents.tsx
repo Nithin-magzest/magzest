@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../api';
 import {
@@ -439,7 +440,7 @@ export default function AppTeamStudents() {
                         </div>
                         {doc.url ? (
                           <a
-                            href={doc.url}
+                            href={uploadUrl(doc.url)}
                             download
                             target="_blank"
                             rel="noopener noreferrer"

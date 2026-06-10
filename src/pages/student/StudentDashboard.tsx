@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 ﻿import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Clock, CheckCircle, Bell, ArrowRight, Star, MapPin, Upload, X, AlertCircle, ExternalLink, CalendarDays, GraduationCap, Phone, Video, PhoneCall } from 'lucide-react';
@@ -267,6 +268,7 @@ export default function StudentDashboard() {
         />
       )}
 
+
       {/* Welcome header */}
       <div className="bg-gradient-to-r from-[#0d1b4b] via-blue-700 to-blue-500 rounded-2xl p-6 text-white">
         <div className="flex items-start justify-between">
@@ -360,7 +362,7 @@ export default function StudentDashboard() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {doc.url && (
-                    <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                    <a href={uploadUrl(doc.url)} target="_blank" rel="noopener noreferrer"
                       className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="Open document">
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>

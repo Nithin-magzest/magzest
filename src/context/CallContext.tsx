@@ -198,9 +198,11 @@ export function CallProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user?.id) return;
 
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+    const socket = import.meta.env.VITE_API_URL ? io(import.meta.env.VITE_API_URL) : io();
     socketRef.current = socket;
-    socket.emit('register', user.id);
+    const registerSocket = () => socket.emit('register', user.id);
+    socket.on('connect', registerSocket);
+    if (socket.connected) registerSocket();
 
     const buildPC = (targetId: string) => {
       const pc = new RTCPeerConnection(ICE_CONFIG);

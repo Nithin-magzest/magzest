@@ -3,13 +3,46 @@ const BASE = '/api';
 function getToken() {
   return localStorage.getItem('token');
 }
+function setToken(t: string) {
+  localStorage.setItem('token', t);
+}
 
 function authHeaders(): Record<string, string> {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` };
 }
 
-async function req<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${url}`, options);
+// Try once to get a new access token using the httpOnly refresh cookie
+let refreshing: Promise<string | null> | null = null;
+async function tryRefresh(): Promise<string | null> {
+  if (refreshing) return refreshing;
+  refreshing = fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data?.token) { setToken(data.token); return data.token; }
+      return null;
+    })
+    .catch(() => null)
+    .finally(() => { refreshing = null; });
+  return refreshing;
+}
+
+async function req<T>(url: string, options?: RequestInit, retry = true): Promise<T> {
+  const res = await fetch(`${BASE}${url}`, { credentials: 'include', ...options });
+  if (res.status === 401 && retry && !url.startsWith('/auth/')) {
+    const newToken = await tryRefresh();
+    if (newToken) {
+      // Retry with fresh token
+      const retryOpts: RequestInit = {
+        ...options,
+        credentials: 'include',
+        headers: { ...(options?.headers as Record<string, string> || {}), Authorization: `Bearer ${newToken}` },
+      };
+      return req<T>(url, retryOpts, false);
+    }
+    // Refresh failed — force logout
+    localStorage.removeItem('token');
+    window.dispatchEvent(new Event('auth:logout'));
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: 'Request failed' }));
     throw new Error(err.message || 'Request failed');
@@ -17,12 +50,19 @@ async function req<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-async function upload<T>(url: string, formData: FormData): Promise<T> {
+async function upload<T>(url: string, formData: FormData, retry = true): Promise<T> {
   const res = await fetch(`${BASE}${url}`, {
     method: 'POST',
+    credentials: 'include',
     headers: { Authorization: `Bearer ${getToken()}` },
     body: formData,
   });
+  if (res.status === 401 && retry) {
+    const newToken = await tryRefresh();
+    if (newToken) return upload<T>(url, formData, false);
+    localStorage.removeItem('token');
+    window.dispatchEvent(new Event('auth:logout'));
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: 'Upload failed' }));
     throw new Error(err.message || 'Upload failed');
@@ -69,6 +109,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessToken, userId }),
       }),
+    refresh: () => tryRefresh(),
+    logout: () => fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {}),
   },
 
   countries: {

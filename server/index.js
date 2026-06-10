@@ -2,12 +2,25 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const path = require('path');
+// Load env file: .env.production or .env.development first, fall back to .env
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production'
+  : process.env.NODE_ENV === 'development' ? '.env.development'
+  : '.env';
+require('dotenv').config({ path: path.join(__dirname, envFile) });
+// Also load base .env for any missing keys
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 if (!process.env.JWT_SECRET || !process.env.MONGODB_URI) {
   console.error('Missing required env vars: JWT_SECRET and MONGODB_URI must be set in server/.env');
   process.exit(1);
+}
+if (!process.env.SMTP_PASS) {
+  console.warn('[warn] SMTP_PASS is not set — emails will not be delivered. Set SMTP_PASS in server/.env to enable email features.');
 }
 
 const { connectDB } = require('./db');
@@ -15,8 +28,16 @@ const { initActivityLogger } = require('./middleware/logActivity');
 
 const app = express();
 const httpServer = createServer(app);
+const ALLOWED_ORIGINS = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL]
+  : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
 const corsOptions = {
-  origin: (origin, callback) => callback(null, true),
+  origin: (origin, callback) => {
+    // Allow server-to-server requests (no origin) and listed origins
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 };
 
@@ -25,7 +46,54 @@ const io = new Server(httpServer, {
 });
 
 app.use(cors(corsOptions));
-app.use(express.json());
+
+// Security headers — disables fingerprinting, enables XSS/clickjacking/MIME protections
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'same-site' },
+  contentSecurityPolicy: false, // managed by frontend build
+}));
+
+// Strip $ and . from user input to block NoSQL injection
+app.use(mongoSanitize());
+
+// Rate limiters
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts. Please try again in 15 minutes.' },
+});
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests. Please slow down.' },
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api', generalLimiter);
+
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(cookieParser());
+
+// Protect uploaded files — only authenticated users can access them
+const jwt = require('jsonwebtoken');
+app.use('/uploads', (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1]
+    || req.query.token; // allow ?token= for direct <img src> links
+  if (!token) return res.status(401).json({ message: 'Authentication required' });
+  try {
+    jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ message: 'Invalid or expired token' });
+  }
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Share io and userSockets with route handlers
@@ -44,6 +112,8 @@ const mailer = nodemailer.createTransport({
     pass: process.env.SMTP_PASS || '',
   },
 });
+
+app.set('mailer', mailer);
 
 // Public email subscription / free registration
 const Subscriber = require('./models/Subscriber');
@@ -130,7 +200,30 @@ app.use('/api/meetings', require('./routes/meetings'));
 app.use('/api/favicon', require('./routes/favicon'));
 app.use('/api/unilogo', require('./routes/unilogo'));
 app.use('/api/activity', require('./routes/activity'));
-app.use('/api/tasks',   require('./routes/tasks'));
+app.use('/api/tasks',         require('./routes/tasks'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/onboarding',    require('./routes/onboarding'));
+
+// Health check — no auth required, used by hosting platforms and monitoring
+const mongoose = require('mongoose');
+const startTime = Date.now();
+app.get('/api/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = dbState === 1 ? 'connected' : dbState === 2 ? 'connecting' : 'disconnected';
+  const uptimeMs = Date.now() - startTime;
+  const h = Math.floor(uptimeMs / 3600000);
+  const m = Math.floor((uptimeMs % 3600000) / 60000);
+  const s = Math.floor((uptimeMs % 60000) / 1000);
+  const uptime = `${h}h ${m}m ${s}s`;
+  const ok = dbState === 1;
+  res.status(ok ? 200 : 503).json({
+    status: ok ? 'ok' : 'degraded',
+    db: dbStatus,
+    uptime,
+    env: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // WebRTC signaling
 io.on('connection', (socket) => {
@@ -171,8 +264,16 @@ io.on('connection', (socket) => {
   });
 });
 
+// Global error handler — catches anything thrown in routes
+app.use((err, req, res, next) => {
+  const status = err.status || err.statusCode || 500;
+  const message = status < 500 ? err.message : 'Internal server error';
+  if (status >= 500) console.error(`[error] ${req.method} ${req.path}`, err);
+  res.status(status).json({ message });
+});
+
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+httpServer.listen(PORT, () => console.log(`Server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`));
 
 async function autoSeedIfEmpty() {
   const User = require('./models/User');
@@ -196,7 +297,12 @@ async function autoSeedIfEmpty() {
   }
 }
 
-connectDB().then(autoSeedIfEmpty).catch((err) => {
+const { startDeadlineReminders } = require('./jobs/deadlineReminders');
+
+connectDB().then(async () => {
+  await autoSeedIfEmpty();
+  startDeadlineReminders(io, userSockets, mailer);
+}).catch((err) => {
   console.error('[Startup] Fatal DB error:', err.message);
   process.exit(1);
 });

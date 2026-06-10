@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { BarChart2, TrendingUp, Users, Award, DollarSign, RefreshCw, AlertCircle } from 'lucide-react';
 import { api } from '../../api';
@@ -164,6 +165,53 @@ export default function AdminAnalytics() {
                     <Bar dataKey="count" name="Applications" fill="#0d1b4b" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+          {/* Top universities + application status */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Top universities */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-4">Top Universities Applied To</h2>
+              {!data.topUniversities?.length ? (
+                <div className="flex items-center justify-center h-40 text-gray-400 text-sm">No applications yet</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={data.topUniversities} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                    <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="count" name="Applications" fill="#7c3aed" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            {/* Application status breakdown */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-4">Applications by Status</h2>
+              {!data.applicationsByStatus?.length ? (
+                <div className="flex items-center justify-center h-40 text-gray-400 text-sm">No applications yet</div>
+              ) : (
+                (() => {
+                  const COLORS = ['#0d1b4b','#7c3aed','#059669','#dc2626','#ea580c','#0891b2','#6b7280'];
+                  return (
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={data.applicationsByStatus} dataKey="count" nameKey="status"
+                          cx="50%" cy="50%" outerRadius={80} label={({ status, percent }) => `${status} ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}>
+                          {data.applicationsByStatus.map((_: any, i: number) => (
+                            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(v: any, n: any) => [v, n]} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  );
+                })()
               )}
             </div>
           </div>

@@ -165,9 +165,30 @@ const UserSchema = new mongoose.Schema({
   joinedDate: String,
   status: { type: String, enum: ['active', 'inactive', 'enrolled'], default: 'active' },
 
+  // Email verification
+  emailVerified: { type: Boolean, default: false },
+  emailVerifyToken: String,
+  emailVerifyExpires: Date,
+
+  // Onboarding — tracks which steps the student has completed
+  onboarding: {
+    profileComplete: { type: Boolean, default: false },
+    documentUploaded: { type: Boolean, default: false },
+    counselorViewed:  { type: Boolean, default: false },
+    universityBrowsed: { type: Boolean, default: false },
+  },
+
   // Password reset
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+
+  // Account lockout — incremented on each failed login, cleared on success
+  loginAttempts: { type: Number, default: 0 },
+  lockedUntil: { type: Date, default: null },
+
+  // JWT refresh token (stored as SHA-256 hash)
+  refreshTokenHash: { type: String, default: null },
+  refreshTokenExpires: { type: Date, default: null },
 
   // Counselor fields
   specialization: [String],

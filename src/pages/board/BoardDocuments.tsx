@@ -1,3 +1,4 @@
+import { uploadUrl } from '../../utils/uploadUrl';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../api';
 import { Search, X, FolderOpen, FileText, Download, ChevronRight, Filter } from 'lucide-react';
@@ -210,7 +211,7 @@ export default function BoardDocuments() {
                         )}
                       </div>
                       {doc.url ? (
-                        <a href={doc.url} download target="_blank" rel="noopener noreferrer"
+                        <a href={uploadUrl(doc.url)} download target="_blank" rel="noopener noreferrer"
                           className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs font-semibold">
                           <Download className="w-3.5 h-3.5" /> Download
                         </a>

@@ -11,6 +11,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 import AuthModal from './components/AuthModal';
 import ToastContainer from './components/ToastNotification';
 import { useNotifications } from './context/NotificationContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Public pages
 const Home             = lazy(() => import('./pages/Home'));
@@ -22,6 +23,7 @@ const Search           = lazy(() => import('./pages/Search'));
 const PublicLayout     = lazy(() => import('./pages/PublicLayout'));
 const ForgotPassword   = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword    = lazy(() => import('./pages/ResetPassword'));
+const VerifyEmail      = lazy(() => import('./pages/VerifyEmail'));
 
 // Shared Activities page
 const Activities = lazy(() => import('./pages/Activities'));
@@ -65,6 +67,7 @@ const AdminStudents          = lazy(() => import('./pages/admin/AdminStudents'))
 const AdminActivityFeed      = lazy(() => import('./pages/admin/AdminActivityFeed'));
 const AdminMeetings          = lazy(() => import('./pages/admin/AdminMeetings'));
 const AdminSettings          = lazy(() => import('./pages/admin/AdminSettings'));
+const AdminAnalytics         = lazy(() => import('./pages/admin/AdminAnalytics'));
 
 // App Team module
 const AppTeamLayout       = lazy(() => import('./pages/appteam/AppTeamLayout'));
@@ -109,6 +112,7 @@ function PageSpinner() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <AuthProvider>
       <CallProvider>
@@ -131,6 +135,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
             {/* Student module */}
             <Route path="/student" element={<StudentLayout />}>
@@ -176,6 +181,7 @@ export default function App() {
               <Route path="meetings" element={<AdminMeetings />} />
               <Route path="chat" element={<AdminChat />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
 
@@ -213,5 +219,6 @@ export default function App() {
       </CallProvider>
     </AuthProvider>
     </GoogleOAuthProvider>
+    </ErrorBoundary>
   );
 }
