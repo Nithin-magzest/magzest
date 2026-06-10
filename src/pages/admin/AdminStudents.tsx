@@ -18,7 +18,8 @@ const COUNTRIES = ['UK', 'Canada', 'Australia', 'Germany', 'Netherlands', 'Singa
 const COURSES = ['Computer Science', 'Engineering', 'Business', 'Medicine', 'Law', 'Arts', 'Data Science', 'Finance', 'Psychology'];
 const EDUCATION_LEVELS = ['10th Grade (Completed)', '12th Grade (Completed)', 'Diploma (Completed)', "Bachelor's (In Progress)", "Bachelor's (Completed)", "Master's (In Progress)", "Master's (Completed)", 'PhD (In Progress)', 'PhD (Completed)', 'Other'];
 const ENGLISH_TYPES = ['IELTS', 'TOEFL', 'PTE', 'Duolingo'];
-const INTAKE_OPTIONS = ['2025 Jan', '2025 May', '2025 Sep', '2026 Jan', '2026 May', '2026 Sep'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const INTAKE_OPTIONS = [2025, 2026, 2027].flatMap(y => MONTHS.map(m => `${m} ${y}`));
 const DEFAULT_STUDENT_FORM = {
   name: '', email: '', password: '', phone: '', nationality: '', educationLevel: '',
   gpa: '', englishType: '', englishScore: '', budget: '',

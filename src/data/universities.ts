@@ -25,13 +25,13 @@ export const universities: University[] = [
       { name: 'University of Toronto Scholars Program', amount: 7500, currency: 'CAD', eligibility: 'High academic achievement', deadline: '2026-01-13' },
     ],
     applicationDeadlines: [
-      { intake: 'Fall 2026', deadline: '2026-01-13' },
-      { intake: 'Winter 2027', deadline: '2026-10-01' },
+      { intake: 'September 2026', deadline: '2026-01-13' },
+      { intake: 'January 2027', deadline: '2026-10-01' },
     ],
     courses: [
-      { id: 'c1', name: 'Computer Science', level: 'Bachelor', duration: '4 years', tuitionFee: 32500, currency: 'CAD', requirements: ['IELTS 6.5', 'High School Diploma', 'Math'], description: 'Comprehensive CS program covering algorithms, AI, and software engineering.', department: 'Faculty of Arts & Science', intake: ['Fall', 'Winter'] },
-      { id: 'c2', name: 'MBA', level: 'Master', duration: '2 years', tuitionFee: 48000, currency: 'CAD', requirements: ['IELTS 7.0', "Bachelor's Degree", 'GMAT 650+', '2 years work experience'], description: 'Rotman School of Management MBA program.', department: 'Rotman School of Management', intake: ['Fall'] },
-      { id: 'c3', name: 'Data Science', level: 'Master', duration: '1.5 years', tuitionFee: 36000, currency: 'CAD', requirements: ['IELTS 6.5', "Bachelor's in CS/Math/Stats"], description: 'Advanced data science and machine learning program.', department: 'Faculty of Arts & Science', intake: ['Fall', 'Winter'] },
+      { id: 'c1', name: 'Computer Science', level: 'Bachelor', duration: '4 years', tuitionFee: 32500, currency: 'CAD', requirements: ['IELTS 6.5', 'High School Diploma', 'Math'], description: 'Comprehensive CS program covering algorithms, AI, and software engineering.', department: 'Faculty of Arts & Science', intake: ['September', 'January'] },
+      { id: 'c2', name: 'MBA', level: 'Master', duration: '2 years', tuitionFee: 48000, currency: 'CAD', requirements: ['IELTS 7.0', "Bachelor's Degree", 'GMAT 650+', '2 years work experience'], description: 'Rotman School of Management MBA program.', department: 'Rotman School of Management', intake: ['September'] },
+      { id: 'c3', name: 'Data Science', level: 'Master', duration: '1.5 years', tuitionFee: 36000, currency: 'CAD', requirements: ['IELTS 6.5', "Bachelor's in CS/Math/Stats"], description: 'Advanced data science and machine learning program.', department: 'Faculty of Arts & Science', intake: ['September', 'January'] },
     ],
   },
   {
@@ -58,13 +58,13 @@ export const universities: University[] = [
       { name: 'Graduate Research Scholarships', amount: 28000, currency: 'AUD', eligibility: 'Research students', deadline: '2026-10-31' },
     ],
     applicationDeadlines: [
-      { intake: 'Semester 1 2026', deadline: '2025-10-31' },
-      { intake: 'Semester 2 2026', deadline: '2026-04-30' },
+      { intake: 'February 2026', deadline: '2025-10-31' },
+      { intake: 'July 2026', deadline: '2026-04-30' },
     ],
     courses: [
-      { id: 'c4', name: 'Information Technology', level: 'Bachelor', duration: '3 years', tuitionFee: 36000, currency: 'AUD', requirements: ['IELTS 6.5', 'High School Diploma'], description: 'A broad IT program with specializations in AI, networking, and security.', department: 'Faculty of Engineering', intake: ['Semester 1', 'Semester 2'] },
-      { id: 'c5', name: 'Business Administration', level: 'Master', duration: '2 years', tuitionFee: 44000, currency: 'AUD', requirements: ['IELTS 7.0', "Bachelor's Degree"], description: 'Melbourne Business School MBA', department: 'Melbourne Business School', intake: ['Semester 1'] },
-      { id: 'c6', name: 'Architecture', level: 'Bachelor', duration: '3 years', tuitionFee: 38000, currency: 'AUD', requirements: ['IELTS 7.0', 'Portfolio'], description: 'Architecture and urban design program.', department: 'Faculty of Architecture', intake: ['Semester 1'] },
+      { id: 'c4', name: 'Information Technology', level: 'Bachelor', duration: '3 years', tuitionFee: 36000, currency: 'AUD', requirements: ['IELTS 6.5', 'High School Diploma'], description: 'A broad IT program with specializations in AI, networking, and security.', department: 'Faculty of Engineering', intake: ['February', 'July'] },
+      { id: 'c5', name: 'Business Administration', level: 'Master', duration: '2 years', tuitionFee: 44000, currency: 'AUD', requirements: ['IELTS 7.0', "Bachelor's Degree"], description: 'Melbourne Business School MBA', department: 'Melbourne Business School', intake: ['February'] },
+      { id: 'c6', name: 'Architecture', level: 'Bachelor', duration: '3 years', tuitionFee: 38000, currency: 'AUD', requirements: ['IELTS 7.0', 'Portfolio'], description: 'Architecture and urban design program.', department: 'Faculty of Architecture', intake: ['February'] },
     ],
   },
   {
@@ -123,13 +123,13 @@ export const universities: University[] = [
       { name: 'TUM Merit Scholarship', amount: 5000, currency: 'EUR', eligibility: 'Academic excellence', deadline: '2026-09-01' },
     ],
     applicationDeadlines: [
-      { intake: 'Winter 2026/27', deadline: '2026-05-31' },
-      { intake: 'Summer 2026', deadline: '2026-01-15' },
+      { intake: 'January 2027', deadline: '2026-05-31' },
+      { intake: 'April 2026', deadline: '2026-01-15' },
     ],
     courses: [
-      { id: 'c10', name: 'Mechanical Engineering', level: 'Bachelor', duration: '6 semesters', tuitionFee: 2000, currency: 'EUR', requirements: ['TestDaF or IELTS 6.0', 'Strong Math background'], description: 'World-class mechanical engineering education.', department: 'TUM School of Engineering', intake: ['Winter', 'Summer'] },
-      { id: 'c11', name: 'Informatics (Computer Science)', level: 'Master', duration: '4 semesters', tuitionFee: 2500, currency: 'EUR', requirements: ['IELTS 6.5', "Bachelor's in CS"], description: 'Top-ranked CS master\'s program.', department: 'TUM School of Computation', intake: ['Winter'] },
-      { id: 'c12', name: 'Robotics', level: 'Master', duration: '4 semesters', tuitionFee: 2500, currency: 'EUR', requirements: ['IELTS 6.5', "Bachelor's in Engineering/CS"], description: 'Advanced robotics and autonomous systems.', department: 'TUM School of Engineering', intake: ['Winter'] },
+      { id: 'c10', name: 'Mechanical Engineering', level: 'Bachelor', duration: '6 semesters', tuitionFee: 2000, currency: 'EUR', requirements: ['TestDaF or IELTS 6.0', 'Strong Math background'], description: 'World-class mechanical engineering education.', department: 'TUM School of Engineering', intake: ['January', 'April'] },
+      { id: 'c11', name: 'Informatics (Computer Science)', level: 'Master', duration: '4 semesters', tuitionFee: 2500, currency: 'EUR', requirements: ['IELTS 6.5', "Bachelor's in CS"], description: 'Top-ranked CS master\'s program.', department: 'TUM School of Computation', intake: ['January'] },
+      { id: 'c12', name: 'Robotics', level: 'Master', duration: '4 semesters', tuitionFee: 2500, currency: 'EUR', requirements: ['IELTS 6.5', "Bachelor's in Engineering/CS"], description: 'Advanced robotics and autonomous systems.', department: 'TUM School of Engineering', intake: ['January'] },
     ],
   },
   {
@@ -246,12 +246,12 @@ export const universities: University[] = [
       { name: 'Monash International Leadership Scholarship', amount: 10000, currency: 'AUD', eligibility: 'High-achieving international students', deadline: '2026-10-31' },
     ],
     applicationDeadlines: [
-      { intake: 'Semester 1 2026', deadline: '2025-11-30' },
-      { intake: 'Semester 2 2026', deadline: '2026-05-31' },
+      { intake: 'February 2026', deadline: '2025-11-30' },
+      { intake: 'July 2026', deadline: '2026-05-31' },
     ],
     courses: [
-      { id: 'c19', name: 'Law', level: 'Bachelor', duration: '4 years', tuitionFee: 38000, currency: 'AUD', requirements: ['IELTS 7.0', 'High Academic Record'], description: 'Bachelor of Laws with specializations.', department: 'Faculty of Law', intake: ['Semester 1'] },
-      { id: 'c20', name: 'Pharmacy', level: 'Bachelor', duration: '4 years', tuitionFee: 36000, currency: 'AUD', requirements: ['IELTS 7.0', 'Science background'], description: 'Pharmacy and pharmaceutical sciences.', department: 'Faculty of Pharmacy', intake: ['Semester 1'] },
+      { id: 'c19', name: 'Law', level: 'Bachelor', duration: '4 years', tuitionFee: 38000, currency: 'AUD', requirements: ['IELTS 7.0', 'High Academic Record'], description: 'Bachelor of Laws with specializations.', department: 'Faculty of Law', intake: ['February'] },
+      { id: 'c20', name: 'Pharmacy', level: 'Bachelor', duration: '4 years', tuitionFee: 36000, currency: 'AUD', requirements: ['IELTS 7.0', 'Science background'], description: 'Pharmacy and pharmaceutical sciences.', department: 'Faculty of Pharmacy', intake: ['February'] },
     ],
   },
 ];

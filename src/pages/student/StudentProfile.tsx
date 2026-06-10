@@ -23,9 +23,53 @@ function courseFieldPlaceholder(level: string) {
   return 'e.g. B.Tech Computer Science, MBA, M.Sc Mathematics';
 }
 
+function isAcademicEntryComplete(entry: AcademicEntry): boolean {
+  if (!entry.institution.trim()) return false;
+  if (!entry.year.trim()) return false;
+  if (!entry.percentage.trim()) return false;
+  if (COURSE_LEVELS.includes(entry.level) && !entry.course.trim()) return false;
+  if (BACHELOR_LEVELS.includes(entry.level)) {
+    if (!entry.status) return false;
+    if (entry.status === 'Pursuing' && !entry.yearOfStudying) return false;
+  }
+  return true;
+}
+
 const EXP_TYPES = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Volunteer'];
-type ExperienceEntry = { id: string; company: string; role: string; employmentType: string; from: string; to: string; current: boolean; noticePeriod: string; description: string; };
-function newExperienceEntry(): ExperienceEntry { return { id: crypto.randomUUID(), company: '', role: '', employmentType: 'Full-time', from: '', to: '', current: false, noticePeriod: '', description: '' }; }
+type ExpCert = { name: string; url: string; docId: string };
+type ExperienceEntry = { id: string; company: string; role: string; employmentType: string; from: string; to: string; current: boolean; noticePeriod: string; description: string; certificates: ExpCert[]; };
+function newExperienceEntry(): ExperienceEntry { return { id: crypto.randomUUID(), company: '', role: '', employmentType: 'Full-time', from: '', to: '', current: false, noticePeriod: '', description: '', certificates: [] }; }
+
+function ExpCertUpload({ onUploaded }: { onUploaded: (doc: ExpCert) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', f);
+      fd.append('name', f.name.replace(/\.[^.]+$/, ''));
+      fd.append('type', 'Work Experience Certificate');
+      const doc: any = await api.students.uploadDocument(fd);
+      onUploaded({ name: doc.name, url: doc.url || '', docId: doc._id || '' });
+    } catch {}
+    setUploading(false);
+    e.target.value = '';
+  };
+  return (
+    <>
+      <input ref={fileRef} type="file" className="hidden" aria-label="Attach certificate"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleFile} />
+      <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()}
+        className="inline-flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-60">
+        <Upload className="w-3 h-3" />
+        {uploading ? 'Uploading…' : 'Attach Certificate'}
+      </button>
+    </>
+  );
+}
 
 const DOC_TYPES = ['Passport', '10th Certificate', 'Intermediate Certificate', 'Diploma Certificate', 'Degree Certificate', 'Transcript', 'English Test Certificate', 'SOP', 'LOR', 'Bank Statement', 'Other'];
 const ALL_COUNTRIES = ['Australia', 'Canada', 'France', 'Germany', 'Ireland', 'Netherlands', 'New Zealand', 'Singapore', 'United Kingdom', 'United States', 'Other'];
@@ -136,16 +180,24 @@ export default function StudentProfile() {
   const [academicEntries, setAcademicEntries] = useState<AcademicEntry[]>(
     (student?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', course: '', ...e, id: e.id || crypto.randomUUID() }))
   );
-  const addAcademicEntry = () => setAcademicEntries(prev => [...prev, newAcademicEntry()]);
-  const updateAcademicEntry = (id: string, field: keyof Omit<AcademicEntry, 'id'>, value: string) =>
+  const [incompleteAcademicId, setIncompleteAcademicId] = useState<string | null>(null);
+  const addAcademicEntry = () => {
+    const firstIncomplete = academicEntries.find(e => !isAcademicEntryComplete(e));
+    if (firstIncomplete) { setIncompleteAcademicId(firstIncomplete.id); return; }
+    setIncompleteAcademicId(null);
+    setAcademicEntries(prev => [...prev, newAcademicEntry()]);
+  };
+  const updateAcademicEntry = (id: string, field: keyof Omit<AcademicEntry, 'id'>, value: string) => {
     setAcademicEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
-  const removeAcademicEntry = (id: string) => setAcademicEntries(prev => prev.filter(e => e.id !== id));
+    if (incompleteAcademicId === id) setIncompleteAcademicId(null);
+  };
+  const removeAcademicEntry = (id: string) => { setAcademicEntries(prev => prev.filter(e => e.id !== id)); if (incompleteAcademicId === id) setIncompleteAcademicId(null); };
 
   const [experienceEntries, setExperienceEntries] = useState<ExperienceEntry[]>(
-    (student?.experienceDetails || []).map((e: any) => ({ employmentType: 'Full-time', noticePeriod: '', ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
+    (student?.experienceDetails || []).map((e: any) => ({ employmentType: 'Full-time', noticePeriod: '', certificates: [], ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
   );
   const addExperienceEntry = () => setExperienceEntries(prev => [...prev, newExperienceEntry()]);
-  const updateExperienceEntry = (id: string, field: keyof Omit<ExperienceEntry, 'id'>, value: string | boolean) =>
+  const updateExperienceEntry = (id: string, field: keyof Omit<ExperienceEntry, 'id'>, value: string | boolean | ExpCert[]) =>
     setExperienceEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
   const removeExperienceEntry = (id: string) => setExperienceEntries(prev => prev.filter(e => e.id !== id));
 
@@ -192,8 +244,15 @@ export default function StudentProfile() {
       },
       educationLevel: s?.educationLevel || '',
       gpa: s?.gpa ?? '',
-      englishTestType: s?.englishScore?.type || '',
+      englishTestType: s?.englishScore?.type || ((s?.moi?.institution || s?.englishProficiencyTest?.name) ? 'Not Attempted' : ''),
       englishTestScore: s?.englishScore?.score ?? '',
+      englishTestDate: s?.englishScore?.testDate || '',
+      moiInstitution: s?.moi?.institution || '',
+      moiProgram: s?.moi?.program || '',
+      moiYear: s?.moi?.year || '',
+      profTestName: s?.englishProficiencyTest?.name || '',
+      profTestScore: s?.englishProficiencyTest?.score || '',
+      profTestInstitution: s?.englishProficiencyTest?.institution || '',
       budget: s?.budget ?? '',
       preferredCountries: (s?.preferredCountries || []) as string[],
       interestedCourses: (s?.interestedCourses || []) as string[],
@@ -217,7 +276,7 @@ export default function StudentProfile() {
         (s?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', ...e, id: e.id || crypto.randomUUID() }))
       );
       setExperienceEntries(
-        (s?.experienceDetails || []).map((e: any) => ({ employmentType: 'Full-time', noticePeriod: '', ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
+        (s?.experienceDetails || []).map((e: any) => ({ employmentType: 'Full-time', noticePeriod: '', certificates: [], ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
       );
       setOtherCountry((s?.preferredCountries || []).find((c: string) => !ALL_COUNTRIES.includes(c)) || '');
       setOtherCourse((s?.interestedCourses || []).find((c: string) => !ALL_COURSES.includes(c)) || '');
@@ -234,7 +293,7 @@ export default function StudentProfile() {
     { label: 'Nationality', filled: !!student.nationality },
     { label: 'Education Level', filled: !!student.educationLevel },
     { label: 'GPA / Percentage', filled: !!student.gpa },
-    { label: 'English Test Score', filled: !!(student.englishScore?.score) },
+    { label: 'English Proficiency', filled: !!(student.englishScore?.score) || !!(student.moi?.institution) || !!(student.englishProficiencyTest?.name) },
     { label: 'Preferred Countries', filled: (student.preferredCountries?.length || 0) > 0 },
     { label: 'Interested Courses', filled: (student.interestedCourses?.length || 0) > 0 },
     { label: 'Annual Budget', filled: !!student.budget },
@@ -263,7 +322,9 @@ export default function StudentProfile() {
         address: form.address.city ? form.address : undefined,
         educationLevel: form.educationLevel || undefined,
         gpa: form.gpa !== '' ? Number(form.gpa) : undefined,
-        englishScore: form.englishTestType ? { type: form.englishTestType, score: Number(form.englishTestScore) } : undefined,
+        englishScore: (form.englishTestType && form.englishTestType !== 'Not Attempted') ? { type: form.englishTestType, score: Number(form.englishTestScore), ...(form.englishTestDate ? { testDate: form.englishTestDate } : {}) } : undefined,
+        moi: form.englishTestType === 'Not Attempted' && form.moiInstitution ? { institution: form.moiInstitution, program: form.moiProgram, year: form.moiYear } : undefined,
+        englishProficiencyTest: form.englishTestType === 'Not Attempted' && form.profTestName ? { name: form.profTestName, score: form.profTestScore, institution: form.profTestInstitution } : undefined,
         budget: form.budget !== '' ? Number(form.budget) : undefined,
         preferredCountries: form.preferredCountries.map(c => c === 'Other' && otherCountry.trim() ? otherCountry.trim() : c),
         interestedCourses: form.interestedCourses.map(c => c === 'Other' && otherCourse.trim() ? otherCourse.trim() : c),
@@ -517,24 +578,91 @@ export default function StudentProfile() {
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 ) : <p className="text-gray-900 font-medium">{student.gpa ? `${student.gpa}/10` : '—'}</p>}
               </div>
-              <div>
+              <div className={form.englishTestType === 'Not Attempted' && editing ? 'md:col-span-2' : ''}>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">English Test</label>
                 {editing ? (
-                  <div className="flex gap-2">
-                    <select aria-label="English test type" value={form.englishTestType} onChange={e => setForm(f => ({ ...f, englishTestType: e.target.value as 'IELTS' | 'TOEFL' | 'PTE' }))}
-                      className="w-1/2 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                      <option value="">Select test</option>
-                      <option>IELTS</option>
-                      <option>TOEFL</option>
-                      <option>PTE</option>
-                      <option>Duolingo</option>
-                      <option>Other</option>
-                    </select>
-                    <input type="number" aria-label="English test score" value={form.englishTestScore} step={0.5}
-                      onChange={e => setForm(f => ({ ...f, englishTestScore: e.target.value }))}
-                      placeholder="Score" className="w-1/2 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <select aria-label="English test type" value={form.englishTestType}
+                        onChange={e => setForm(f => ({ ...f, englishTestType: e.target.value, englishTestScore: '', englishTestDate: '', moiInstitution: '', moiProgram: '', moiYear: '', profTestName: '', profTestScore: '', profTestInstitution: '' }))}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="">Select test</option>
+                        <option>IELTS</option>
+                        <option>TOEFL</option>
+                        <option>PTE</option>
+                        <option>Duolingo</option>
+                        <option>Other</option>
+                        <option value="Not Attempted">Not Attempted</option>
+                      </select>
+                      {form.englishTestType && form.englishTestType !== 'Not Attempted' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <input type="number" aria-label="English test score" value={form.englishTestScore} step={0.5}
+                            onChange={e => setForm(f => ({ ...f, englishTestScore: e.target.value }))}
+                            placeholder="Score" className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          <input type="date" aria-label="Exam date" value={form.englishTestDate}
+                            onChange={e => setForm(f => ({ ...f, englishTestDate: e.target.value }))}
+                            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        </div>
+                      )}
+                    </div>
+                    {form.englishTestType === 'Not Attempted' && (
+                      <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-4">
+                        <p className="text-xs font-semibold text-amber-700">Since no English test was attempted, provide your MOI certificate and English Proficiency Test Waiver details:</p>
+                        {/* MOI */}
+                        <div>
+                          <p className="text-xs font-bold text-gray-700 mb-2">Medium of Instruction (MOI)</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input aria-label="MOI Institution" value={form.moiInstitution}
+                              onChange={e => setForm(f => ({ ...f, moiInstitution: e.target.value }))}
+                              placeholder="Institution Name"
+                              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                            <input aria-label="MOI Program" value={form.moiProgram}
+                              onChange={e => setForm(f => ({ ...f, moiProgram: e.target.value }))}
+                              placeholder="Program / Course"
+                              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                            <input aria-label="MOI Year" value={form.moiYear}
+                              onChange={e => setForm(f => ({ ...f, moiYear: e.target.value }))}
+                              placeholder="Year (e.g. 2023)"
+                              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                          </div>
+                        </div>
+                        {/* English Proficiency Test Waiver */}
+                        <div>
+                          <p className="text-xs font-bold text-gray-700 mb-2">English Proficiency Test Waiver</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input aria-label="Waiver Reference / ID" value={form.profTestName}
+                              onChange={e => setForm(f => ({ ...f, profTestName: e.target.value }))}
+                              placeholder="Waiver Reference / ID"
+                              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                            <input aria-label="Issue Date" value={form.profTestScore}
+                              onChange={e => setForm(f => ({ ...f, profTestScore: e.target.value }))}
+                              placeholder="Issue Date (e.g. Jan 2024)"
+                              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                            <input aria-label="Issuing Institution" value={form.profTestInstitution}
+                              onChange={e => setForm(f => ({ ...f, profTestInstitution: e.target.value }))}
+                              placeholder="Issuing Institution"
+                              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ) : <p className="text-gray-900 font-medium">{student.englishScore ? `${student.englishScore.type}: ${student.englishScore.score}` : '—'}</p>}
+                ) : (
+                  <div className="space-y-1">
+                    {student.englishScore ? (
+                      <p className="text-gray-900 font-medium">{student.englishScore.type}: {student.englishScore.score}{student.englishScore.testDate ? ` · ${new Date(student.englishScore.testDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}` : ''}</p>
+                    ) : student.moi?.institution || student.englishProficiencyTest?.name ? (
+                      <div className="space-y-1.5 text-sm">
+                        {student.moi?.institution && (
+                          <p className="text-gray-900 font-medium">MOI: {student.moi.institution}{student.moi.program ? ` — ${student.moi.program}` : ''}{student.moi.year ? ` (${student.moi.year})` : ''}</p>
+                        )}
+                        {student.englishProficiencyTest?.name && (
+                          <p className="text-gray-900 font-medium">Waiver: {student.englishProficiencyTest.name}{student.englishProficiencyTest.score ? ` — ${student.englishProficiencyTest.score}` : ''}</p>
+                        )}
+                      </div>
+                    ) : <p className="text-gray-900 font-medium">—</p>}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Annual Budget (USD)</label>
@@ -552,12 +680,15 @@ export default function StudentProfile() {
                 <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 text-blue-500" /> Academic History
                 </h4>
-                {editing && (
-                  <button type="button" onClick={addAcademicEntry}
-                    className="flex items-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
-                    <Plus className="w-3.5 h-3.5" /> Add Academic Entry
-                  </button>
-                )}
+                {editing && (() => {
+                  const anyIncomplete = academicEntries.some(e => !isAcademicEntryComplete(e));
+                  return (
+                    <button type="button" onClick={addAcademicEntry} disabled={anyIncomplete}
+                      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${anyIncomplete ? 'text-gray-300 bg-gray-50 cursor-not-allowed' : 'text-blue-600 bg-blue-50 hover:bg-blue-100'}`}>
+                      <Plus className="w-3.5 h-3.5" /> Add Academic Entry
+                    </button>
+                  );
+                })()}
               </div>
 
               {academicEntries.length === 0 ? (
@@ -570,15 +701,24 @@ export default function StudentProfile() {
               ) : (
                 <div className="space-y-4">
                   {editing ? (
-                    academicEntries.map((entry, idx) => (
-                      <div key={entry.id} className="border border-blue-100 bg-blue-50/40 rounded-xl p-4">
+                    academicEntries.map((entry, idx) => {
+                      const isIncomplete = incompleteAcademicId === entry.id;
+                      const err = (field: boolean) => isIncomplete && !field ? 'border-red-400 bg-red-50' : 'border-gray-200';
+                      return (
+                      <div key={entry.id} className={`border rounded-xl p-4 transition-colors ${isIncomplete ? 'border-red-300 bg-red-50/30' : 'border-blue-100 bg-blue-50/40'}`}>
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full">Education {idx + 1}</span>
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${isIncomplete ? 'text-red-700 bg-red-100' : 'text-blue-700 bg-blue-100'}`}>Education {idx + 1}</span>
                           <button type="button" aria-label="Remove entry" onClick={() => removeAcademicEntry(entry.id)}
                             className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
+                        {isIncomplete && (
+                          <div className="flex items-center gap-2 bg-red-100 border border-red-200 rounded-lg px-3 py-2 mb-3">
+                            <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                            <p className="text-xs text-red-600 font-medium">Please fill all required fields before adding a new entry.</p>
+                          </div>
+                        )}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="sm:col-span-2">
                             <label className="block text-xs font-medium text-gray-500 mb-1">Education Level</label>
@@ -602,14 +742,14 @@ export default function StudentProfile() {
                               <input aria-label={courseFieldLabel(entry.level)} value={entry.course}
                                 placeholder={courseFieldPlaceholder(entry.level)}
                                 onChange={e => updateAcademicEntry(entry.id, 'course', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${err(!!entry.course.trim())}`} />
                             </div>
                           )}
                           {BACHELOR_LEVELS.includes(entry.level) && (
                             <>
                               <div className="sm:col-span-2">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Current Status</label>
-                                <div className="flex gap-3">
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Current Status <span className="text-red-400">*</span></label>
+                                <div className={`flex gap-3 p-1 rounded-lg ${isIncomplete && !entry.status ? 'ring-2 ring-red-400' : ''}`}>
                                   {['Pursuing', 'Passed Out'].map(opt => (
                                     <button key={opt} type="button"
                                       onClick={() => updateAcademicEntry(entry.id, 'status', opt)}
@@ -622,10 +762,10 @@ export default function StudentProfile() {
                               {entry.status === 'Pursuing' && (
                                 <>
                                   <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Year of Studying</label>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Year of Studying <span className="text-red-400">*</span></label>
                                     <select aria-label="Year of Studying" value={entry.yearOfStudying}
                                       onChange={e => updateAcademicEntry(entry.id, 'yearOfStudying', e.target.value)}
-                                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${err(!!entry.yearOfStudying)}`}>
                                       <option value="">Select year</option>
                                       <option>1st Year</option>
                                       <option>2nd Year</option>
@@ -659,10 +799,10 @@ export default function StudentProfile() {
                             </>
                           )}
                           <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Institution Name</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Institution Name <span className="text-red-400">*</span></label>
                             <input aria-label="Institution Name" value={entry.institution} placeholder="e.g. St. Joseph's High School"
                               onChange={e => updateAcademicEntry(entry.id, 'institution', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${err(!!entry.institution.trim())}`} />
                           </div>
                           <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">Board / University</label>
@@ -671,16 +811,16 @@ export default function StudentProfile() {
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Year of Passing</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Year of Passing <span className="text-red-400">*</span></label>
                             <input aria-label="Year of Passing" value={entry.year} placeholder="e.g. 2022"
                               onChange={e => updateAcademicEntry(entry.id, 'year', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${err(!!entry.year.trim())}`} />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Percentage / GPA</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Percentage / GPA <span className="text-red-400">*</span></label>
                             <input aria-label="Percentage or GPA" value={entry.percentage} placeholder="e.g. 85% or 8.5 CGPA"
                               onChange={e => updateAcademicEntry(entry.id, 'percentage', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${err(!!entry.percentage.trim())}`} />
                           </div>
                           <div className="sm:col-span-2">
                             <label className="block text-xs font-medium text-gray-500 mb-1">City</label>
@@ -697,7 +837,8 @@ export default function StudentProfile() {
                           </div>
                         </div>
                       </div>
-                    ))
+                      );
+                    })
                   ) : (
                     academicEntries.map(entry => (
                       <div key={entry.id} className="border border-gray-100 bg-gray-50 rounded-xl p-4">
@@ -726,12 +867,15 @@ export default function StudentProfile() {
                 </div>
               )}
 
-              {editing && academicEntries.length > 0 && (
-                <button type="button" onClick={addAcademicEntry}
-                  className="mt-4 w-full flex items-center justify-center gap-2 border-2 border-dashed border-blue-200 text-blue-500 hover:border-blue-400 hover:text-blue-700 py-3 rounded-xl transition-colors text-sm font-medium">
-                  <Plus className="w-4 h-4" /> Add Another Academic Entry
-                </button>
-              )}
+              {editing && academicEntries.length > 0 && (() => {
+                const anyIncomplete = academicEntries.some(e => !isAcademicEntryComplete(e));
+                return (
+                  <button type="button" onClick={addAcademicEntry} disabled={anyIncomplete}
+                    className={`mt-4 w-full flex items-center justify-center gap-2 border-2 border-dashed py-3 rounded-xl transition-colors text-sm font-medium ${anyIncomplete ? 'border-gray-200 text-gray-300 cursor-not-allowed' : 'border-blue-200 text-blue-500 hover:border-blue-400 hover:text-blue-700'}`}>
+                    <Plus className="w-4 h-4" /> Add Another Academic Entry
+                  </button>
+                );
+              })()}
             </div>
           </div>
 
@@ -832,6 +976,36 @@ export default function StudentProfile() {
                           onChange={e => updateExperienceEntry(entry.id, 'description', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
                       </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5">Certificates &amp; Documents</label>
+                        <div className="space-y-2">
+                          {(entry.certificates || []).map((cert, ci) => (
+                            <div key={ci} className="flex items-center justify-between gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileText className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
+                                <span className="text-xs text-gray-700 truncate">{cert.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {cert.url && (
+                                  <a href={uploadUrl(cert.url)} target="_blank" rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 hover:underline font-medium">Open</a>
+                                )}
+                                <button type="button" aria-label="Remove certificate"
+                                  onClick={async () => {
+                                    if (cert.docId) await api.students.deleteDocument(cert.docId).catch(() => {});
+                                    updateExperienceEntry(entry.id, 'certificates', (entry.certificates || []).filter((_, i) => i !== ci));
+                                  }}
+                                  className="p-0.5 text-gray-400 hover:text-red-500 transition-colors">
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          <ExpCertUpload
+                            onUploaded={cert => updateExperienceEntry(entry.id, 'certificates', [...(entry.certificates || []), cert])}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -848,6 +1022,16 @@ export default function StudentProfile() {
                         <p className="text-xs text-gray-400 mt-0.5">{entry.from}{entry.to || entry.current ? ` — ${entry.current ? 'Present' : entry.to}` : ''}</p>
                         {entry.current && entry.noticePeriod && <p className="text-xs text-purple-600 font-medium mt-0.5">Notice Period: {entry.noticePeriod}</p>}
                         {entry.description && <p className="text-xs text-gray-500 mt-1.5 italic">{entry.description}</p>}
+                        {(entry.certificates || []).length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {(entry.certificates || []).map((cert, ci) => (
+                              <a key={ci} href={uploadUrl(cert.url)} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-xs bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-lg font-medium transition-colors">
+                                <FileText className="w-3 h-3 flex-shrink-0" /> {cert.name}
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

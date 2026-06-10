@@ -10,7 +10,7 @@ export const mockStudents: Student[] = [
     budget: 40000,
     interestedCourses: ['Computer Science', 'Data Science'],
     applications: [
-      { id: 'app1', studentId: 's1', universityId: 'u1', universityName: 'University of Toronto', courseId: 'c3', courseName: 'Data Science', status: 'under_review', submittedDate: '2025-10-15', updatedDate: '2025-11-01', intake: 'Fall 2026' },
+      { id: 'app1', studentId: 's1', universityId: 'u1', universityName: 'University of Toronto', courseId: 'c3', courseName: 'Data Science', status: 'under_review', submittedDate: '2025-10-15', updatedDate: '2025-11-01', intake: 'September 2026' },
       { id: 'app2', studentId: 's1', universityId: 'u7', universityName: 'University of British Columbia', courseId: 'c17', courseName: 'Engineering', status: 'offer_received', submittedDate: '2025-10-20', updatedDate: '2025-11-10', intake: 'September 2026' },
     ],
     documents: [
@@ -51,7 +51,7 @@ export const mockStudents: Student[] = [
     budget: 20000,
     interestedCourses: ['Engineering', 'Robotics'],
     applications: [
-      { id: 'app4', studentId: 's3', universityId: 'u4', universityName: 'TU Munich', courseId: 'c12', courseName: 'Robotics', status: 'accepted', submittedDate: '2025-09-01', updatedDate: '2025-11-15', intake: 'Winter 2026/27' },
+      { id: 'app4', studentId: 's3', universityId: 'u4', universityName: 'TU Munich', courseId: 'c12', courseName: 'Robotics', status: 'accepted', submittedDate: '2025-09-01', updatedDate: '2025-11-15', intake: 'January 2027' },
     ],
     documents: [
       { id: 'd7', name: 'Passport', type: 'Identity', uploadedDate: '2025-08-15', status: 'verified' },

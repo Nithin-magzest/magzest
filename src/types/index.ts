@@ -22,7 +22,9 @@ export interface Student extends User {
   address?: { street: string; city: string; state: string; country: string; postalCode: string };
   educationLevel: string;
   gpa: number;
-  englishScore: { type: 'IELTS' | 'TOEFL' | 'PTE' | 'Duolingo'; score: number };
+  englishScore?: { type: 'IELTS' | 'TOEFL' | 'PTE' | 'Duolingo' | 'Other'; score: number; testDate?: string };
+  moi?: { institution: string; program: string; year: string };
+  englishProficiencyTest?: { name: string; score: string; institution: string };
   preferredCountries: string[];
   budget: number;
   interestedCourses: string[];

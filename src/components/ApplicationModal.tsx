@@ -85,9 +85,15 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
   const isOtherYear = academic.graduationYear === 'Other';
 
   const [finance, setFinance] = useState({
-    englishTestType: student?.englishScore?.type || '',
+    englishTestType: student?.englishScore?.type || ((student?.moi?.institution || student?.englishProficiencyTest?.name) ? 'Not Attempted' : ''),
     englishTestScore: student?.englishScore?.score ? String(student.englishScore.score) : '',
     englishTestDate: '',
+    moiInstitution: student?.moi?.institution || '',
+    moiProgram: student?.moi?.program || '',
+    moiYear: student?.moi?.year || '',
+    profTestName: student?.englishProficiencyTest?.name || '',
+    profTestScore: student?.englishProficiencyTest?.score || '',
+    profTestInstitution: student?.englishProficiencyTest?.institution || '',
     intake: course.intake?.[0] || '',
     studyMode: 'Full-time',
     fundingSource: '',
@@ -126,7 +132,7 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
     if (step === 2) {
       if (!finance.intake) return 'Please select an intake';
       if (!finance.fundingSource) return 'Please select a funding source';
-      if (finance.englishTestType && !finance.englishTestScore) return 'Please enter your English test score';
+      if (finance.englishTestType && finance.englishTestType !== 'Not Attempted' && !finance.englishTestScore) return 'Please enter your English test score';
     }
     if (step === 3) {
       if (sop.whyCourse.trim().length < 50) return 'Please write at least 50 characters for why you chose this course';
@@ -178,11 +184,13 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
         previousMajor: academic.previousMajor,
         graduationYear: isOtherYear ? graduationYearCustom : academic.graduationYear,
         percentage: academic.percentage,
-        englishTest: finance.englishTestType ? {
+        englishTest: (finance.englishTestType && finance.englishTestType !== 'Not Attempted') ? {
           type: finance.englishTestType,
           score: parseFloat(finance.englishTestScore),
           testDate: finance.englishTestDate,
         } : undefined,
+        moi: finance.englishTestType === 'Not Attempted' && finance.moiInstitution ? { institution: finance.moiInstitution, program: finance.moiProgram, year: finance.moiYear } : undefined,
+        englishProficiencyTest: finance.englishTestType === 'Not Attempted' && finance.profTestName ? { name: finance.profTestName, score: finance.profTestScore, institution: finance.profTestInstitution } : undefined,
         fundingSource: finance.fundingSource,
         sponsorName: finance.sponsorName,
         whyCourse: sop.whyCourse,
@@ -370,7 +378,7 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
           {/* Step 2 — English Proficiency & Finance */}
           {step === 2 && (
             <div className="space-y-5">
-              {(student?.englishScore?.type || student?.englishScore?.score) && (
+              {(student?.englishScore?.type || student?.moi?.institution || student?.englishProficiencyTest?.name) && (
                 <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm text-blue-700">
                   <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-500" />
                   <span>English proficiency pre-filled from your profile — review and update if needed.</span>
@@ -397,28 +405,73 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
 
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3">English Proficiency</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className={labelCls}>Test Type</label>
-                    <select value={finance.englishTestType} onChange={e => setFinance(f => ({ ...f, englishTestType: e.target.value }))} className={`${inputCls} bg-white`}>
-                      <option value="">None / Not yet taken</option>
-                      <option>IELTS</option>
-                      <option>TOEFL</option>
-                      <option>PTE</option>
-                      <option>Duolingo</option>
-                    </select>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className={labelCls}>Test Type</label>
+                      <select aria-label="English test type" value={finance.englishTestType}
+                        onChange={e => setFinance(f => ({ ...f, englishTestType: e.target.value, englishTestScore: '', englishTestDate: '', moiInstitution: '', moiProgram: '', moiYear: '', profTestName: '', profTestScore: '', profTestInstitution: '' }))}
+                        className={`${inputCls} bg-white`}>
+                        <option value="">None / Not yet taken</option>
+                        <option>IELTS</option>
+                        <option>TOEFL</option>
+                        <option>PTE</option>
+                        <option>Duolingo</option>
+                        <option>Other</option>
+                        <option value="Not Attempted">Not Attempted</option>
+                      </select>
+                    </div>
+                    {finance.englishTestType && finance.englishTestType !== 'Not Attempted' && (
+                      <>
+                        <div>
+                          <label className={labelCls}>Score <span className="text-red-500">*</span></label>
+                          <input type="number" step="0.1" value={finance.englishTestScore} onChange={e => setFinance(f => ({ ...f, englishTestScore: e.target.value }))} placeholder="e.g. 7.5" className={inputCls} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Exam Date</label>
+                          <input type="date" aria-label="Exam date" value={finance.englishTestDate} onChange={e => setFinance(f => ({ ...f, englishTestDate: e.target.value }))} className={inputCls} />
+                        </div>
+                      </>
+                    )}
                   </div>
-                  {finance.englishTestType && (
-                    <>
+                  {finance.englishTestType === 'Not Attempted' && (
+                    <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-4">
+                      <p className="text-xs font-semibold text-amber-700">Since no English test was attempted, provide your MOI certificate and English Proficiency Test Waiver details:</p>
                       <div>
-                        <label className={labelCls}>Score <span className="text-red-500">*</span></label>
-                        <input type="number" step="0.1" value={finance.englishTestScore} onChange={e => setFinance(f => ({ ...f, englishTestScore: e.target.value }))} placeholder="e.g. 7.5" className={inputCls} />
+                        <p className="text-xs font-bold text-gray-700 mb-2">Medium of Instruction (MOI)</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className={labelCls}>Institution Name</label>
+                            <input type="text" value={finance.moiInstitution} onChange={e => setFinance(f => ({ ...f, moiInstitution: e.target.value }))} placeholder="e.g. Delhi University" className={inputCls} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Program / Course</label>
+                            <input type="text" value={finance.moiProgram} onChange={e => setFinance(f => ({ ...f, moiProgram: e.target.value }))} placeholder="e.g. B.Tech Computer Science" className={inputCls} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Year</label>
+                            <input type="text" value={finance.moiYear} onChange={e => setFinance(f => ({ ...f, moiYear: e.target.value }))} placeholder="e.g. 2023" className={inputCls} />
+                          </div>
+                        </div>
                       </div>
                       <div>
-                        <label className={labelCls}>Test Date</label>
-                        <input type="date" value={finance.englishTestDate} onChange={e => setFinance(f => ({ ...f, englishTestDate: e.target.value }))} className={inputCls} />
+                        <p className="text-xs font-bold text-gray-700 mb-2">English Proficiency Test Waiver</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className={labelCls}>Waiver Reference / ID</label>
+                            <input type="text" value={finance.profTestName} onChange={e => setFinance(f => ({ ...f, profTestName: e.target.value }))} placeholder="Waiver Reference / ID" className={inputCls} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Issue Date</label>
+                            <input type="text" value={finance.profTestScore} onChange={e => setFinance(f => ({ ...f, profTestScore: e.target.value }))} placeholder="e.g. Jan 2024" className={inputCls} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Issuing Institution</label>
+                            <input type="text" value={finance.profTestInstitution} onChange={e => setFinance(f => ({ ...f, profTestInstitution: e.target.value }))} placeholder="Issuing Institution" className={inputCls} />
+                          </div>
+                        </div>
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
@@ -428,7 +481,7 @@ export default function ApplicationModal({ course, uni, onClose, onSuccess }: Pr
                 <div className="space-y-3">
                   <div>
                     <label className={labelCls}>Funding Source <span className="text-red-500">*</span></label>
-                    <select value={finance.fundingSource} onChange={e => setFinance(f => ({ ...f, fundingSource: e.target.value }))} className={`${inputCls} bg-white`}>
+                    <select aria-label="Funding source" value={finance.fundingSource} onChange={e => setFinance(f => ({ ...f, fundingSource: e.target.value }))} className={`${inputCls} bg-white`}>
                       <option value="">Select funding source</option>
                       <option>Self-funded</option>
                       <option>Family / Parent Sponsor</option>

@@ -4,12 +4,22 @@ const mongoose = require('mongoose');
 // Mongoose mis-interpreting { type: ..., otherField: ... } as a SchemaType
 // definition rather than an embedded document.
 const EnglishScoreSchema = new mongoose.Schema(
-  { type: { type: String, enum: ['IELTS', 'TOEFL', 'PTE', 'Duolingo'] }, score: Number },
+  { type: { type: String, enum: ['IELTS', 'TOEFL', 'PTE', 'Duolingo', 'Other'] }, score: Number, testDate: String },
   { _id: false }
 );
 
 const EnglishTestSchema = new mongoose.Schema(
   { type: { type: String }, score: Number, testDate: String },
+  { _id: false }
+);
+
+const MOISchema = new mongoose.Schema(
+  { institution: String, program: String, year: String },
+  { _id: false }
+);
+
+const EnglishProficiencyTestSchema = new mongoose.Schema(
+  { name: String, score: String, institution: String },
   { _id: false }
 );
 
@@ -72,6 +82,8 @@ const ApplicationSchema = new mongoose.Schema({
 
   // English proficiency
   englishTest: EnglishTestSchema,
+  moi: MOISchema,
+  englishProficiencyTest: EnglishProficiencyTestSchema,
 
   // Financial
   fundingSource: String,
@@ -96,6 +108,11 @@ const ApplicationSchema = new mongoose.Schema({
   comments: [CommentSchema],
 });
 
+const ExperienceCertSchema = new mongoose.Schema(
+  { name: String, url: String, docId: String },
+  { _id: false }
+);
+
 const ExperienceSchema = new mongoose.Schema({
   company: String,
   role: String,
@@ -105,6 +122,7 @@ const ExperienceSchema = new mongoose.Schema({
   current: Boolean,
   noticePeriod: String,
   description: String,
+  certificates: [ExperienceCertSchema],
 }, { _id: false });
 
 const AcademicDetailSchema = new mongoose.Schema({
@@ -154,6 +172,8 @@ const UserSchema = new mongoose.Schema({
   educationLevel: String,
   gpa: Number,
   englishScore: EnglishScoreSchema,
+  moi: MOISchema,
+  englishProficiencyTest: EnglishProficiencyTestSchema,
   preferredCountries: [String],
   budget: Number,
   interestedCourses: [String],
