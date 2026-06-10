@@ -67,6 +67,7 @@ const AdminStudents          = lazy(() => import('./pages/admin/AdminStudents'))
 const AdminActivityFeed      = lazy(() => import('./pages/admin/AdminActivityFeed'));
 const AdminMeetings          = lazy(() => import('./pages/admin/AdminMeetings'));
 const AdminSettings          = lazy(() => import('./pages/admin/AdminSettings'));
+const AdminAnalytics         = lazy(() => import('./pages/admin/AdminAnalytics'));
 
 // App Team module
 const AppTeamLayout       = lazy(() => import('./pages/appteam/AppTeamLayout'));
@@ -180,6 +181,7 @@ export default function App() {
               <Route path="meetings" element={<AdminMeetings />} />
               <Route path="chat" element={<AdminChat />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
 
