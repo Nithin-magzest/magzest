@@ -24,10 +24,10 @@ function courseFieldPlaceholder(level: string) {
 }
 
 function isAcademicEntryComplete(entry: AcademicEntry): boolean {
-  if (!entry.institution.trim()) return false;
-  if (!entry.year.trim()) return false;
-  if (!entry.percentage.trim()) return false;
-  if (COURSE_LEVELS.includes(entry.level) && !entry.course.trim()) return false;
+  if (!(entry.institution || '').trim()) return false;
+  if (!(entry.year || '').trim()) return false;
+  if (!(entry.percentage || '').trim()) return false;
+  if (COURSE_LEVELS.includes(entry.level) && !(entry.course || '').trim()) return false;
   if (BACHELOR_LEVELS.includes(entry.level)) {
     if (!entry.status) return false;
     if (entry.status === 'Pursuing' && !entry.yearOfStudying) return false;
@@ -680,7 +680,7 @@ export default function StudentProfile() {
                               <input aria-label={courseFieldLabel(entry.level)} value={entry.course}
                                 placeholder={courseFieldPlaceholder(entry.level)}
                                 onChange={e => updateAcademicEntry(entry.id, 'course', e.target.value)}
-                                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${err(!!entry.course.trim())}`} />
+                                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${err(!!(entry.course || '').trim())}`} />
                             </div>
                           )}
                           {BACHELOR_LEVELS.includes(entry.level) && (

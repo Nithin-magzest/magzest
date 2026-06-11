@@ -6,3 +6,4 @@ server/.env.production
 dist
 .claude
 server/uploads
+*.log
