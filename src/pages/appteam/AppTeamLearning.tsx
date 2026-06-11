@@ -45,7 +45,7 @@ const RESOURCES = [
     title: 'Understanding Every Application Status',
     description: 'Draft, Submitted, Under Review, Offer Received, Accepted, Enrolled, Rejected — what each status means, when to use it, and who triggers the change.',
     duration: '8 min',
-    url: 'https://www.nacac.org/resources/knowledge-center/',
+    url: 'https://www.nacac.org/resources/',
     tags: ['statuses', 'reference'],
   },
   {
@@ -61,7 +61,7 @@ const RESOURCES = [
     title: 'Document Verification Checklist',
     description: 'How to review Passports, Transcripts, SOP, LOR, and bank statements. What to look for, common issues, and how to mark documents verified or rejected.',
     duration: '12 min',
-    url: 'https://www.internationalstudent.com/study_usa/university-application/documents-needed/',
+    url: 'https://www.fastweb.com/financial-aid/articles/documents-needed-for-college-application',
     tags: ['documents', 'checklist'],
   },
   {
@@ -69,7 +69,7 @@ const RESOURCES = [
     title: 'Spotting Fraudulent or Incomplete Documents',
     description: 'Red flags to watch for in transcripts, degrees, and bank statements. How to escalate suspected issues to senior admin.',
     duration: '10 min',
-    url: 'https://www.ukcisa.org.uk/Information--Advice/Preparation-and-Arrival/UK-student-visas-documents',
+    url: 'https://www.fastweb.com/college-search/articles/how-to-verify-college-documents',
     tags: ['documents', 'quality'],
   },
   {
@@ -77,7 +77,7 @@ const RESOURCES = [
     title: 'Writing Effective Processing Notes',
     description: 'How to write clear, actionable notes when updating an application. Best practices that help counselors and students understand the next step.',
     duration: '6 min',
-    url: 'https://www.nacac.org/professional-development/',
+    url: 'https://www.nacac.org/resources/',
     tags: ['processing', 'notes'],
   },
   {
@@ -85,7 +85,7 @@ const RESOURCES = [
     title: 'Handling a High Volume of Applications',
     description: 'Prioritisation strategies, batch processing tips, and how to use filters in the applications view to work through a large queue efficiently.',
     duration: '8 min',
-    url: 'https://www.iecaonline.com/professional-development/',
+    url: 'https://www.iecaonline.com',
     tags: ['processing', 'efficiency'],
   },
   {
@@ -109,7 +109,7 @@ const RESOURCES = [
     title: 'Responding to Student Questions',
     description: 'How to use the comment thread on an application to respond to student queries. Tone guidelines and response time expectations.',
     duration: '5 min',
-    url: 'https://www.nacac.org/professional-development/',
+    url: 'https://www.nacac.org/resources/',
     tags: ['students', 'communication'],
   },
   {
@@ -125,7 +125,7 @@ const RESOURCES = [
     title: 'Handling Rejections and Reapplications',
     description: 'How to record a rejection, communicate sensitively, and help the student understand reapplication options.',
     duration: '7 min',
-    url: 'https://www.ukcisa.org.uk/Information--Advice/Visa-and-Immigration/Appealing-an-immigration-decision',
+    url: 'https://www.fastweb.com/college-search/articles/what-to-do-when-colleges-reject-you',
     tags: ['rejection', 'student-support'],
   },
   {
@@ -149,14 +149,40 @@ const RESOURCES = [
     title: 'Mastering the Applications Filter & Search',
     description: 'Advanced use of status tabs, counselor filters, and the search bar to quickly locate specific applications and build working queues.',
     duration: '6 min',
-    url: 'https://www.iecaonline.com/professional-development/',
+    url: 'https://www.iecaonline.com',
     tags: ['filters', 'efficiency'],
+  },
+
+  // Video Resources
+  {
+    id: 'proc-v1', category: 'processing', type: 'video', level: 'Beginner',
+    title: 'Study Abroad: Full Application Process Explained',
+    description: 'A complete walkthrough of the study abroad application journey — helps app team understand what students go through at every stage.',
+    duration: '20 min',
+    url: 'https://www.youtube.com/watch?v=vfwZZDcmeQo',
+    tags: ['overview', 'process', 'student-journey'],
+  },
+  {
+    id: 'doc-v1', category: 'documents', type: 'video', level: 'Beginner',
+    title: 'All Documents Required for University Applications',
+    description: 'Covers every document international students submit — transcripts, SOP, LOR, financial proof — so app team knows exactly what to look for when verifying.',
+    duration: '12 min',
+    url: 'https://www.youtube.com/watch?v=ggsGmoVA0zY',
+    tags: ['documents', 'checklist', 'verification'],
+  },
+  {
+    id: 'comm-v1', category: 'communication', type: 'video', level: 'Intermediate',
+    title: 'F1 Visa Interview: 21 Common Questions & Answers',
+    description: 'Understanding the questions students face in visa interviews — helps app team respond accurately to student queries and flag the right status updates.',
+    duration: '20 min',
+    url: 'https://www.youtube.com/watch?v=gJD4N215GWo',
+    tags: ['visa', 'student-support', 'communication'],
   },
 ];
 
 const LEARNING_PATH = [
-  'app-flow-overview', 'status-meanings', 'doc-verification',
-  'status-update-guide', 'processing-notes', 'student-communication',
+  'app-flow-overview', 'proc-v1', 'status-meanings', 'doc-verification', 'doc-v1',
+  'status-update-guide', 'processing-notes', 'student-communication', 'comm-v1',
   'counselor-coordination', 'offer-handling', 'rejection-handling',
   'doc-quality-check', 'bulk-processing', 'escalation-procedure',
   'reporting-basics', 'pdf-reports', 'advanced-filters',

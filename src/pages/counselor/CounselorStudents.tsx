@@ -711,7 +711,7 @@ function StudentDetail() {
       )}
 
       {activeTab === 'notes' && (() => {
-        const myNotes = (student.counselorNotes || []).filter((n: any) => n.counselorId === (counselor?._id || counselor?.id));
+        const myNotes = (student.counselorNotes || []).filter((n: any) => n.counselorId === ((counselor as any)?._id || counselor?.id));
 
         const handleAddNote = async () => {
           if (!noteText.trim() || !studentId) return;
@@ -785,8 +785,8 @@ function StudentDetail() {
                         {isEditing ? (
                           <div className="space-y-2">
                             <textarea
-                              value={editingNote.text}
-                              onChange={e => setEditingNote({ ...editingNote, text: e.target.value })}
+                              value={editingNote!.text}
+                              onChange={e => setEditingNote({ id: editingNote!.id, text: e.target.value })}
                               rows={3}
                               className="w-full px-3 py-2 border border-yellow-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none bg-white"
                             />
@@ -795,7 +795,7 @@ function StudentDetail() {
                                 className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
                                 Cancel
                               </button>
-                              <button type="button" disabled={!editingNote.text.trim() || notesSaving} onClick={handleSaveEdit}
+                              <button type="button" disabled={!editingNote!.text.trim() || notesSaving} onClick={handleSaveEdit}
                                 className="px-3 py-1.5 text-xs bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50">
                                 {notesSaving ? 'Saving…' : 'Save'}
                               </button>
