@@ -27,43 +27,43 @@ const RESOURCES: Resource[] = [
   {
     id: 'gs-1', category: 'getting-started', type: 'article', title: 'How to Choose the Right University for You',
     description: 'A complete walkthrough of how to compare universities by ranking, location, tuition fees, and course quality to find the best fit.',
-    duration: '10 min', url: 'https://www.topuniversities.com/student-info/choosing-university/how-choose-university',
+    duration: '10 min', url: 'https://www.fastweb.com/college-search/articles/how-to-choose-a-college',
     tags: ['Choosing', 'Rankings', 'Research'], level: 'Beginner', featured: true,
   },
   {
     id: 'gs-2', category: 'getting-started', type: 'article', title: 'Understanding University Requirements Before You Apply',
     description: 'Learn what universities look at — academic scores, English proficiency, work experience, and portfolio requirements.',
-    duration: '10 min', url: 'https://www.topuniversities.com/student-info/choosing-university/how-choose-university',
+    duration: '10 min', url: 'https://www.fastweb.com/college-search/articles/tips-for-choosing-a-college',
     tags: ['Requirements', 'Eligibility', 'Planning'], level: 'Beginner',
   },
   {
     id: 'gs-3', category: 'getting-started', type: 'guide', title: 'Creating Your Application Timeline: Month by Month',
     description: 'Plan backwards from your intended intake — when to research, test, apply, and accept offers to never miss a deadline.',
-    duration: '8 min', url: 'https://www.internationalstudent.com/study_usa/application-timeline/',
+    duration: '8 min', url: 'https://bigfuture.collegeboard.org/plan-for-college',
     tags: ['Timeline', 'Deadlines', 'Planning'], level: 'Beginner',
   },
   {
     id: 'gs-4', category: 'getting-started', type: 'guide', title: 'Study Abroad 101: Everything You Need to Know',
     description: 'From selecting a country to arriving on campus — a comprehensive overview for first-time international applicants.',
-    duration: '15 min', url: 'https://www.studyabroad.com/how-to-study-abroad',
+    duration: '15 min', url: 'https://www.goabroad.com/articles/study-abroad/what-is-study-abroad',
     tags: ['Overview', 'Countries', 'First Steps'], level: 'Beginner', featured: true,
   },
   {
     id: 'app-1', category: 'application', type: 'guide', title: 'Step-by-Step: Filling a University Application Form',
     description: 'A complete guide to completing an international university application — every section explained in detail.',
-    duration: '15 min', url: 'https://www.commonapp.org/apply/how-to-apply',
+    duration: '15 min', url: 'https://www.commonapp.org/apply',
     tags: ['Application Form', 'Walkthrough', 'Step-by-step'], level: 'Beginner', featured: true,
   },
   {
     id: 'app-2', category: 'application', type: 'article', title: 'Writing a Winning Statement of Purpose (SOP)',
     description: 'Structure, tone, and content strategies for crafting an SOP that convinces admissions teams you belong at their university.',
-    duration: '15 min', url: 'https://www.shemmassianconsulting.com/blog/statement-of-purpose',
+    duration: '15 min', url: 'https://www.fastweb.com/financial-aid/articles/how-to-write-a-statement-of-purpose',
     tags: ['SOP', 'Writing', 'Personal Statement'], level: 'Intermediate',
   },
   {
     id: 'app-3', category: 'application', type: 'guide', title: 'Applying to Multiple Universities: A Smart Strategy',
     description: 'How to build a balanced list of reach, match, and safety schools — and manage multiple applications simultaneously.',
-    duration: '12 min', url: 'https://www.kaplanpathways.com/about/news/applying-to-multiple-universities/',
+    duration: '12 min', url: 'https://www.fastweb.com/college-search/articles/how-to-apply-to-multiple-colleges',
     tags: ['Multiple Apps', 'Strategy', 'Safety Schools'], level: 'Intermediate',
   },
   {
@@ -75,37 +75,37 @@ const RESOURCES: Resource[] = [
   {
     id: 'app-5', category: 'application', type: 'article', title: 'Advanced Application Tactics: Standing Out from the Crowd',
     description: 'How top applicants craft portfolios, secure strong references, and tailor each application to a specific program.',
-    duration: '12 min', url: 'https://www.princetonreview.com/college-advice/college-application-tips',
+    duration: '12 min', url: 'https://www.fastweb.com/college-search/articles/college-application-tips',
     tags: ['Portfolio', 'References', 'Differentiation'], level: 'Advanced', featured: true,
   },
   {
     id: 'doc-1', category: 'documents', type: 'guide', title: 'Complete Document Checklist for International Applications',
     description: 'Every document you will ever need: passport, transcripts, English scores, bank statements, SOP, and recommendation letters — with tips on formatting.',
-    duration: '10 min', url: 'https://www.internationalstudent.com/study_usa/university-application/documents-needed/',
+    duration: '10 min', url: 'https://www.fastweb.com/financial-aid/articles/documents-needed-for-college-application',
     tags: ['Checklist', 'Documents', 'Formatting'], level: 'Beginner', featured: true,
   },
   {
     id: 'doc-2', category: 'documents', type: 'article', title: 'How to Get Strong Recommendation Letters',
     description: 'Who to ask, how to brief them, and what a great reference letter looks like — with a sample structure.',
-    duration: '9 min', url: 'https://www.prepscholar.com/gre/blog/how-to-ask-for-recommendation-letters/',
+    duration: '9 min', url: 'https://www.fastweb.com/financial-aid/articles/what-makes-a-great-letter-of-recommendation',
     tags: ['Recommendations', 'References', 'Letters'], level: 'Intermediate',
   },
   {
     id: 'doc-3', category: 'documents', type: 'guide', title: 'Uploading & Submitting Documents: Avoiding Common Errors',
     description: 'File formats, size limits, naming conventions, and what to do if a document gets rejected by the online portal.',
-    duration: '8 min', url: 'https://www.ucas.com/undergraduate/applying-to-uni/filling-your-application',
+    duration: '8 min', url: 'https://www.fastweb.com/college-search/articles/how-to-upload-documents-to-college-application',
     tags: ['Upload', 'File Formats', 'Portals'], level: 'Beginner',
   },
   {
     id: 'doc-4', category: 'documents', type: 'guide', title: 'Financial Documents: Bank Statements & Sponsorship Letters',
     description: 'How to prepare financial proof that meets visa and university requirements — amounts, formatting, and certification.',
-    duration: '11 min', url: 'https://www.gov.uk/student-visa/documents-you-must-provide',
+    duration: '11 min', url: 'https://www.fastweb.com/financial-aid/articles/prove-financial-support-for-student-visa',
     tags: ['Finance', 'Bank Statement', 'Sponsorship'], level: 'Advanced',
   },
   {
     id: 'sch-1', category: 'scholarships', type: 'article', title: 'Finding Scholarships You Actually Qualify For',
     description: 'How to search scholarship databases, filter by your profile, and shortlist realistic opportunities to maximize success.',
-    duration: '12 min', url: 'https://www.scholarships.com/financial-aid/college-scholarships/',
+    duration: '12 min', url: 'https://www.fastweb.com/financial-aid/articles/how-to-find-scholarships',
     tags: ['Databases', 'Search', 'Eligibility'], level: 'Beginner', featured: true,
   },
   {
@@ -117,41 +117,103 @@ const RESOURCES: Resource[] = [
   {
     id: 'sch-3', category: 'scholarships', type: 'guide', title: 'Writing a Scholarship Essay That Wins',
     description: 'Structure, tone, and storytelling techniques for crafting scholarship essays that move selection committees.',
-    duration: '12 min', url: 'https://www.scholarships.com/financial-aid/college-scholarships/scholarships-blog/2020/june/tips-for-writing-a-winning-scholarship-essay/',
+    duration: '12 min', url: 'https://blog.collegevine.com/how-to-write-a-scholarship-essay',
     tags: ['Essay', 'Writing', 'Storytelling'], level: 'Intermediate',
   },
   {
     id: 'visa-1', category: 'visa', type: 'article', title: 'Student Visa Guide: UK, US, Canada & Australia',
     description: 'Side-by-side comparison of Tier 4, F-1, Study Permit, and Student Visa — requirements, costs, and processing times.',
-    duration: '15 min', url: 'https://educationusa.state.gov/foreign-students/student-visas',
+    duration: '15 min', url: 'https://www.fastweb.com/financial-aid/articles/how-to-apply-for-a-student-visa',
     tags: ['UK Visa', 'F-1 Visa', 'Canada', 'Australia'], level: 'Intermediate', featured: true,
   },
   {
     id: 'visa-2', category: 'visa', type: 'article', title: 'Preparing for Your Student Visa Interview',
     description: 'Common questions, correct answers, and what documents to bring — a realistic practice guide for visa applicants.',
-    duration: '10 min', url: 'https://www.internationalstudent.com/study_usa/student-visa/visa-interview/',
+    duration: '10 min', url: 'https://www.fastweb.com/financial-aid/articles/student-visa-interview-tips',
     tags: ['Visa Interview', 'Practice', 'Questions'], level: 'Intermediate',
   },
   {
     id: 'visa-3', category: 'visa', type: 'guide', title: 'Pre-Departure Checklist: From Acceptance to Arrival',
     description: 'Everything to do after receiving your visa — accommodation, flights, insurance, banking, and campus orientation.',
-    duration: '8 min', url: 'https://www.internationalstudent.com/study_usa/before-you-go/',
+    duration: '8 min', url: 'https://www.goabroad.com/articles/study-abroad/study-abroad-pre-departure-checklist',
     tags: ['Pre-Departure', 'Accommodation', 'Insurance'], level: 'Beginner',
   },
   {
     id: 'visa-4', category: 'visa', type: 'article', title: 'What to Do If Your Visa Is Refused',
     description: 'Understanding refusal reasons, appeal rights, and how to strengthen a reapplication with a real case study.',
-    duration: '12 min', url: 'https://www.ukcisa.org.uk/Information--Advice/Visa-and-Immigration/Appealing-an-immigration-decision',
+    duration: '12 min', url: 'https://www.fastweb.com/financial-aid/articles/what-to-do-when-your-visa-is-denied',
     tags: ['Refusal', 'Appeal', 'Reapplication'], level: 'Advanced',
+  },
+
+  // Video Resources
+  {
+    id: 'gs-v1', category: 'getting-started', type: 'video', title: 'Choose the RIGHT University for You',
+    description: 'A practical video breaking down how to pick the right university — explains why rankings alone should not be your deciding factor when studying abroad.',
+    duration: '8 min', url: 'https://www.youtube.com/watch?v=9jy_4Un6jS4',
+    tags: ['Choosing', 'Rankings', 'Decision'], level: 'Beginner',
+  },
+  {
+    id: 'gs-v2', category: 'getting-started', type: 'video', title: 'Study Abroad: Complete Step-by-Step Guide',
+    description: 'Everything you need to know about studying abroad in one video — from finding programs and applying to securing scholarships and arriving on campus.',
+    duration: '20 min', url: 'https://www.youtube.com/watch?v=vfwZZDcmeQo',
+    tags: ['Overview', 'Complete Guide', 'First Steps'], level: 'Beginner', featured: true,
+  },
+  {
+    id: 'app-v1', category: 'application', type: 'video', title: 'Write the Perfect Statement of Purpose (SOP)',
+    description: 'A detailed video walkthrough covering SOP format, structure, tips, and real samples — one of the most watched SOP guides for university applicants.',
+    duration: '22 min', url: 'https://www.youtube.com/watch?v=P64R-kW-bgw',
+    tags: ['SOP', 'Writing', 'Format'], level: 'Intermediate',
+  },
+  {
+    id: 'app-v2', category: 'application', type: 'video', title: 'Reach, Match & Safety Schools Explained',
+    description: 'How to build a balanced college list using the reach, match, and safety framework — with practical strategy for maximising your acceptance rate.',
+    duration: '10 min', url: 'https://www.youtube.com/watch?v=7KFIu5Pumso',
+    tags: ['College List', 'Reach', 'Safety Schools'], level: 'Intermediate',
+  },
+  {
+    id: 'doc-v1', category: 'documents', type: 'video', title: 'All Documents Required for University Applications',
+    description: 'A video covering every document international students need — transcripts, SOP, recommendation letters, financial proof, and how to prepare each one.',
+    duration: '12 min', url: 'https://www.youtube.com/watch?v=ggsGmoVA0zY',
+    tags: ['Checklist', 'Documents', 'Graduate'], level: 'Beginner',
+  },
+  {
+    id: 'doc-v2', category: 'documents', type: 'video', title: 'How to Ask for a Recommendation Letter',
+    description: '5 proven tips for asking professors or managers for strong recommendation letters — includes a sample email template that actually works.',
+    duration: '8 min', url: 'https://www.youtube.com/watch?v=FUy-SqsHipE',
+    tags: ['Recommendations', 'Email', 'Tips'], level: 'Intermediate',
+  },
+  {
+    id: 'sch-v1', category: 'scholarships', type: 'video', title: 'Write a Scholarship Essay That Actually Wins',
+    description: 'Tips and tricks for scholarship essays that stand out — what judges look for, the right structure, tone, and the most common mistakes to avoid.',
+    duration: '14 min', url: 'https://www.youtube.com/watch?v=uZx4n0Keuko',
+    tags: ['Essay', 'Writing', 'Winning Tips'], level: 'Intermediate',
+  },
+  {
+    id: 'visa-v1', category: 'visa', type: 'video', title: 'US F1 Student Visa: Complete Step-by-Step Guide',
+    description: 'Full walkthrough of the F1 visa application process — DS-160 form, embassy interview, required documents, and timeline explained clearly.',
+    duration: '18 min', url: 'https://www.youtube.com/watch?v=CPiPqWtEca4',
+    tags: ['F-1 Visa', 'US', 'Embassy'], level: 'Intermediate', featured: true,
+  },
+  {
+    id: 'visa-v2', category: 'visa', type: 'video', title: 'F1 Visa Interview Q&A — Former US Visa Officer',
+    description: 'A former US visa officer answers the most common F1 interview questions and explains exactly what consulate officers look for before approving.',
+    duration: '20 min', url: 'https://www.youtube.com/watch?v=1y3RCZdkBeA',
+    tags: ['Visa Interview', 'Officer Tips', 'Q&A'], level: 'Intermediate',
+  },
+  {
+    id: 'visa-v3', category: 'visa', type: 'video', title: 'F1 Visa Rejected? Why It Happens & How to Reapply',
+    description: 'Understand the real reasons behind F1 visa rejections and get a clear, actionable strategy for strengthening your reapplication.',
+    duration: '15 min', url: 'https://www.youtube.com/watch?v=Sk-JfbaVvPI',
+    tags: ['Visa Rejection', 'Reapply', 'Strategy'], level: 'Advanced',
   },
 ];
 
 const LEARNING_PATH = [
-  'gs-4', 'gs-1', 'gs-2', 'gs-3',
-  'doc-1', 'app-1', 'app-2', 'doc-2', 'doc-3', 'doc-4',
-  'app-3', 'app-5', 'app-4',
-  'sch-1', 'sch-3', 'sch-2',
-  'visa-1', 'visa-2', 'visa-4', 'visa-3',
+  'gs-4', 'gs-v2', 'gs-1', 'gs-2', 'gs-v1', 'gs-3',
+  'doc-1', 'doc-v1', 'app-1', 'app-v1', 'app-2', 'doc-2', 'doc-v2', 'doc-3', 'doc-4',
+  'app-3', 'app-v2', 'app-5', 'app-4',
+  'sch-1', 'sch-v1', 'sch-3', 'sch-2',
+  'visa-1', 'visa-v1', 'visa-2', 'visa-v2', 'visa-4', 'visa-v3', 'visa-3',
 ];
 
 const PHASE_DIFFICULTY: Record<string, { label: string; color: string }> = {

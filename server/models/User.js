@@ -125,6 +125,11 @@ const ExperienceSchema = new mongoose.Schema({
   certificates: [ExperienceCertSchema],
 }, { _id: false });
 
+const AcadDocSchema = new mongoose.Schema(
+  { name: String, url: String, docId: String, docType: String },
+  { _id: false }
+);
+
 const AcademicDetailSchema = new mongoose.Schema({
   level: String,
   customLevel: String,
@@ -140,6 +145,7 @@ const AcademicDetailSchema = new mongoose.Schema({
   yearOfPassing: String,
   backlogs: String,
   attempts: String,
+  docs: [AcadDocSchema],
 }, { _id: false });
 
 const CounselorNoteSchema = new mongoose.Schema({

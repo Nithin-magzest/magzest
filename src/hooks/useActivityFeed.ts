@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { API_ORIGIN } from '../api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,7 +57,7 @@ export function useActivityFeed() {
     const token = localStorage.getItem('token');
     setIsLoading(true);
 
-    fetch('/api/activity?limit=50', {
+    fetch(`${API_ORIGIN}/api/activity?limit=50`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.json())
@@ -70,7 +71,7 @@ export function useActivityFeed() {
 
   // ── Socket.io connection ───────────────────────────────────────────────────
   useEffect(() => {
-    const socket = io('http://localhost:5000', {
+    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
       reconnectionAttempts: 10,
       reconnectionDelay:    2000,
       reconnectionDelayMax: 10000,

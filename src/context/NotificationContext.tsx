@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
-import { api } from '../api';
+import { api, API_ORIGIN } from '../api';
 import { useAuth } from './AuthContext';
 
 export type NotifType = 'meeting' | 'application' | 'discount' | 'subscriber' | 'counselor' | 'task' | 'deadline';
@@ -112,7 +112,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     prevUserId.current = userId;
     setToasts([]);
 
-    fetch('/api/notifications', { headers: authHeader() })
+    fetch(`${API_ORIGIN}/api/notifications`, { headers: authHeader() })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then((data: any[]) => {
         const loaded: AppNotification[] = data.map(n => ({
@@ -134,7 +134,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Initial load on first mount
   useEffect(() => {
     if (!isAuthenticated || !userId) return;
-    fetch('/api/notifications', { headers: authHeader() })
+    fetch(`${API_ORIGIN}/api/notifications`, { headers: authHeader() })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then((data: any[]) => {
         const loaded: AppNotification[] = data.map(n => ({
@@ -195,7 +195,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     // Save to DB async — update local id with DB _id on success
-    fetch('/api/notifications', {
+    fetch(`${API_ORIGIN}/api/notifications`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: notif.type, priority: notif.priority, title: notif.title, message: notif.message, link: notif.link }),
@@ -672,17 +672,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const markRead = (id: string) => {
     setNotifications(p => p.map(n => n.id === id ? { ...n, read: true } : n));
-    fetch(`/api/notifications/${id}/read`, { method: 'PUT', headers: authHeader() }).catch(() => {});
+    fetch(`${API_ORIGIN}/api/notifications/${id}/read`, { method: 'PUT', headers: authHeader() }).catch(() => {});
   };
 
   const markAllRead = () => {
     setNotifications(p => p.map(n => ({ ...n, read: true })));
-    fetch('/api/notifications/read-all', { method: 'PUT', headers: authHeader() }).catch(() => {});
+    fetch(`${API_ORIGIN}/api/notifications/read-all`, { method: 'PUT', headers: authHeader() }).catch(() => {});
   };
 
   const dismiss = (id: string) => {
     setNotifications(p => p.filter(n => n.id !== id));
-    fetch(`/api/notifications/${id}`, { method: 'DELETE', headers: authHeader() }).catch(() => {});
+    fetch(`${API_ORIGIN}/api/notifications/${id}`, { method: 'DELETE', headers: authHeader() }).catch(() => {});
   };
 
   const dismissToast = (id: string) => setToasts(p => p.filter(n => n.id !== id));
@@ -690,7 +690,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const clearAll = () => {
     setNotifications([]);
     localStorage.removeItem(storageKey(userId));
-    fetch('/api/notifications', { method: 'DELETE', headers: authHeader() }).catch(() => {});
+    fetch(`${API_ORIGIN}/api/notifications`, { method: 'DELETE', headers: authHeader() }).catch(() => {});
   };
 
   return (

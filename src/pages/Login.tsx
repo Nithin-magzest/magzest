@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { GraduationCap, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../api';
+import { api, API_ORIGIN } from '../api';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
@@ -159,7 +159,7 @@ export default function Login() {
         headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
       });
       const userInfo = await userInfoRes.json();
-      const res = await fetch('/api/auth/google', {
+      const res = await fetch(`${API_ORIGIN}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessToken: tokenResponse.access_token, userInfo }),
@@ -186,7 +186,7 @@ export default function Login() {
   // GitHub — server-side redirect flow
   const handleGitHub = () => {
     setSocialLoading('github');
-    window.location.href = '/api/auth/github';
+    window.location.href = `${API_ORIGIN}/api/auth/github`;
   };
 
   // Facebook — uses FB JS SDK (loaded separately)

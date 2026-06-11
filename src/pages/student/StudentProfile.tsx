@@ -7,8 +7,9 @@ import { Student } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 
 const EDUCATION_LEVELS = ['10th Grade', '12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
-type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; course: string; year: string; percentage: string; city: string; comment: string; status: string; yearOfStudying: string; yearOfPassing: string; backlogs: string; attempts: string; };
-function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '', customLevel: '', institution: '', board: '', course: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '' }; }
+type AcadDoc = { name: string; url: string; docId: string; docType: string };
+type AcademicEntry = { id: string; level: string; customLevel: string; institution: string; board: string; course: string; year: string; percentage: string; city: string; comment: string; status: string; yearOfStudying: string; yearOfPassing: string; backlogs: string; attempts: string; docs: AcadDoc[]; };
+function newAcademicEntry(): AcademicEntry { return { id: crypto.randomUUID(), level: '', customLevel: '', institution: '', board: '', course: '', year: '', percentage: '', city: '', comment: '', status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', docs: [] }; }
 const BACHELOR_LEVELS = ["Bachelor's Degree", "Master's Degree"];
 const COURSE_LEVELS = ['12th Grade / Intermediate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Other'];
 function courseFieldLabel(level: string) {
@@ -66,6 +67,37 @@ function ExpCertUpload({ onUploaded }: { onUploaded: (doc: ExpCert) => void }) {
         className="inline-flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-60">
         <Upload className="w-3 h-3" />
         {uploading ? 'Uploading…' : 'Attach Certificate'}
+      </button>
+    </>
+  );
+}
+
+function AcadDocUpload({ docType, onUploaded }: { docType: string; onUploaded: (doc: AcadDoc) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', f);
+      fd.append('name', f.name.replace(/\.[^.]+$/, ''));
+      fd.append('type', docType);
+      const doc: any = await api.students.uploadDocument(fd);
+      onUploaded({ name: doc.name, url: doc.url || '', docId: doc._id || '', docType });
+    } catch {}
+    setUploading(false);
+    e.target.value = '';
+  };
+  return (
+    <>
+      <input ref={fileRef} type="file" className="hidden" aria-label={`Upload ${docType}`}
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleFile} />
+      <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()}
+        className="inline-flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-60">
+        <Upload className="w-3 h-3" />
+        {uploading ? 'Uploading…' : `Upload ${docType}`}
       </button>
     </>
   );
@@ -187,7 +219,7 @@ export default function StudentProfile() {
   const [saving, setSaving] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [academicEntries, setAcademicEntries] = useState<AcademicEntry[]>(
-    (student?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', course: '', ...e, id: e.id || crypto.randomUUID() }))
+    (student?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', course: '', docs: [], ...e, id: e.id || crypto.randomUUID() }))
   );
   const [incompleteAcademicId, setIncompleteAcademicId] = useState<string | null>(null);
   const addAcademicEntry = () => {
@@ -196,7 +228,7 @@ export default function StudentProfile() {
     setIncompleteAcademicId(null);
     setAcademicEntries(prev => [...prev, newAcademicEntry()]);
   };
-  const updateAcademicEntry = (id: string, field: keyof Omit<AcademicEntry, 'id'>, value: string) => {
+  const updateAcademicEntry = (id: string, field: keyof Omit<AcademicEntry, 'id'>, value: string | AcadDoc[]) => {
     setAcademicEntries(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
     if (incompleteAcademicId === id) setIncompleteAcademicId(null);
   };
@@ -282,7 +314,7 @@ export default function StudentProfile() {
       const s = user as Student;
       setForm(buildForm(s));
       setAcademicEntries(
-        (s?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', ...e, id: e.id || crypto.randomUUID() }))
+        (s?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', docs: [], ...e, id: e.id || crypto.randomUUID() }))
       );
       setExperienceEntries(
         (s?.experienceDetails || []).map((e: any) => ({ employmentType: 'Full-time', noticePeriod: '', certificates: [], ...e, id: e.id || crypto.randomUUID(), current: !!e.current }))
@@ -773,6 +805,33 @@ export default function StudentProfile() {
                               onChange={e => updateAcademicEntry(entry.id, 'comment', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
                           </div>
+                          {entry.level === "Bachelor's Degree" && (
+                            <div className="sm:col-span-2">
+                              <label className="block text-xs font-medium text-gray-500 mb-2">CMM / OD Documents</label>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {(['CMM', 'OD'] as const).map(dt => (
+                                  <AcadDocUpload key={dt} docType={dt}
+                                    onUploaded={doc => updateAcademicEntry(entry.id, 'docs', [...(entry.docs || []), doc])} />
+                                ))}
+                              </div>
+                              {(entry.docs || []).length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {(entry.docs || []).map((doc, di) => (
+                                    <div key={di} className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1">
+                                      <span className="text-[10px] font-bold text-blue-700 bg-blue-200 px-1.5 py-0.5 rounded">{doc.docType}</span>
+                                      <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                                        className="text-xs text-blue-700 hover:underline max-w-[140px] truncate">{doc.name}</a>
+                                      <button type="button" aria-label="Remove document"
+                                        onClick={() => updateAcademicEntry(entry.id, 'docs', (entry.docs || []).filter((_, i) => i !== di))}
+                                        className="text-gray-400 hover:text-red-500 transition-colors ml-0.5">
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                       );
@@ -797,6 +856,21 @@ export default function StudentProfile() {
                             {entry.status === 'Pursuing' && entry.backlogs !== '' && entry.backlogs !== undefined && <div><p className="text-xs text-gray-400">Backlogs</p><p className="font-medium text-gray-800">{entry.backlogs}</p></div>}
                             {entry.status === 'Pursuing' && entry.attempts !== '' && entry.attempts !== undefined && <div><p className="text-xs text-gray-400">Attempts</p><p className="font-medium text-gray-800">{entry.attempts}</p></div>}
                             {entry.comment && <div className="col-span-2 sm:col-span-3"><p className="text-xs text-gray-400">Comments</p><p className="font-medium text-gray-700 italic">{entry.comment}</p></div>}
+                            {entry.level === "Bachelor's Degree" && (entry.docs || []).length > 0 && (
+                              <div className="col-span-2 sm:col-span-3">
+                                <p className="text-xs text-gray-400 mb-1">CMM / OD Documents</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {(entry.docs || []).map((doc, di) => (
+                                    <a key={di} href={doc.url} target="_blank" rel="noopener noreferrer"
+                                      className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1 hover:bg-blue-100 transition-colors">
+                                      <span className="text-[10px] font-bold text-blue-700 bg-blue-200 px-1.5 py-0.5 rounded">{doc.docType}</span>
+                                      <span className="text-xs text-blue-700 max-w-[140px] truncate">{doc.name}</span>
+                                      <ExternalLink className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

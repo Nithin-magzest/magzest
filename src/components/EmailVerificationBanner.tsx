@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MailWarning, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_ORIGIN } from '../api';
 
 export default function EmailVerificationBanner() {
   const { user } = useAuth();
@@ -14,7 +15,7 @@ export default function EmailVerificationBanner() {
   const handleResend = async () => {
     setResending(true);
     try {
-      await fetch('/api/auth/resend-verification', {
+      await fetch(`${API_ORIGIN}/api/auth/resend-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email }),

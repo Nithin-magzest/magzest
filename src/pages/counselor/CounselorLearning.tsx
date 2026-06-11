@@ -26,13 +26,13 @@ const RESOURCES: Resource[] = [
   {
     id: 'adm-1', category: 'admissions', type: 'article', title: 'Understanding University Application Requirements',
     description: 'A comprehensive walkthrough of typical document requirements, deadlines, and how to guide students through the checklist.',
-    duration: '12 min', url: 'https://www.nacac.org/resources/knowledge-center/',
+    duration: '12 min', url: 'https://www.nacac.org/resources/',
     tags: ['Documents', 'Deadlines', 'Checklist'], featured: true,
   },
   {
     id: 'adm-2', category: 'admissions', type: 'article', title: 'Personal Statement Coaching: Best Practices',
     description: 'How to help students craft compelling personal statements that stand out to admissions committees.',
-    duration: '12 min', url: 'https://www.nacac.org/resources/knowledge-center/',
+    duration: '12 min', url: 'https://www.nacac.org/resources/',
     tags: ['Personal Statement', 'Writing', 'Coaching'],
   },
   {
@@ -44,19 +44,19 @@ const RESOURCES: Resource[] = [
   {
     id: 'adm-4', category: 'admissions', type: 'guide', title: 'Common Mistakes in Application Processing',
     description: 'Recorded session covering frequent errors counselors make when reviewing and submitting applications.',
-    duration: '20 min', url: 'https://www.iecaonline.com/professional-development/',
+    duration: '20 min', url: 'https://www.iecaonline.com',
     tags: ['Errors', 'Quality Control', 'Review'],
   },
   {
     id: 'uni-1', category: 'universities', type: 'article', title: 'How to Research and Compare Universities',
     description: 'Learn to evaluate rankings, program quality, campus life, and job outcomes when advising students on university selection.',
-    duration: '10 min', url: 'https://www.topuniversities.com/student-info/choosing-university/how-choose-university',
+    duration: '10 min', url: 'https://www.fastweb.com/college-search/articles/how-to-choose-a-college',
     tags: ['Rankings', 'Comparison', 'Research'], featured: true,
   },
   {
     id: 'uni-2', category: 'universities', type: 'article', title: 'Understanding University Rankings & What They Really Mean',
     description: 'QS, THE, US News — how to interpret rankings and explain their relevance (and limitations) to students.',
-    duration: '10 min', url: 'https://www.topuniversities.com/qs-world-university-rankings/methodology',
+    duration: '10 min', url: 'https://www.fastweb.com/college-search/articles/college-rankings-explained',
     tags: ['QS', 'THE', 'Rankings'],
   },
   {
@@ -68,7 +68,7 @@ const RESOURCES: Resource[] = [
   {
     id: 'visa-1', category: 'visa', type: 'article', title: 'Student Visa Types: UK, US, Canada, Australia',
     description: 'Overview of Tier 4, F-1, Study Permit, and Student Visa requirements — eligibility, documents, and timelines.',
-    duration: '15 min', url: 'https://educationusa.state.gov/foreign-students/student-visas',
+    duration: '15 min', url: 'https://www.usa.gov/student-visa',
     tags: ['UK Visa', 'F-1', 'Canada', 'Australia'], featured: true,
   },
   {
@@ -80,25 +80,25 @@ const RESOURCES: Resource[] = [
   {
     id: 'visa-3', category: 'visa', type: 'guide', title: 'Pre-Departure Checklist for Students',
     description: 'Everything students need before they fly: accommodation, insurance, banking, and arrival orientation tips.',
-    duration: '7 min', url: 'https://www.internationalstudent.com/study_usa/before-you-go/',
+    duration: '7 min', url: 'https://www.goabroad.com/articles/study-abroad/study-abroad-pre-departure-checklist',
     tags: ['Pre-Departure', 'Checklist', 'Orientation'],
   },
   {
     id: 'visa-4', category: 'visa', type: 'article', title: 'Navigating Visa Refusals and Appeals',
     description: "What to do when a student's visa is refused — grounds, reapplication strategies, and counselor responsibilities.",
-    duration: '12 min', url: 'https://www.ukcisa.org.uk/Information--Advice/Visa-and-Immigration/Appealing-an-immigration-decision',
+    duration: '12 min', url: 'https://www.fastweb.com/financial-aid/articles/what-to-do-when-your-visa-is-denied',
     tags: ['Refusals', 'Appeals', 'Reapplication'],
   },
   {
     id: 'sch-1', category: 'scholarships', type: 'article', title: "Finding Scholarships: A Counselor's Guide",
     description: "Databases, eligibility criteria, and how to match the right scholarships to each student's profile.",
-    duration: '12 min', url: 'https://www.scholarships.com/financial-aid/college-scholarships/',
+    duration: '12 min', url: 'https://www.fastweb.com/financial-aid/articles/how-to-find-scholarships',
     tags: ['Databases', 'Eligibility', 'Matching'], featured: true,
   },
   {
     id: 'sch-2', category: 'scholarships', type: 'article', title: 'Merit vs Need-Based Scholarships: Key Differences',
     description: 'Understanding the distinction and how to position students for each type effectively.',
-    duration: '8 min', url: 'https://www.scholarships.com/financial-aid/college-scholarships/',
+    duration: '8 min', url: 'https://blog.collegevine.com/how-to-write-a-scholarship-essay',
     tags: ['Merit', 'Need-Based', 'Positioning'],
   },
   {
@@ -110,13 +110,13 @@ const RESOURCES: Resource[] = [
   {
     id: 'skl-1', category: 'skills', type: 'article', title: 'Motivational Interviewing for Counselors',
     description: 'Evidence-based communication techniques to help students clarify their goals and overcome hesitation.',
-    duration: '15 min', url: 'https://www.nacac.org/professional-development/',
+    duration: '15 min', url: 'https://www.nacac.org/resources/',
     tags: ['Communication', 'Motivation', 'Technique'], featured: true,
   },
   {
     id: 'skl-2', category: 'skills', type: 'article', title: 'Managing Difficult Student Conversations',
     description: 'How to deliver bad news (rejections, visa refusals) professionally while keeping students engaged.',
-    duration: '10 min', url: 'https://www.nacac.org/professional-development/',
+    duration: '10 min', url: 'https://www.iecaonline.com',
     tags: ['Difficult Conversations', 'Empathy', 'Retention'],
   },
   {
@@ -131,14 +131,52 @@ const RESOURCES: Resource[] = [
     duration: '20 min', url: 'https://www.icef.com/academy/',
     tags: ['CRM', 'Pipeline', 'Tracking'],
   },
+
+  // Video Resources
+  {
+    id: 'adm-v1', category: 'admissions', type: 'video', title: 'How to Write the Perfect SOP (2026 Guide)',
+    description: 'A comprehensive guide for coaching students on SOP writing — covers content, structure, strategy, and the most common mistakes applicants make.',
+    duration: '25 min', url: 'https://www.youtube.com/watch?v=KspJ8dl974E',
+    tags: ['SOP', 'Coaching', 'Writing'], featured: true,
+  },
+  {
+    id: 'uni-v1', category: 'universities', type: 'video', title: 'University Rankings: What They Actually Measure',
+    description: 'A deep analysis of how QS, THE, and ARWU rankings work — why they matter, their limitations, and how to explain them clearly to students.',
+    duration: '12 min', url: 'https://www.youtube.com/watch?v=3RmW1yQmpWA',
+    tags: ['QS', 'THE', 'Rankings Analysis'],
+  },
+  {
+    id: 'visa-cv1', category: 'visa', type: 'video', title: 'UK Student Visa Application: Full Step-by-Step',
+    description: 'Everything counselors need to know about the UK student visa process — from CAS numbers and application forms to biometrics and decision timelines.',
+    duration: '22 min', url: 'https://www.youtube.com/watch?v=9mpLfcuIPhI',
+    tags: ['UK Visa', 'Step-by-Step', 'CAS'],
+  },
+  {
+    id: 'visa-cv2', category: 'visa', type: 'video', title: 'Student Visa Rejections 2026: Re-Application Guide',
+    description: 'Why student visa rejection rates are rising and how to help students build stronger reapplications — broken down by destination country.',
+    duration: '18 min', url: 'https://www.youtube.com/watch?v=qKyMqeaTNNk',
+    tags: ['Visa Rejection', 'Reapplication', 'Countries'],
+  },
+  {
+    id: 'sch-cv1', category: 'scholarships', type: 'video', title: 'Best Scholarship Tips to Actually Win Money',
+    description: 'Practical, honest advice for helping students find and win scholarships — covering search strategy, eligibility filtering, and essay positioning.',
+    duration: '14 min', url: 'https://www.youtube.com/watch?v=kmcDSsrwiOg',
+    tags: ['Tips', 'Strategy', 'Winning'],
+  },
+  {
+    id: 'skl-v1', category: 'skills', type: 'video', title: 'F1 Visa Interview: 21 Questions & Answers',
+    description: 'A thorough Q&A covering the 21 most common F1 visa interview questions — essential for counselors to coach students before their embassy appointment.',
+    duration: '20 min', url: 'https://www.youtube.com/watch?v=gJD4N215GWo',
+    tags: ['Visa Interview', 'Coaching', 'F-1 Q&A'], featured: true,
+  },
 ];
 
 const LEARNING_PATH = [
-  'adm-3', 'adm-1', 'adm-2', 'adm-4',
-  'uni-1', 'uni-2', 'uni-3',
-  'sch-1', 'sch-2', 'sch-3',
-  'visa-1', 'visa-2', 'visa-3', 'visa-4',
-  'skl-1', 'skl-2', 'skl-3', 'skl-4',
+  'adm-3', 'adm-v1', 'adm-1', 'adm-2', 'adm-4',
+  'uni-1', 'uni-v1', 'uni-2', 'uni-3',
+  'sch-1', 'sch-cv1', 'sch-2', 'sch-3',
+  'visa-1', 'visa-cv1', 'visa-2', 'visa-cv2', 'visa-3', 'visa-4',
+  'skl-1', 'skl-v1', 'skl-2', 'skl-3', 'skl-4',
 ];
 
 const PHASE_DIFFICULTY: Record<string, { label: string; color: string }> = {

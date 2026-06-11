@@ -47,7 +47,7 @@ router.post('/seed', authMiddleware, async (req, res) => {
 
   const samples = [
     { type: 'enquiry',   action: 'submitted new enquiry',       detail: 'MS CS — University of Toronto, Canada',              studentName: 'Aryan Sharma' },
-    { type: 'visa',      action: 'visa application approved',   detail: 'Student visa (F-1) — USA · Intake: Fall 2025',        studentName: 'Priya Patel' },
+    { type: 'visa',      action: 'visa application approved',   detail: 'Student visa (F-1) — USA · Intake: September 2025',   studentName: 'Priya Patel' },
     { type: 'payment',   action: 'made payment',                detail: 'Application fee — ₹15,000 · Ref #PY9821',             studentName: 'Mohammed Al-Rashid' },
     { type: 'alert',     action: 'document deadline in 3 days', detail: 'SOP & LORs pending for Monash University',            studentName: 'System' },
     { type: 'offer',     action: 'received university offer',   detail: 'University of Melbourne — MBA · Conditional offer',   studentName: 'Nguyen Thi Lan' },
