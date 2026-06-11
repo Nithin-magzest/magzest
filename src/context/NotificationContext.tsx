@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
-import { api, API_ORIGIN } from '../api';
+import { api, API_ORIGIN, getApiToken } from '../api';
 import { useAuth } from './AuthContext';
 
 export type NotifType = 'meeting' | 'application' | 'discount' | 'subscriber' | 'counselor' | 'task' | 'deadline';
@@ -102,7 +102,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     () => new Date(localStorage.getItem(`notif_panel_opened_${userId}`) || 0)
   );
 
-  const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
+  const authHeader = () => ({ Authorization: `Bearer ${getApiToken()}`, 'Content-Type': 'application/json' });
 
   // Load from DB on mount and when user changes
   const prevUserId = useRef(userId);
@@ -197,7 +197,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     // Save to DB async — update local id with DB _id on success
     fetch(`${API_ORIGIN}/api/notifications`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${getApiToken()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: notif.type, priority: notif.priority, title: notif.title, message: notif.message, link: notif.link }),
     })
       .then(r => r.ok ? r.json() : null)
@@ -441,9 +441,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!isAuthenticated || !userId) return;
 
-    const socket = import.meta.env.VITE_API_URL
-      ? io(import.meta.env.VITE_API_URL)
-      : io();
+    const socket = io(import.meta.env.VITE_API_URL || '', {
+      auth: (cb: (data: object) => void) => cb({ token: getApiToken() }),
+    });
 
     // Register after connection is established — and re-register on every reconnect
     const registerSocket = () => socket.emit('register', userId);

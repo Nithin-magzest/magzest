@@ -13,12 +13,23 @@ const storage = multer.diskStorage({
   },
 });
 
+const allowedMimeTypes = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+];
+
 module.exports = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (req, file, cb) => {
-    const allowed = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif'];
-    if (allowed.includes(path.extname(file.originalname).toLowerCase())) {
+    const allowedExts = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif'];
+    const extOk = allowedExts.includes(path.extname(file.originalname).toLowerCase());
+    const mimeOk = allowedMimeTypes.includes(file.mimetype);
+    if (extOk && mimeOk) {
       cb(null, true);
     } else {
       cb(new Error('Only PDF, Word documents, and images are allowed'));

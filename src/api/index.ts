@@ -1,12 +1,12 @@
 export const API_ORIGIN = import.meta.env.VITE_API_URL || '';
 const BASE = `${API_ORIGIN}/api`;
 
-function getToken() {
-  return localStorage.getItem('token');
-}
-function setToken(t: string) {
-  localStorage.setItem('token', t);
-}
+let _token: string | null = null;
+export function setApiToken(t: string | null) { _token = t; }
+export function getApiToken(): string | null { return _token; }
+
+function getToken() { return _token; }
+function setToken(t: string) { _token = t; }
 
 function authHeaders(): Record<string, string> {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` };
@@ -41,7 +41,7 @@ async function req<T>(url: string, options?: RequestInit, retry = true): Promise
       return req<T>(url, retryOpts, false);
     }
     // Refresh failed — force logout
-    localStorage.removeItem('token');
+    _token = null;
     window.dispatchEvent(new Event('auth:logout'));
   }
   if (!res.ok) {
@@ -61,7 +61,7 @@ async function upload<T>(url: string, formData: FormData, retry = true): Promise
   if (res.status === 401 && retry) {
     const newToken = await tryRefresh();
     if (newToken) return upload<T>(url, formData, false);
-    localStorage.removeItem('token');
+    _token = null;
     window.dispatchEvent(new Event('auth:logout'));
   }
   if (!res.ok) {

@@ -1,6 +1,6 @@
 ﻿import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User } from '../types';
-import { api } from '../api';
+import { api, setApiToken } from '../api';
 
 // Force a full page reload on HMR so the context reference never mismatches
 if (import.meta.hot) { import.meta.hot.invalidate(); }
@@ -24,21 +24,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      api.auth.me()
-        .then(u => setUser(u))
-        .catch(() => localStorage.removeItem('token'))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    // Restore session from httpOnly refresh cookie — no localStorage needed
+    api.auth.refresh()
+      .then(async token => {
+        if (token) {
+          const u = await api.auth.me();
+          setUser(u);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
       const { token, user: u } = await api.auth.login(email, password);
-      localStorage.setItem('token', token);
+      setApiToken(token);
       setUser(u);
       return { success: true, role: u.role };
     } catch {
@@ -47,24 +48,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginWithToken = async (token: string) => {
-    localStorage.setItem('token', token);
+    setApiToken(token);
     try {
       const u = await api.auth.me();
       setUser(u);
     } catch {
-      localStorage.removeItem('token');
+      setApiToken(null);
     }
   };
 
   const logout = () => {
     api.auth.logout();
-    localStorage.removeItem('token');
+    setApiToken(null);
     setUser(null);
   };
 
   // Listen for forced logout triggered by the API interceptor when refresh fails
   useEffect(() => {
-    const handler = () => { setUser(null); };
+    const handler = () => { setApiToken(null); setUser(null); };
     window.addEventListener('auth:logout', handler);
     return () => window.removeEventListener('auth:logout', handler);
   }, []);

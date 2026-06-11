@@ -91,9 +91,9 @@ export default function Login() {
     if (searchParams.get('verified') === '1') setSuccessMsg('✅ Email verified! You can now sign in.');
   }, []);
 
-  // Handle GitHub OAuth callback redirect (token comes back in URL)
+  // Handle GitHub OAuth callback — server sets a refresh cookie and redirects here
   useEffect(() => {
-    const socialToken = searchParams.get('social_token');
+    const socialLogin = searchParams.get('social_login');
     const role = searchParams.get('role');
     const oauthError = searchParams.get('error');
 
@@ -107,11 +107,15 @@ export default function Login() {
       return;
     }
 
-    if (socialToken && role) {
-      loginWithToken(socialToken);
-      if (role === 'admin') navigate('/admin');
-      else if (role === 'counselor') navigate('/counselor');
-      else navigate('/student');
+    if (socialLogin === '1' && role) {
+      api.auth.refresh().then(async token => {
+        if (token) {
+          await loginWithToken(token);
+          redirectAfterLogin(role);
+        } else {
+          setError('Social login failed. Please try again.');
+        }
+      });
     }
   }, [searchParams, loginWithToken, navigate]);
 

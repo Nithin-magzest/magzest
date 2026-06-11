@@ -8,7 +8,6 @@ import {
   BookOpen, DollarSign, MapPin, CheckCircle, Download, RefreshCw,
   ChevronLeft, ChevronRight, Info, UserX, Activity,
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { api } from '../../api';
 import { checkCourseEligibility, ELIGIBILITY_BADGE } from '../../utils/eligibility';
 import StatusBadge from '../../components/StatusBadge';
@@ -794,14 +793,22 @@ export default function AdminStudents() {
   };
 
   const handleExport = () => {
-    const ws = XLSX.utils.json_to_sheet(filtered.map(s => ({
+    const rows = filtered.map(s => ({
       Name: s.name || '', Email: s.email || '', Nationality: s.nationality || '',
       Status: s.status || '', Counselor: counselorNameById[s.counselorId] || 'Unassigned',
       'Joined Date': s.joinedDate || '',
-    })));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Students');
-    XLSX.writeFile(wb, 'students.xlsx');
+    }));
+    if (!rows.length) return;
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(','),
+      ...rows.map(r => headers.map(h => JSON.stringify((r as Record<string, string>)[h] ?? '')).join(',')),
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'students.csv'; a.click();
+    URL.revokeObjectURL(url);
   };
 
   const activeTags: { label: string; clear: () => void }[] = [];

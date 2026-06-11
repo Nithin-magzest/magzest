@@ -31,6 +31,7 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 // Update current student profile
 router.put('/me', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ message: 'Forbidden' });
   const { password, role, _id, __v, ...updates } = req.body;
   try {
     const user = await User.findByIdAndUpdate(

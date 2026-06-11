@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { getApiToken } from '../api';
 
 export type CallState = 'idle' | 'calling' | 'incoming' | 'active';
 
@@ -42,7 +43,9 @@ export function useCall(userId: string | undefined, userName: string | undefined
   useEffect(() => {
     if (!userId) return;
 
-    const socket = import.meta.env.VITE_API_URL ? io(import.meta.env.VITE_API_URL) : io();
+    const socket = io(import.meta.env.VITE_API_URL || '', {
+      auth: (cb: (data: object) => void) => cb({ token: getApiToken() }),
+    });
     socketRef.current = socket;
     const registerSocket = () => socket.emit('register', userId);
     socket.on('connect', registerSocket);

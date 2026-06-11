@@ -169,9 +169,9 @@ router.get('/github/callback', async (req, res) => {
       avatar: avatar_url,
     });
 
-    const token = issueToken(user);
-    // Redirect back to frontend with token in query param (frontend reads and stores it)
-    res.redirect(`${frontendUrl}/login?social_token=${token}&role=${user.role}`);
+    const { raw, expires } = await issueRefreshToken(user);
+    setRefreshCookie(res, raw, expires);
+    res.redirect(`${frontendUrl}/login?social_login=1&role=${user.role}`);
   } catch (err) {
     console.error('[auth/github/callback]', err);
     res.redirect(`${frontendUrl}/login?error=github_failed`);

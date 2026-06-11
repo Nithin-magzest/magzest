@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { X, GraduationCap, Eye, EyeOff, AlertCircle, UserPlus, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
-import { api } from '../api';
+import { api, setApiToken } from '../api';
 import PasswordStrengthBar from './PasswordStrengthBar';
 import { checkPasswordStrength } from '../utils/passwordStrength';
 
@@ -69,7 +69,7 @@ export default function AuthModal() {
     setRegLoading(true);
     try {
       const { token } = await api.auth.register({ name: regName, email: regEmail, password: regPassword });
-      localStorage.setItem('token', token);
+      setApiToken(token);
       await refreshUser();
       close();
       navigate('/student');

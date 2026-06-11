@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback, Re
 import { io, Socket } from 'socket.io-client';
 import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { api } from '../api';
+import { api, getApiToken } from '../api';
 import { createCallRingtone } from '../utils/pirateTone';
 import './call.css';
 
@@ -198,7 +198,9 @@ export function CallProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user?.id) return;
 
-    const socket = import.meta.env.VITE_API_URL ? io(import.meta.env.VITE_API_URL) : io();
+    const socket = io(import.meta.env.VITE_API_URL || '', {
+      auth: (cb: (data: object) => void) => cb({ token: getApiToken() }),
+    });
     socketRef.current = socket;
     const registerSocket = () => socket.emit('register', user.id);
     socket.on('connect', registerSocket);

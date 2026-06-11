@@ -1,6 +1,7 @@
 const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -51,10 +52,15 @@ const io = new Server(httpServer, {
 
 app.use(cors(corsOptions));
 
-// Security headers — disables fingerprinting, enables XSS/clickjacking/MIME protections
+// Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'same-site' },
-  contentSecurityPolicy: false, // managed by frontend build
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
 }));
 
 // Strip $ and . from user input to block NoSQL injection
@@ -229,18 +235,28 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Verify JWT on every socket connection — rejects unauthenticated clients
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) return next(new Error('Unauthorized'));
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.data.userId = String(decoded.id);
+    socket.data.role = decoded.role;
+    next();
+  } catch {
+    next(new Error('Unauthorized'));
+  }
+});
+
 // WebRTC signaling
 io.on('connection', (socket) => {
-  socket.on('register', async (userId) => {
-    const uid = String(userId);
+  socket.on('register', () => {
+    const uid = socket.data.userId;
+    if (!uid) return;
     if (!userSockets.has(uid)) userSockets.set(uid, new Set());
     userSockets.get(uid).add(socket.id);
-    socket.data.userId = uid;
-    try {
-      const User = require('./models/User');
-      const user = await User.findById(userId).select('role');
-      if (user?.role === 'admin') socket.join('admin-room');
-    } catch {}
+    if (socket.data.role === 'admin') socket.join('admin-room');
   });
 
   const relay = (event, to, payload) => {

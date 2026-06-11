@@ -1,6 +1,5 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import * as XLSX from 'xlsx';
 import {
   FileText, RefreshCw, Search, X, ChevronDown, AlertTriangle,
   CheckCircle, Clock, Send, Award, XCircle, BookOpen, Edit2, FileDown,
@@ -39,7 +38,7 @@ const STATUS_COLORS: Record<string, string> = {
   enrolled:       'bg-purple-100 text-purple-700 border-purple-200',
 };
 
-function exportApplicationsToExcel(apps: any[]) {
+function exportApplicationsToCSV(apps: any[]) {
   const rows = apps.map(a => ({
     'Student Name':    a.studentName        || '',
     'Student Email':   a.studentEmail       || '',
@@ -53,14 +52,19 @@ function exportApplicationsToExcel(apps: any[]) {
     'Notes':           a.notes              || '',
   }));
 
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [
-    { wch: 24 }, { wch: 30 }, { wch: 18 }, { wch: 32 },
-    { wch: 32 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 40 },
-  ];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Applications');
-  XLSX.writeFile(wb, `applications_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  if (!rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(','),
+    ...rows.map(r => headers.map(h => JSON.stringify((r as Record<string, string>)[h] ?? '')).join(',')),
+  ].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `applications_export_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function Spinner({ size = 4, white = false }: { size?: number; white?: boolean }) {
@@ -390,7 +394,7 @@ export default function AdminApplications() {
               <p className="text-xs text-gray-400 ml-auto">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</p>
               <button
                 type="button"
-                onClick={() => exportApplicationsToExcel(filtered)}
+                onClick={() => exportApplicationsToCSV(filtered)}
                 disabled={filtered.length === 0}
                 title="Download filtered applications as Excel"
                 className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0"

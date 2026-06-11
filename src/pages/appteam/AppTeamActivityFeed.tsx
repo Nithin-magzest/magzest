@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Activity, RefreshCw, Zap } from 'lucide-react';
 import ActivityFeed from '../../components/ActivityFeed';
 import MeetingPanel from '../../components/MeetingPanel';
-import { API_ORIGIN } from '../../api';
+import { API_ORIGIN, getApiToken } from '../../api';
 
 export default function AppTeamActivityFeed() {
   const [seeding, setSeeding] = useState(false);
@@ -12,10 +12,9 @@ export default function AppTeamActivityFeed() {
     setSeeding(true);
     setSeedMsg('');
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`${API_ORIGIN}/api/activity/seed`, {
         method:  'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${getApiToken()}` },
       });
       const data = await res.json();
       setSeedMsg(`✓ Seeded ${data.seeded} sample events`);
