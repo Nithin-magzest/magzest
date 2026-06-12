@@ -355,7 +355,7 @@ async function sendVerificationEmail(user, mailer, frontendUrl) {
             <p style="font-size:13px;color:#6b7280;">This link expires in 24 hours. If you didn't create this account, you can ignore this email.</p>
           </div>
         </div>`,
-    }).catch(() => {});
+    }).catch(err => console.error('[mailer] verification email failed:', err.message));
   }
 }
 
@@ -439,7 +439,7 @@ router.post('/forgot-password', async (req, res) => {
 
     try {
       await createMailer().sendMail({
-        from: `"GradZest" <${process.env.SMTP_USER}>`,
+        from: `"GradZest" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
         to: user.email,
         subject: 'Reset your GradZest password',
         html: `<p>Hi ${user.name},</p><p>Click the link below to reset your password (valid for 1 hour):</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>If you didn't request this, ignore this email.</p><p>— The GradZest Team</p>`,
