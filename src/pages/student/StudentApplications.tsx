@@ -180,12 +180,16 @@ function ApplicationCard({ app, onAccept, onReject, accepting, rejecting, onComm
         </div>
 
         {/* Offer actions */}
-        {app.status === 'offer_received' && app.offerType && (
-          <div className="mt-3">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-full">
-              <Award className="w-3 h-3" />
-              {app.offerType}
-            </span>
+        {app.status === 'offer_received' && (
+          <div className="mt-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Award className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-semibold text-green-800">Offer Received</span>
+            </div>
+            {app.offerType
+              ? <p className="text-xs text-green-700 pl-6">Type: <span className="font-semibold">{app.offerType}</span></p>
+              : <p className="text-xs text-green-600 pl-6">Offer type not specified</p>
+            }
           </div>
         )}
 
@@ -215,6 +219,22 @@ function ApplicationCard({ app, onAccept, onReject, accepting, rejecting, onComm
       {/* Expanded details */}
       {expanded && (
         <div className="border-t border-gray-100 px-6 py-5 space-y-5 bg-gray-50 rounded-b-2xl">
+
+          {/* Offer Details */}
+          {app.status === 'offer_received' && app.offerType && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Award className="w-4 h-4 text-green-600" />
+                <h4 className="text-sm font-semibold text-gray-700">Offer Details</h4>
+              </div>
+              <div className="pl-6">
+                <div className="bg-white border border-green-200 rounded-xl px-4 py-3 inline-flex flex-col gap-1">
+                  <span className="text-xs text-gray-500">Offer Type</span>
+                  <span className="text-sm font-semibold text-green-700">{app.offerType}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Personal */}
           {(app.dateOfBirth || app.gender || app.passportNumber) && (
