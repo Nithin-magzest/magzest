@@ -1,7 +1,8 @@
 import { uploadUrl } from '../../utils/uploadUrl';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { api } from '../../api';
-import { Search, X, FolderOpen, FileText, Download, ChevronRight, Filter } from 'lucide-react';
+import { Search, X, FolderOpen, FileText, Download, ChevronRight, Filter, Eye } from 'lucide-react';
+import DocPreviewModal from '../../components/DocPreviewModal';
 
 const DOC_STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
   pending:  { label: 'Pending',  color: 'text-amber-700',  bg: 'bg-amber-100' },
@@ -25,6 +26,7 @@ export default function BoardDocuments() {
   const [searchStudent, setSearchStudent] = useState('');
   const [searchDoc, setSearchDoc] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [previewDoc, setPreviewDoc] = useState<{ url: string; name: string } | null>(null);
 
   useEffect(() => {
     api.admin.students()
@@ -84,6 +86,7 @@ export default function BoardDocuments() {
   );
 
   return (
+    <>
     <div className="flex h-[calc(100vh-5rem)] -m-6">
       {/* Left: student list */}
       <div className={`flex flex-col border-r border-gray-200 bg-white ${selected ? 'hidden lg:flex w-72' : 'flex-1'}`}>
@@ -211,10 +214,17 @@ export default function BoardDocuments() {
                         )}
                       </div>
                       {doc.url ? (
-                        <a href={uploadUrl(doc.url)} download target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs font-semibold">
-                          <Download className="w-3.5 h-3.5" /> Download
-                        </a>
+                        <div className="flex items-center gap-1.5">
+                          <button type="button"
+                            onClick={() => setPreviewDoc({ url: uploadUrl(doc.url), name: doc.name })}
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-indigo-300 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors text-xs font-semibold">
+                            <Eye className="w-3.5 h-3.5" /> Preview
+                          </button>
+                          <a href={uploadUrl(doc.url)} download target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs font-semibold">
+                            <Download className="w-3.5 h-3.5" /> Download
+                          </a>
+                        </div>
                       ) : (
                         <span className="text-xs text-gray-300 italic">No file</span>
                       )}
@@ -233,5 +243,9 @@ export default function BoardDocuments() {
         </div>
       )}
     </div>
+    {previewDoc && (
+      <DocPreviewModal url={previewDoc.url} fileName={previewDoc.name} onClose={() => setPreviewDoc(null)} />
+    )}
+    </>
   );
 }
