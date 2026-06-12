@@ -97,7 +97,7 @@ router.post('/', authMiddleware, async (req, res) => {
     if (mailer && data.email) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       mailer.sendMail({
-        from: '"Gradzest" <nithin@magzest.in>',
+        from: `"Gradzest" <${process.env.SMTP_USER}>`,
         to: data.email.toLowerCase(),
         subject: 'Your Gradzest Account Has Been Created',
         html: `
@@ -160,7 +160,7 @@ router.post('/:id/documents', authMiddleware, async (req, res) => {
     if (user.email) {
       const mailer = req.app.get('mailer');
       if (mailer) mailer.sendMail({
-        from: '"Gradzest" <nithin@magzest.in>',
+        from: `"Gradzest" <${process.env.SMTP_USER}>`,
         to: user.email,
         subject: `Document Requested: ${doc.name}`,
         html: `

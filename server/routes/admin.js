@@ -214,7 +214,7 @@ router.put('/students/:id/assign', authMiddleware, adminOnly, async (req, res) =
       if (student.email && counselor) {
         const mailer = req.app.get('mailer');
         if (mailer) mailer.sendMail({
-          from: '"Gradzest" <nithin@magzest.in>',
+          from: `"Gradzest" <${process.env.SMTP_USER}>`,
           to: student.email,
           subject: 'Your Counselor Has Been Assigned',
           html: `

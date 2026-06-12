@@ -69,7 +69,7 @@ async function runDeadlineCheck(io, userSockets, mailer) {
       // Email
       if (mailer && student.email) {
         mailer.sendMail({
-          from: '"Gradzest" <nithin@magzest.in>',
+          from: `"Gradzest" <${process.env.SMTP_USER}>`,
           to: student.email,
           subject: `${title} — ${app.universityName}`,
           html: `

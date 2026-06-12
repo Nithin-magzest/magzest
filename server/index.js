@@ -150,7 +150,7 @@ app.post('/api/subscribe', async (req, res) => {
     // Send thank-you email to the new subscriber
     const greeting = sub.name ? `Hi ${sub.name},` : 'Hello,';
     mailer.sendMail({
-      from:    '"Gradzest" <nithin@magzest.in>',
+      from:    `"Gradzest" <${process.env.SMTP_USER}>`,
       to:      sub.email,
       subject: 'Thank you for registering with Gradzest!',
       html: `
