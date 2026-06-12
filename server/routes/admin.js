@@ -50,6 +50,7 @@ router.post('/counselors', authMiddleware, adminOnly, async (req, res) => {
       name, email: email.toLowerCase(), password: hashed, role: 'counselor',
       specialization: rest.specialization || [], assignedStudents: [],
       experience: rest.experience || 0,
+      emailVerified: true,
     });
     await counselor.save();
     const obj = counselor.toJSON();
@@ -124,6 +125,7 @@ router.post('/students', authMiddleware, adminOnly, async (req, res) => {
       budget: budget || null, preferredCountries: preferredCountries || [],
       interestedCourses: interestedCourses || [], status: 'active',
       joinedDate: new Date().toISOString().split('T')[0],
+      emailVerified: true,
     });
     await student.save();
     if (counselorId) {

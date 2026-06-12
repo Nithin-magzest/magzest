@@ -63,6 +63,7 @@ async function findOrCreateSocialUser({ providerId, providerField, email, name, 
       avatar,
       role: 'student',
       status: 'active',
+      emailVerified: true,
       joinedDate: new Date().toISOString().split('T')[0],
     });
   } else {
@@ -249,6 +250,14 @@ router.post('/login', async (req, res) => {
       }
       return res.status(401).json({
         message: `Invalid email or password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before lockout.`,
+      });
+    }
+
+    // Block login if email is not verified (only for self-registered students with pending token)
+    if (user.emailVerified === false && user.emailVerifyToken) {
+      return res.status(403).json({
+        message: 'Please verify your email before logging in. Check your inbox for the verification link.',
+        code: 'EMAIL_NOT_VERIFIED',
       });
     }
 

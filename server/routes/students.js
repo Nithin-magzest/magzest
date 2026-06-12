@@ -88,7 +88,7 @@ router.post('/', authMiddleware, async (req, res) => {
     // Generate a random 12-char password instead of a hardcoded default
     const tempPassword = crypto.randomBytes(6).toString('hex'); // e.g. "a3f8c1d2e5b7"
     const hashed = await bcrypt.hash(tempPassword, 10);
-    const student = new User({ ...data, email: data.email.toLowerCase(), password: hashed, role: 'student' });
+    const student = new User({ ...data, email: data.email.toLowerCase(), password: hashed, role: 'student', emailVerified: true });
     await student.save();
     await User.findByIdAndUpdate(req.user.id, { $push: { assignedStudents: student._id.toString() } });
 
