@@ -92,7 +92,6 @@ app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(cookieParser());
 
 // Protect uploaded files — only authenticated users can access them
-const jwt = require('jsonwebtoken');
 app.use('/uploads', (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1]
     || req.query.token; // allow ?token= for direct <img src> links
