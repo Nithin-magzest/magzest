@@ -3103,6 +3103,14 @@ export default function Home() {
                   </Link>
                 </li>
                 <li>
+                  <Link
+                    to="/resources"
+                    className="hover:text-white transition-colors"
+                  >
+                    Blog &amp; Resources
+                  </Link>
+                </li>
+                <li>
                   <button
                     type="button"
                     onClick={() =>

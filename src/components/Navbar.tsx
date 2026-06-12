@@ -101,6 +101,7 @@ export default function Navbar() {
   const navLinks = [
     { to: "/", label: "Home", active: location.pathname === "/" },
     { to: "/universities", label: "Browse Programs", active: location.pathname === "/universities" },
+    { to: "/resources", label: "Resources", active: location.pathname.startsWith("/resources") },
   ];
 
   return (
@@ -326,6 +327,8 @@ export default function Navbar() {
                 className="block px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Home</Link>
               <Link to="/universities" onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Browse Programs</Link>
+              <Link to="/resources" onClick={() => setMenuOpen(false)}
+                className="block px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Resources</Link>
               <a href="/#how-it-works" onClick={scrollToHowItWorks}
                 className="block px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">How It Works</a>
               {isAuthenticated ? (

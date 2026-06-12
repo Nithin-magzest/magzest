@@ -1,6 +1,7 @@
 import { uploadUrl } from '../../utils/uploadUrl';
 import { useEffect, useRef, useState } from 'react';
-import { User, GraduationCap, BookOpen, Upload, Edit3, Save, X, FileText, Trash2, ExternalLink, CheckCircle, AlertCircle, Plus, ArrowUp, ArrowDown } from 'lucide-react';
+import { User, GraduationCap, BookOpen, Upload, Edit3, Save, X, FileText, Trash2, ExternalLink, CheckCircle, AlertCircle, Plus, ArrowUp, ArrowDown, Eye } from 'lucide-react';
+import DocPreviewModal from '../../components/DocPreviewModal';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Student } from '../../types';
@@ -218,6 +219,7 @@ export default function StudentProfile() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{ url: string; name: string } | null>(null);
   const [academicEntries, setAcademicEntries] = useState<AcademicEntry[]>(
     (student?.academicDetails || []).map((e: any) => ({ status: '', yearOfStudying: '', yearOfPassing: '', backlogs: '', attempts: '', course: '', docs: [], ...e, id: e.id || crypto.randomUUID() }))
   );
@@ -381,6 +383,7 @@ export default function StudentProfile() {
   };
 
   return (
+    <>
     <div className="space-y-6">
       {showUpload && (
         <UploadDocumentModal
@@ -1171,8 +1174,11 @@ export default function StudentProfile() {
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 {cert.url && (
-                                  <a href={uploadUrl(cert.url)} target="_blank" rel="noopener noreferrer"
-                                    className="text-xs text-blue-600 hover:underline font-medium">Open</a>
+                                  <button type="button"
+                                    onClick={() => setPreviewDoc({ url: uploadUrl(cert.url), name: cert.name })}
+                                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium">
+                                    <Eye className="w-3 h-3" /> Preview
+                                  </button>
                                 )}
                                 <button type="button" aria-label="Remove certificate"
                                   onClick={async () => {
@@ -1209,10 +1215,11 @@ export default function StudentProfile() {
                         {(entry.certificates || []).length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {(entry.certificates || []).map((cert, ci) => (
-                              <a key={ci} href={uploadUrl(cert.url)} target="_blank" rel="noopener noreferrer"
+                              <button key={ci} type="button"
+                                onClick={() => setPreviewDoc({ url: uploadUrl(cert.url), name: cert.name })}
                                 className="inline-flex items-center gap-1.5 text-xs bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-lg font-medium transition-colors">
-                                <FileText className="w-3 h-3 flex-shrink-0" /> {cert.name}
-                              </a>
+                                <Eye className="w-3 h-3 flex-shrink-0" /> {cert.name}
+                              </button>
                             ))}
                           </div>
                         )}
@@ -1326,10 +1333,11 @@ export default function StudentProfile() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {resumeDoc.url && (
-                        <a href={uploadUrl(resumeDoc.url)} target="_blank" rel="noopener noreferrer"
+                        <button type="button"
+                          onClick={() => setPreviewDoc({ url: uploadUrl(resumeDoc.url), name: resumeDoc.name })}
                           className="inline-flex items-center gap-1 text-xs bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
-                          <ExternalLink className="w-3 h-3" /> Open
-                        </a>
+                          <Eye className="w-3 h-3" /> Preview
+                        </button>
                       )}
                       <StatusBadge status={resumeDoc.status} />
                       <button type="button" aria-label="Delete resume"
@@ -1380,10 +1388,11 @@ export default function StudentProfile() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {doc.url && (
-                        <a href={uploadUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                        <button type="button"
+                          onClick={() => setPreviewDoc({ url: uploadUrl(doc.url), name: doc.name })}
                           className="inline-flex items-center gap-1 text-xs bg-sky-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
-                          <ExternalLink className="w-3 h-3" /> Open
-                        </a>
+                          <Eye className="w-3 h-3" /> Preview
+                        </button>
                       )}
                       <StatusBadge status={doc.status} />
                       <button type="button" aria-label="Delete document"
@@ -1451,10 +1460,11 @@ export default function StudentProfile() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {doc.url && (
-                        <a href={uploadUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                        <button type="button"
+                          onClick={() => setPreviewDoc({ url: uploadUrl(doc.url), name: doc.name })}
                           className="inline-flex items-center gap-1 text-xs bg-sky-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
-                          <ExternalLink className="w-3 h-3" /> Open
-                        </a>
+                          <Eye className="w-3 h-3" /> Preview
+                        </button>
                       )}
                       <StatusBadge status={doc.status} />
                       <button type="button" aria-label="Delete document"
@@ -1492,5 +1502,9 @@ export default function StudentProfile() {
         </div>
       </div>
     </div>
+    {previewDoc && (
+      <DocPreviewModal url={previewDoc.url} fileName={previewDoc.name} onClose={() => setPreviewDoc(null)} />
+    )}
+    </>
   );
 }

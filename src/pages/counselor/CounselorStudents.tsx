@@ -1,7 +1,8 @@
 import { uploadUrl } from '../../utils/uploadUrl';
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Routes, Route, useParams, useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus, Users, BookOpen, StickyNote, Edit2, Trash2 } from 'lucide-react';
+import { Search, ArrowLeft, FileText, MessageSquare, CheckCircle, Upload, Phone, X, ExternalLink, UserPlus, Plus, Users, BookOpen, StickyNote, Edit2, Trash2, Eye } from 'lucide-react';
+import DocPreviewModal from '../../components/DocPreviewModal';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Counselor } from '../../types';
@@ -407,6 +408,7 @@ function StudentDetail() {
   const [countryFilter, setCountryFilter] = useState('');
   const [courseSearch, setCourseSearch] = useState('');
   const { user: counselor } = useAuth();
+  const [previewDoc, setPreviewDoc] = useState<{ url: string; name: string } | null>(null);
 
   useEffect(() => {
     if (studentId) api.students.get(studentId).then(setStudent).catch(() => {});
@@ -466,6 +468,7 @@ function StudentDetail() {
   });
 
   return (
+    <>
     <div className="space-y-5">
       {showRequestDoc && studentId && (
         <RequestDocumentModal
@@ -688,10 +691,11 @@ function StudentDetail() {
                   </div>
                   <div className="flex items-center gap-2">
                     {doc.url && (
-                      <a href={uploadUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                      <button type="button"
+                        onClick={() => setPreviewDoc({ url: uploadUrl(doc.url), name: doc.name })}
                         className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-200 font-medium transition-colors">
-                        <ExternalLink className="w-3 h-3" /> Open
-                      </a>
+                        <Eye className="w-3 h-3" /> Preview
+                      </button>
                     )}
                     <StatusBadge status={doc.status} size="md" />
                     {doc.status === 'pending' && (
@@ -829,5 +833,9 @@ function StudentDetail() {
         );
       })()}
     </div>
+    {previewDoc && (
+      <DocPreviewModal url={previewDoc.url} fileName={previewDoc.name} onClose={() => setPreviewDoc(null)} />
+    )}
+    </>
   );
 }
