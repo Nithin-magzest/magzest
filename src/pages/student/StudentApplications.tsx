@@ -15,6 +15,60 @@ const timeline = [
   { key: 'accepted', label: 'Accepted', icon: CheckCircle },
 ];
 
+const OFFER_TYPE_INFO: Record<string, { label: string; description: string; color: string; badge: string }> = {
+  'Normal Offer':                    { label: 'Normal Offer',                    description: 'You have received a standard offer. Review the terms carefully and accept or decline below.',                                                        color: 'green',  badge: 'bg-green-100 text-green-800 border-green-300' },
+  'University Conditional Offer':    { label: 'University Conditional Offer',    description: 'This offer is conditional. You must meet specific academic conditions set by the university before it becomes confirmed.',                            color: 'amber',  badge: 'bg-amber-100 text-amber-800 border-amber-300' },
+  'CAS Conditional Offer':           { label: 'CAS Conditional Offer',           description: 'A CAS (Confirmation of Acceptance for Studies) conditional offer. Once conditions are met, you will receive your CAS number for your student visa.',  color: 'blue',   badge: 'bg-blue-100 text-blue-800 border-blue-300' },
+  'Unconditional Offer':             { label: 'Unconditional Offer',             description: 'Congratulations! You have been fully accepted with no further requirements. You can accept this offer right away.',                                   color: 'green',  badge: 'bg-green-100 text-green-800 border-green-300' },
+  'Scholarship Conditional Offer':   { label: 'Scholarship Conditional Offer',   description: 'This scholarship offer is conditional. Meet the required conditions to secure your scholarship funding.',                                             color: 'purple', badge: 'bg-purple-100 text-purple-800 border-purple-300' },
+};
+
+function OfferTypeBanner({ offerType, compact = false }: { offerType?: string; compact?: boolean }) {
+  if (!offerType) {
+    return compact ? (
+      <p className="text-xs text-green-600 pl-6">Offer type not specified. Contact your counselor for details.</p>
+    ) : null;
+  }
+  const info = OFFER_TYPE_INFO[offerType];
+  const colorMap: Record<string, { bg: string; border: string; title: string; desc: string; icon: string }> = {
+    green:  { bg: 'bg-green-50',  border: 'border-green-200',  title: 'text-green-900',  desc: 'text-green-700',  icon: 'text-green-600' },
+    amber:  { bg: 'bg-amber-50',  border: 'border-amber-200',  title: 'text-amber-900',  desc: 'text-amber-700',  icon: 'text-amber-500' },
+    blue:   { bg: 'bg-blue-50',   border: 'border-blue-200',   title: 'text-blue-900',   desc: 'text-blue-700',   icon: 'text-blue-600' },
+    purple: { bg: 'bg-purple-50', border: 'border-purple-200', title: 'text-purple-900', desc: 'text-purple-700', icon: 'text-purple-600' },
+  };
+  const c = colorMap[info?.color || 'green'];
+  const label = info?.label || offerType;
+  const description = info?.description || '';
+
+  if (compact) {
+    return (
+      <div className={`mt-3 ${c.bg} border ${c.border} rounded-xl px-4 py-3`}>
+        <div className="flex items-center gap-2 mb-1">
+          <Award className={`w-4 h-4 ${c.icon}`} />
+          <span className={`text-sm font-bold ${c.title}`}>Offer Received</span>
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${info?.badge || 'bg-gray-100 text-gray-700 border-gray-300'}`}>{label}</span>
+        </div>
+        {description && <p className={`text-xs ${c.desc} pl-6 leading-relaxed`}>{description}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${c.bg} border ${c.border} rounded-xl px-4 py-4`}>
+      <div className="flex items-start gap-3">
+        <Award className={`w-5 h-5 ${c.icon} flex-shrink-0 mt-0.5`} />
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className={`text-sm font-bold ${c.title}`}>Offer Received</span>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${info?.badge || 'bg-gray-100 text-gray-700 border-gray-300'}`}>{label}</span>
+          </div>
+          {description && <p className={`text-xs ${c.desc} leading-relaxed`}>{description}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DetailRow({ label, value }: { label: string; value?: string | boolean | null }) {
   if (!value && value !== false) return null;
   return (
@@ -181,16 +235,7 @@ function ApplicationCard({ app, onAccept, onReject, accepting, rejecting, onComm
 
         {/* Offer actions */}
         {app.status === 'offer_received' && (
-          <div className="mt-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-            <div className="flex items-center gap-2 mb-1">
-              <Award className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-semibold text-green-800">Offer Received</span>
-            </div>
-            {app.offerType
-              ? <p className="text-xs text-green-700 pl-6">Type: <span className="font-semibold">{app.offerType}</span></p>
-              : <p className="text-xs text-green-600 pl-6">Offer type not specified</p>
-            }
-          </div>
+          <OfferTypeBanner offerType={app.offerType} compact />
         )}
 
         {app.status === 'offer_received' && (
@@ -221,18 +266,13 @@ function ApplicationCard({ app, onAccept, onReject, accepting, rejecting, onComm
         <div className="border-t border-gray-100 px-6 py-5 space-y-5 bg-gray-50 rounded-b-2xl">
 
           {/* Offer Details */}
-          {app.status === 'offer_received' && app.offerType && (
+          {app.status === 'offer_received' && (
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Award className="w-4 h-4 text-green-600" />
                 <h4 className="text-sm font-semibold text-gray-700">Offer Details</h4>
               </div>
-              <div className="pl-6">
-                <div className="bg-white border border-green-200 rounded-xl px-4 py-3 inline-flex flex-col gap-1">
-                  <span className="text-xs text-gray-500">Offer Type</span>
-                  <span className="text-sm font-semibold text-green-700">{app.offerType}</span>
-                </div>
-              </div>
+              <OfferTypeBanner offerType={app.offerType} />
             </div>
           )}
 
