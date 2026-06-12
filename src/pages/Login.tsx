@@ -171,7 +171,7 @@ export default function Login() {
         throw new Error(err.message);
       }
       const data = await res.json();
-      loginWithToken(data.token);
+      await loginWithToken(data.token);
       redirectAfterLogin(data.user.role);
     } catch (err: any) {
       toast.error(err.message || 'Google login failed. Make sure VITE_GOOGLE_CLIENT_ID is configured.');
