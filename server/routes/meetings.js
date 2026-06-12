@@ -99,7 +99,7 @@ router.post('/', auth, async (req, res) => {
         const studentUser = await require('../models/User').findById(p.userId).select('email name');
         if (studentUser?.email) {
           mailer.sendMail({
-            from: `"Gradzest" <${process.env.SMTP_USER}>`,
+            from: `"Gradzest" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
             to: studentUser.email,
             subject: `New Meeting Scheduled: ${title}`,
             html: `

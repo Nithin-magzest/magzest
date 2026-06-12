@@ -124,7 +124,7 @@ router.put('/:appId', authMiddleware, async (req, res) => {
       const mailer = req.app.get('mailer');
       if (mailer) {
         mailer.sendMail({
-          from: `"Gradzest" <${process.env.SMTP_USER}>`,
+          from: `"Gradzest" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
           to: user.email,
           subject: `Application Update: ${app.universityName} — ${STATUS_LABEL[status]}`,
           html: `

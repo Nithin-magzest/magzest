@@ -338,7 +338,7 @@ async function sendVerificationEmail(user, mailer, frontendUrl) {
   if (mailer) {
     const verifyUrl = `${frontendUrl}/verify-email?token=${raw}`;
     mailer.sendMail({
-      from: `"Gradzest" <${process.env.SMTP_USER}>`,
+      from: `"Gradzest" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
       to: user.email,
       subject: 'Verify your Gradzest email address',
       html: `
