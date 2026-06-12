@@ -297,7 +297,7 @@ router.get('/applications', authMiddleware, adminOnly, async (req, res) => {
 
 // Update application status (admin only)
 router.put('/applications/:studentId/:appId', authMiddleware, adminOnly, async (req, res) => {
-  const { status, notes } = req.body;
+  const { status, notes, offerType } = req.body;
   try {
     const existing = await User.findOne({ _id: req.params.studentId, 'applications._id': req.params.appId }).select('applications.$');
     const currentStatus = existing?.applications?.[0]?.status;
@@ -306,6 +306,7 @@ router.put('/applications/:studentId/:appId', authMiddleware, adminOnly, async (
     if (status) update['applications.$.status'] = status;
     if (notes !== undefined) update['applications.$.notes'] = notes;
     if (status === 'rejected' && currentStatus) update['applications.$.rejectedFrom'] = currentStatus;
+    if (offerType !== undefined) update['applications.$.offerType'] = status === 'offer_received' ? offerType : '';
 
     const student = await User.findOneAndUpdate(
       { _id: req.params.studentId, 'applications._id': req.params.appId },

@@ -81,7 +81,7 @@ router.post('/:appId/comments', authMiddleware, async (req, res) => {
 
 // Update application status
 router.put('/:appId', authMiddleware, async (req, res) => {
-  const { status, notes } = req.body;
+  const { status, notes, offerType } = req.body;
   try {
     // Find current status before updating (to store rejectedFrom)
     const existing = await User.findOne({ 'applications._id': req.params.appId }).select('applications.$');
@@ -90,6 +90,7 @@ router.put('/:appId', authMiddleware, async (req, res) => {
     const updateFields = { 'applications.$.status': status, 'applications.$.updatedDate': new Date().toISOString() };
     if (notes !== undefined) updateFields['applications.$.notes'] = notes;
     if (status === 'rejected' && currentStatus) updateFields['applications.$.rejectedFrom'] = currentStatus;
+    if (offerType !== undefined) updateFields['applications.$.offerType'] = status === 'offer_received' ? offerType : '';
 
     const user = await User.findOneAndUpdate(
       { 'applications._id': req.params.appId },
