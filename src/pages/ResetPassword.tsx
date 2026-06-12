@@ -4,6 +4,7 @@ import { GraduationCap, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-rea
 import { api } from '../api';
 import PasswordStrengthBar from '../components/PasswordStrengthBar';
 import { checkPasswordStrength } from '../utils/passwordStrength';
+import { useToast } from '../context/ToastContext';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -15,18 +16,17 @@ export default function ResetPassword() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     const strength = checkPasswordStrength(password);
     if (!strength.valid) {
-      setError('Password must be at least 8 characters and include an uppercase letter, a number, and a special character.');
+      toast.error('Password must be at least 8 characters and include an uppercase letter, a number, and a special character.');
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match.');
+      toast.error('Passwords do not match.');
       return;
     }
     setSubmitting(true);
@@ -34,7 +34,7 @@ export default function ResetPassword() {
       await api.auth.resetPassword(token, password);
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      toast.error(err.message || 'Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -60,9 +60,13 @@ export default function ResetPassword() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex flex-col items-center justify-center bg-[#0d1b4b] rounded-xl shadow-md px-8 py-5 mb-4">
-              <GraduationCap className="w-10 h-10 text-white mb-1.5" />
-              <span className="font-bold text-white text-xl tracking-tight">GradZest</span>
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-[#0d1b4b] rounded-2xl flex items-center justify-center flex-shrink-0">
+                <GraduationCap className="w-7 h-7 text-white" />
+              </div>
+              <span className="text-3xl font-extrabold tracking-tight select-none">
+                <span className="text-[#0d1b4b]">Grad</span><span className="text-blue-500">zest</span>
+              </span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Set New Password</h1>
             <p className="text-gray-500 mt-2 text-sm">Choose a strong password for your account</p>
@@ -83,20 +87,6 @@ export default function ResetPassword() {
             </div>
           ) : (
             <>
-              {error && (
-                <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                  <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                  <div className="text-red-700 text-sm">
-                    <p>{error}</p>
-                    {error.toLowerCase().includes('expired') || error.toLowerCase().includes('invalid') ? (
-                      <Link to="/forgot-password" className="underline font-medium mt-1 inline-block">
-                        Request a new reset link
-                      </Link>
-                    ) : null}
-                  </div>
-                </div>
-              )}
-
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>

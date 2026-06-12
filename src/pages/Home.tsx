@@ -2067,10 +2067,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* ── HERO ── */}
-      <section className="relative bg-gradient-to-br from-[#0d1b4b] via-[#0f2258] to-[#1a3a8a] pt-16 pb-24 overflow-hidden">
-        {/* Brand glow: navy + blue-500 */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-10 w-80 h-80 bg-blue-400/15 rounded-full blur-3xl pointer-events-none" />
+      <section className="relative bg-[#0d1540] pt-16 pb-24 overflow-hidden">
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-800/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-10 w-80 h-80 bg-blue-900/20 rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="animate-fade-in-up inline-flex items-center gap-2 bg-black/30 text-white border border-white/10 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
             <span className="w-2 h-2 bg-green-400 rounded-full inline-block flex-shrink-0" />
@@ -2552,7 +2551,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleApply}
-                      className="bg-blue-500 text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-blue-600 active:scale-95 transition-all inline-flex items-center gap-1.5"
+                      className="bg-[#0d1b4b] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#152258] active:scale-95 transition-all inline-flex items-center gap-1.5"
                     >
                       <Zap className="w-3.5 h-3.5" /> Apply Now
                     </button>
@@ -3080,12 +3079,12 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             <div>
               <div className="flex items-center mb-4">
-                <div className="flex flex-col items-center justify-center bg-blue-500 rounded-xl px-3 py-1.5 min-w-[72px]">
+                <div className="w-9 h-9 bg-[#0d1b4b] rounded-xl flex items-center justify-center flex-shrink-0">
                   <GraduationCap className="w-5 h-5 text-white" />
-                  <span className="font-bold text-white text-xs tracking-tight leading-tight">
-                    GradZest
-                  </span>
                 </div>
+                <span className="text-xl font-extrabold tracking-tight select-none ml-2">
+                  <span className="text-white">Grad</span><span className="text-blue-400">zest</span>
+                </span>
               </div>
               <p className="text-sm leading-relaxed mb-4">
                 Empowering Indian students to discover, apply, and thrive at top

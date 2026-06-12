@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { GraduationCap, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { api, API_ORIGIN } from '../api';
+import { useToast } from '../context/ToastContext';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
@@ -78,17 +79,16 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const { login, loginWithToken } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Show success message when redirected from email verification
   useEffect(() => {
-    if (searchParams.get('verified') === '1') setSuccessMsg('✅ Email verified! You can now sign in.');
+    if (searchParams.get('verified') === '1') toast.success('Email verified! You can now sign in.');
   }, []);
 
   // Handle GitHub OAuth callback — server sets a refresh cookie and redirects here
@@ -103,7 +103,7 @@ export default function Login() {
         github_token_failed: 'GitHub authentication failed. Please try again.',
         github_failed: 'GitHub login failed. Please try again.',
       };
-      setError(messages[oauthError] || 'Social login failed.');
+      toast.error(messages[oauthError] || 'Social login failed.');
       return;
     }
 
@@ -113,7 +113,7 @@ export default function Login() {
           await loginWithToken(token);
           redirectAfterLogin(role);
         } else {
-          setError('Social login failed. Please try again.');
+          toast.error('Social login failed. Please try again.');
         }
       });
     }
@@ -127,7 +127,6 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setSubmitting(true);
     const result = await login(email, password);
     setSubmitting(false);
@@ -136,14 +135,13 @@ export default function Login() {
       if (redirectTo) navigate(redirectTo);
       else redirectAfterLogin(result.role!);
     } else {
-      setError('Invalid email or password. Try the demo accounts below.');
+      toast.error('Invalid email or password. Try the demo accounts below.');
     }
   };
 
   const loginAs = async (demoEmail: string, demoPassword: string, redirectTo?: string) => {
     setEmail(demoEmail);
     setPassword(demoPassword);
-    setError('');
     setSubmitting(true);
     const result = await login(demoEmail, demoPassword);
     setSubmitting(false);
@@ -151,7 +149,7 @@ export default function Login() {
       if (redirectTo) navigate(redirectTo);
       else redirectAfterLogin(result.role!);
     } else {
-      setError('Login failed. Please make sure the server is running and the database is seeded.');
+      toast.error('Login failed. Please make sure the server is running and the database is seeded.');
     }
   };
 
@@ -176,14 +174,14 @@ export default function Login() {
       loginWithToken(data.token);
       redirectAfterLogin(data.user.role);
     } catch (err: any) {
-      setError(err.message || 'Google login failed. Make sure VITE_GOOGLE_CLIENT_ID is configured.');
+      toast.error(err.message || 'Google login failed. Make sure VITE_GOOGLE_CLIENT_ID is configured.');
     } finally {
       setSocialLoading(null);
     }
   };
 
   const handleGoogleError = () => {
-    setError('Google sign-in was cancelled or failed.');
+    toast.error('Google sign-in was cancelled or failed.');
     setSocialLoading(null);
   };
 
@@ -197,7 +195,7 @@ export default function Login() {
   const handleFacebook = () => {
     const FB = (window as any).FB;
     if (!FB) {
-      setError('Facebook SDK not loaded. Add VITE_FACEBOOK_APP_ID to your .env and reload.');
+      toast.error('Facebook SDK not loaded. Add VITE_FACEBOOK_APP_ID to your .env and reload.');
       return;
     }
     setSocialLoading('facebook');
@@ -211,10 +209,10 @@ export default function Login() {
           loginWithToken(data.token);
           redirectAfterLogin(data.user.role);
         } catch (err: any) {
-          setError(err.message || 'Facebook login failed.');
+          toast.error(err.message || 'Facebook login failed.');
         }
       } else {
-        setError('Facebook sign-in was cancelled.');
+        toast.error('Facebook sign-in was cancelled.');
       }
       setSocialLoading(null);
     }, { scope: 'public_profile,email' });
@@ -244,47 +242,37 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex flex-col items-center justify-center bg-[#0d1b4b] rounded-xl shadow-md px-8 py-5 mb-4">
-              <GraduationCap className="w-10 h-10 text-white mb-1.5" />
-              <span className="font-bold text-white text-xl tracking-tight">GradZest</span>
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-[#0d1b4b] rounded-2xl flex items-center justify-center flex-shrink-0">
+                <GraduationCap className="w-7 h-7 text-white" />
+              </div>
+              <span className="text-3xl font-extrabold tracking-tight select-none">
+                <span className="text-[#0d1b4b]">Grad</span><span className="text-blue-500">zest</span>
+              </span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
             <p className="text-gray-500 mt-2 text-sm">Sign in to access your dashboard</p>
           </div>
 
-          {successMsg && (
-            <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-              <p className="text-green-700 text-sm">{successMsg}</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-              <p className="text-red-700 text-sm">{error}</p>
-            </div>
-          )}
-
           {/* Social Login Buttons */}
           <div className="grid grid-cols-3 gap-3 mb-5">
             {GOOGLE_CLIENT_ID ? (
               <GoogleLoginButton
-                onSuccess={(tr) => { setError(''); handleGoogleSuccess(tr); }}
-                onError={() => { setError(''); handleGoogleError(); }}
+                onSuccess={(tr) => handleGoogleSuccess(tr)}
+                onError={() => handleGoogleError()}
                 loading={socialLoading === 'google'}
                 disabled={anyLoading}
               />
             ) : (
               <GoogleButtonUnconfigured
-                onClick={() => setError('Google login is not configured on this server.')}
+                onClick={() => toast.error('Google login is not configured on this server.')}
                 disabled={anyLoading}
               />
             )}
 
             <button
               type="button"
-              onClick={() => { setError(''); handleGitHub(); }}
+              onClick={handleGitHub}
               disabled={anyLoading}
               className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               title="Sign in with GitHub"
@@ -297,7 +285,7 @@ export default function Login() {
 
             <button
               type="button"
-              onClick={() => { setError(''); handleFacebook(); }}
+              onClick={handleFacebook}
               disabled={anyLoading}
               className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               title="Sign in with Facebook"

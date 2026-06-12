@@ -1,23 +1,23 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GraduationCap, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { GraduationCap, CheckCircle, ArrowLeft } from 'lucide-react';
 import { api } from '../api';
+import { useToast } from '../context/ToastContext';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setSubmitting(true);
     try {
       await api.auth.forgotPassword(email.trim().toLowerCase());
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      toast.error(err.message || 'Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -28,9 +28,13 @@ export default function ForgotPassword() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex flex-col items-center justify-center bg-[#0d1b4b] rounded-xl shadow-md px-8 py-5 mb-4">
-              <GraduationCap className="w-10 h-10 text-white mb-1.5" />
-              <span className="font-bold text-white text-xl tracking-tight">GradZest</span>
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-[#0d1b4b] rounded-2xl flex items-center justify-center flex-shrink-0">
+                <GraduationCap className="w-7 h-7 text-white" />
+              </div>
+              <span className="text-3xl font-extrabold tracking-tight select-none">
+                <span className="text-[#0d1b4b]">Grad</span><span className="text-blue-500">zest</span>
+              </span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Forgot Password</h1>
             <p className="text-gray-500 mt-2 text-sm">Enter your email and we'll send you a reset link</p>
@@ -50,13 +54,6 @@ export default function ForgotPassword() {
             </div>
           ) : (
             <>
-              {error && (
-                <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                  <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                  <p className="text-red-700 text-sm">{error}</p>
-                </div>
-              )}
-
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>

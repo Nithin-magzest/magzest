@@ -17,9 +17,13 @@ export default function VerifyEmail() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-        <div className="inline-flex flex-col items-center justify-center bg-[#0d1b4b] rounded-xl shadow-md px-8 py-5 mb-6">
-          <GraduationCap className="w-10 h-10 text-white mb-1.5" />
-          <span className="font-bold text-white text-xl tracking-tight">GradZest</span>
+        <div className="inline-flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-[#0d1b4b] rounded-2xl flex items-center justify-center flex-shrink-0">
+            <GraduationCap className="w-7 h-7 text-white" />
+          </div>
+          <span className="text-3xl font-extrabold tracking-tight select-none">
+            <span className="text-[#0d1b4b]">Grad</span><span className="text-blue-500">zest</span>
+          </span>
         </div>
         {status === 'loading' && (
           <>

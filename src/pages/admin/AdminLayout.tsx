@@ -31,23 +31,23 @@ function NavIcon({ icon, size }: { icon: NavIcon; size: 'sm' | 'md' }) {
 export default function AdminLayout() {
   const { user, isAuthenticated, loading } = useAuth();
   const unreadCount = useUnreadMessages();
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center dark:bg-gray-900"><div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div></div>;
   if (!isAuthenticated) return <Navigate to="/login" />;
   if (user?.role !== 'admin') return <Navigate to="/login" />;
 
   return (
-    <div className="min-h-screen bg-purple-50">
+    <div className="min-h-screen bg-purple-50 dark:bg-gray-900">
       <Navbar />
       <div className="flex">
-        <aside className="hidden md:flex flex-col w-64 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto bg-white border-r border-gray-200 p-4 gap-1">
-          <div className="mb-4 px-3 py-3 bg-purple-50 rounded-xl">
+        <aside className="hidden md:flex flex-col w-64 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 gap-1">
+          <div className="mb-4 px-3 py-3 bg-purple-50 dark:bg-gray-700 rounded-xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white">
                 <Shield className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">{user.name}</p>
-                <p className="text-xs text-purple-600">Admin Portal</p>
+                <p className="font-semibold text-gray-900 dark:text-white text-sm">{user.name}</p>
+                <p className="text-xs text-purple-600 dark:text-purple-400">Admin Portal</p>
               </div>
             </div>
           </div>
@@ -58,7 +58,7 @@ export default function AdminLayout() {
               end={item.end}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                  isActive ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  isActive ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                 }`
               }
             >
@@ -73,9 +73,9 @@ export default function AdminLayout() {
           ))}
         </aside>
 
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-40">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex z-40">
           {navItems.map(item => (
-            <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `flex-1 flex flex-col items-center py-3 text-xs gap-1 ${isActive ? 'text-purple-600' : 'text-gray-500'}`}>
+            <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `flex-1 flex flex-col items-center py-3 text-xs gap-1 ${isActive ? 'text-purple-600' : 'text-gray-500 dark:text-gray-400'}`}>
               <div className="relative">
                 <NavIcon icon={item.icon} size="md" />
                 {item.label === 'Chat' && unreadCount > 0 && (

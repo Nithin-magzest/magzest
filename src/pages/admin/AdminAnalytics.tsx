@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { BarChart2, TrendingUp, Users, Award, DollarSign, RefreshCw, AlertCircle } from 'lucide-react';
 import { api } from '../../api';
+import { SkeletonStat } from '../../components/Skeleton';
 
 type Period = '7d' | '30d' | '90d' | '1yr';
 
@@ -114,8 +115,18 @@ export default function AdminAnalytics() {
       )}
 
       {loading && (
-        <div className="flex items-center justify-center gap-3 py-20 text-gray-400">
-          <Spinner /><span className="text-sm">Loading analytics…</span>
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonStat key={i} />)}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
+                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+                <div className="h-48 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

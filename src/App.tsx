@@ -4,12 +4,15 @@ import { AuthProvider } from './context/AuthContext';
 import { CallProvider } from './context/CallContext';
 import { AuthModalProvider } from './context/AuthModalContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 import AuthModal from './components/AuthModal';
 import ToastContainer from './components/ToastNotification';
+import FlashToast from './components/FlashToast';
 import { useNotifications } from './context/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -104,8 +107,19 @@ function ToastLayer() {
 
 function PageSpinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <span className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-[#0d1b4b] rounded-xl flex items-center justify-center animate-pulse" />
+        <div className="space-y-1.5">
+          <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-3 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+        </div>
+      </div>
+      <div className="space-y-3 w-64">
+        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-4/5" />
+        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/5" />
+      </div>
     </div>
   );
 }
@@ -113,6 +127,8 @@ function PageSpinner() {
 export default function App() {
   return (
     <ErrorBoundary>
+    <ThemeProvider>
+    <ToastProvider>
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <AuthProvider>
       <CallProvider>
@@ -121,6 +137,7 @@ export default function App() {
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
         <ToastLayer />
+        <FlashToast />
         <AuthModal />
         <Suspense fallback={<PageSpinner />}>
           <Routes>
@@ -219,6 +236,8 @@ export default function App() {
       </CallProvider>
     </AuthProvider>
     </GoogleOAuthProvider>
+    </ToastProvider>
+    </ThemeProvider>
     </ErrorBoundary>
   );
 }

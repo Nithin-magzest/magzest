@@ -89,10 +89,12 @@ export default function AuthModal() {
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-1.5 rounded-lg">
+            <div className="w-9 h-9 bg-[#0d1b4b] rounded-xl flex items-center justify-center flex-shrink-0">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900">GradZest</span>
+            <span className="text-xl font-extrabold tracking-tight select-none">
+              <span className="text-[#0d1b4b]">Grad</span><span className="text-blue-500">zest</span>
+            </span>
           </div>
           <button
             type="button"
