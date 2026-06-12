@@ -77,6 +77,7 @@ function UpdateStatusModal({
   onUpdated: (updated: any) => void;
 }) {
   const [status, setStatus] = useState(app.status);
+  const [offerType, setOfferType] = useState(app.offerType || '');
   const [notes, setNotes] = useState(app.notes || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -121,7 +122,7 @@ function UpdateStatusModal({
     setError('');
     try {
       const appId = app._id || app.id;
-      const payload = { status, notes, academicDetails: academicDetails.map(({ id, ...rest }) => rest) };
+      const payload = { status, offerType: status === 'offer_received' ? offerType : '', notes, academicDetails: academicDetails.map(({ id, ...rest }) => rest) };
       const updated = await api.applications.update(appId, payload);
       onUpdated({ ...app, ...updated, ...payload });
       onClose();
@@ -170,6 +171,25 @@ function UpdateStatusModal({
               ))}
             </div>
           </div>
+
+          {status === 'offer_received' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Offer Type</label>
+              <select
+                value={offerType}
+                onChange={e => setOfferType(e.target.value)}
+                aria-label="Offer type"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-600 bg-white"
+              >
+                <option value="">Select offer type…</option>
+                <option value="Normal Offer">Normal Offer</option>
+                <option value="University Conditional Offer">University Conditional Offer</option>
+                <option value="CAS Conditional Offer">CAS Conditional Offer</option>
+                <option value="Unconditional Offer">Unconditional Offer</option>
+                <option value="Scholarship Conditional Offer">Scholarship Conditional Offer</option>
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes (optional)</label>

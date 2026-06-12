@@ -53,6 +53,7 @@ const ApplicationSchema = new mongoose.Schema({
   notes: String,
   intake: String,
   offerLetterUrl: String,
+  offerType: String,
   rejectedFrom: String,
 
   // Application details

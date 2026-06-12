@@ -81,6 +81,7 @@ function UpdateStatusModal({
   onUpdated: (updated: any) => void;
 }) {
   const [status, setStatus] = useState(app.status);
+  const [offerType, setOfferType] = useState(app.offerType || '');
   const [notes, setNotes] = useState(app.notes || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -89,7 +90,7 @@ function UpdateStatusModal({
     setSaving(true);
     setError('');
     try {
-      const updated = await api.admin.updateApplication(app.studentId, app._id || app.id, { status, notes });
+      const updated = await api.admin.updateApplication(app.studentId, app._id || app.id, { status, offerType: status === 'offer_received' ? offerType : '', notes });
       onUpdated(updated);
       onClose();
     } catch (e: any) {
@@ -137,6 +138,25 @@ function UpdateStatusModal({
               ))}
             </div>
           </div>
+
+          {status === 'offer_received' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Offer Type</label>
+              <select
+                value={offerType}
+                onChange={e => setOfferType(e.target.value)}
+                aria-label="Offer type"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+              >
+                <option value="">Select offer type…</option>
+                <option value="Normal Offer">Normal Offer</option>
+                <option value="University Conditional Offer">University Conditional Offer</option>
+                <option value="CAS Conditional Offer">CAS Conditional Offer</option>
+                <option value="Unconditional Offer">Unconditional Offer</option>
+                <option value="Scholarship Conditional Offer">Scholarship Conditional Offer</option>
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes (optional)</label>

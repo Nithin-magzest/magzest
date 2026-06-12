@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Plus, Calendar, ArrowRight, CheckCircle, Clock, Star, ChevronDown, ChevronUp, User, BookOpen, Globe, DollarSign, MessageCircle, Send, XCircle, GraduationCap } from 'lucide-react';
+import { FileText, Plus, Calendar, ArrowRight, CheckCircle, Clock, Star, ChevronDown, ChevronUp, User, BookOpen, Globe, DollarSign, MessageCircle, Send, XCircle, GraduationCap, Award } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api';
 import { Student } from '../../types';
@@ -180,6 +180,15 @@ function ApplicationCard({ app, onAccept, onReject, accepting, rejecting, onComm
         </div>
 
         {/* Offer actions */}
+        {app.status === 'offer_received' && app.offerType && (
+          <div className="mt-3">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-full">
+              <Award className="w-3 h-3" />
+              {app.offerType}
+            </span>
+          </div>
+        )}
+
         {app.status === 'offer_received' && (
           <div className="mt-4 flex gap-3 flex-wrap">
             <button type="button" onClick={() => onAccept(appId)} disabled={accepting === appId || rejecting === appId}
