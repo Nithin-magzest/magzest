@@ -2072,20 +2072,20 @@ export default function Home() {
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-10 w-80 h-80 bg-blue-400/15 rounded-full blur-3xl pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="animate-fade-in-up inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
-            <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse inline-block flex-shrink-0" />
-            🎓 1,000+ Students Placed in Top Universities
+          <div className="animate-fade-in-up inline-flex items-center gap-2 bg-black/30 text-white border border-white/10 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+            <span className="w-2 h-2 bg-green-400 rounded-full inline-block flex-shrink-0" />
+            Backed by Gradzest expert advisors
           </div>
           <div className="animate-fade-in-up delay-80">
-            <h1 className="text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-5 tracking-tight">
-              Turn Your Dream of<br className="hidden sm:block" />
-              <span className="text-blue-400">Studying Abroad</span> into Reality
+            <h1 className="text-5xl lg:text-7xl font-extrabold text-white leading-tight mb-5 tracking-tight">
+              Find Your <span className="text-cyan-300">Perfect Program</span>
+              <br />to Study Abroad
             </h1>
           </div>
           <div className="animate-fade-in-up delay-160">
-            <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Get matched with the right university, the right course, and the right counselor.
-              Free expert guidance from application to visa — every step of the way.
+            <p className="text-lg text-blue-200/70 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Search 200,000+ courses at top universities across 40+ countries.
+              <br />Free to apply — our advisors guide you every step of the way.
             </p>
           </div>
 
