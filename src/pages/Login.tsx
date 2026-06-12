@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { api, API_ORIGIN } from '../api';
 import { useToast } from '../context/ToastContext';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '198093687527-5i6c5llkcabiggjr6i7ejdo2eq9sfpi1.apps.googleusercontent.com';
 
 // SVG icons for social providers
 function GoogleIcon() {
