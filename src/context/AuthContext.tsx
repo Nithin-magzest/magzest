@@ -5,7 +5,7 @@ import { api, setApiToken } from '../api';
 // Force a full page reload on HMR so the context reference never mismatches
 if (import.meta.hot) { import.meta.hot.invalidate(); }
 
-type LoginResult = { success: true; role: string } | { success: false };
+type LoginResult = { success: true; role: string } | { success: false; code?: string; message?: string };
 
 interface AuthContextType {
   user: User | null;
@@ -42,8 +42,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setApiToken(token);
       setUser(u);
       return { success: true, role: u.role };
-    } catch {
-      return { success: false };
+    } catch (err: any) {
+      const message = err?.message || '';
+      const code = message.toLowerCase().includes('verify your email') ? 'EMAIL_NOT_VERIFIED' : undefined;
+      return { success: false, code, message };
     }
   };
 

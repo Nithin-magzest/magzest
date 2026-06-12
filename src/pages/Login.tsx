@@ -134,8 +134,10 @@ export default function Login() {
       const redirectTo = searchParams.get('redirect');
       if (redirectTo) navigate(redirectTo);
       else redirectAfterLogin(result.role!);
+    } else if (result.code === 'EMAIL_NOT_VERIFIED') {
+      toast.error('Please verify your email before logging in. Check your inbox or request a new verification link.');
     } else {
-      toast.error('Invalid email or password. Try the demo accounts below.');
+      toast.error('Invalid email or password.');
     }
   };
 
